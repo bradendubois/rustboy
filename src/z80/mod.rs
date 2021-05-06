@@ -224,6 +224,28 @@ impl Opcode {
         }
     }
 
+    ///0x17 - RLA : Rotate contents of register A to the left,
+    fn rca() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock{m: 1, t: 4},
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.a = (cpu.registers.a << 1) | (cpu.registers.a >> 7);
+                // save contents of carry flag
+                /* other way to write this, more inline with the js tutorial we're following
+                idk, it's mighty sus.
+                let ci = if cpu.registers.f&0x10 {1} else {0};
+                let co = if cpu.registers.a&0x80 {0x10} else {0};
+                cpu.registers.a = cpu.registers.a << 1;
+                match cpu.registers.a(ci){
+                    Some(x) => cpu.registers.a = x,
+                    None => {
+                        cpu.registers.a += ci;
+                        cpu.registers.f = (cpu.registers.f&0xEF)+co;
+                    }*/
+            }
+        }
+    }
 }
 
 #[allow(dead_code)]
