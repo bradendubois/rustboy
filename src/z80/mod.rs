@@ -6,6 +6,8 @@ struct Clock {
     m: u16,
     t: u16
 }
+#[derive(Debug)]
+#[allow(dead_code)]
 enum Status{
     STOPPED,
     HALTED,
@@ -274,7 +276,7 @@ impl Z80 {
             clock: Clock { m: 0, t: 0 },
 
             // status enum starts as running.
-            status: Status{RUNNING},
+            status: Status::RUNNING,
 
             // MMU Unit
             mmu
