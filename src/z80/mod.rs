@@ -1,3 +1,5 @@
+use super::mmu;
+
 #[derive(Debug)]
 struct Clock {
     m: u16,
@@ -35,13 +37,15 @@ struct Z80 {
     // Struct representing the clock of the Z80 for purposes of timing
     clock: Clock,
 
+    // Struct representing the memory unit
+    mmu: mmu::MMU
 }
 
 #[allow(dead_code)]
 impl Z80 {
 
     // Initialization / creation of a Z80 CPU
-    fn init() -> Z80 {
+    fn init(mmu: mmu::MMU) -> Z80 {
 
         Z80 {
 
@@ -62,7 +66,10 @@ impl Z80 {
             },
 
             // Clock begins at 0
-            clock: Clock { m: 0, t: 0 }
+            clock: Clock { m: 0, t: 0 },
+
+            // MMU Unit
+            mmu
         }
     }
 
@@ -92,12 +99,12 @@ impl Z80 {
 
     // 0x01 - LD BC, d16 ; load the 2 following bytes of immediate data into BC
     fn ld_bc(&mut self) {
-        // self.registers.c = mmu.LOAD?(self.registers.pc + 1)
-        // self.registers.b = mmu.LOAD?(self.registers.pc + 2)
+        self.registers.c = self.mmu.read(self.registers.pc + 1);
+        self.registers.b = self.mmu.read(self.registers.pc + 2);
     }
 
     // 0x02 - LD (BC), A : store contents of A in memory location specified by registers BC
     fn ld_bc_a(&mut self) {
-        // mmu.STORE?(self.registers.a, (self.registers.b << 8) + self.registers.c)
+        self.mmu.write(self.registers.a, ((self.registers.b << 8) + self.registers.c).into());
     }
 }
