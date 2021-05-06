@@ -297,6 +297,22 @@ impl Opcode {
         }
     }
 
+    /// 0x12 - LD (DE), A : store contents of A in memory location specified by registers DE
+    fn ld_de_a()-> Opcode{
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 2,
+                t: 8
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.mmu.write(cpu.registers.a, ((cpu.registers.d << 8) + cpu.registers.e).into());
+            }
+        }
+    }
+
+    ///
+
 }
 
 
