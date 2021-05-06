@@ -158,10 +158,20 @@ impl Opcode {
                 m: 2, t: 8
             },
             instruction: |cpu: &mut Z80| {
-                cpu.registers.e = (cpu.registers.e+1)&255;
-                if !cpu.registers.e {
-                    cpu.registers.d=(cpu.registers.d+1)&255;
+                match cpu.registers.e.checked_add(1){
+                    Some(x) => cpu.registers.e += 1,
+                    None => {
+                        cpu.registers.e += 1;
+                        match cpu.registers.e.checked_add(1){
+                            Some(i) => cpu.registers.d = i,
+                            None => {
+                                cpu.registers.d += 1;
+                                cpu.registers.f |= 0x10;
+                            }
+                        }
+                    }
                 }
+
             }
         }
     }
