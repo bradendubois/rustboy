@@ -145,6 +145,20 @@ impl Opcode {
         }
     }
 
+    // 0x21 - LD SP d16
+    fn ld_sp_d16() -> Opcode {
+        Opcode {
+            size: 3,
+            clock_timing: Clock {
+                m: 3,
+                t: 0
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.h = cpu.mmu.read(cpu.registers.pc + 2);
+                cpu.registers.l = cpu.mmu.read(cpu.registers.pc + 1);
+            }
+        }
+    }
 
 }
 
