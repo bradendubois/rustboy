@@ -1,10 +1,11 @@
+#[derive(Debug)]
 struct Clock {
     m: u16,
     t: u16
 }
 
-
-struct Registers {
+#[derive(Debug)]
+struct Registers{
     a: u8,
     b: u8,
     c: u8,
@@ -19,12 +20,19 @@ struct Registers {
     t: u16,
 }
 
+impl Z80 {
+
+
+
+
+}
 
 // Suggestion: Maybe this can come in handy
 type Opcode = u8;
 
 
 // Struct representing the Z80 CPU
+#[derive(Debug)]
 struct Z80 {
 
     // Struct of all registers in the Z80
@@ -80,11 +88,10 @@ impl Z80 {
         };
     }
 
-
-    // 0x00 - NOP ; no operation
-    fn nop (&mut self) {
-        self.registers.pc += 1;
+    /// NOP aka No-Operation
+    #[warn(dead_code)]
+    fn nop(&mut self) {
+        self.registers.pc+=1;
     }
-
 
 }
