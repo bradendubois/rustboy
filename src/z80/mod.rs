@@ -159,7 +159,7 @@ impl Opcode {
             },
             instruction: |cpu: &mut Z80| {
                 match cpu.registers.e.checked_add(1){
-                    Some(x) => cpu.registers.e += 1,
+                    Some(x) => cpu.registers.e = x,
                     None => {
                         cpu.registers.e += 1;
                         match cpu.registers.e.checked_add(1){
