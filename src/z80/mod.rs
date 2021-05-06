@@ -37,11 +37,10 @@ struct Z80 {
 
 }
 
-
+#[allow(dead_code)]
 impl Z80 {
 
     // Initialization / creation of a Z80 CPU
-    #[allow(dead_code)]
     fn init() -> Z80 {
 
         Z80 {
@@ -69,7 +68,6 @@ impl Z80 {
 
 
     // Basic execution of the current operation at the program-counter (PC) register
-    #[allow(dead_code)]
     fn step(&mut self) {
 
         // Test variable to test the match statement
@@ -82,12 +80,24 @@ impl Z80 {
             0x00 => self.nop(),
             _ => panic!("execution of unmapped opcode: {}", x)
         };
+
+        // Increment program counter to next position in memory; it's unsigned, 16 bit, so overflow
+        // may occur and resets back to position 0
+        self.registers.pc += 1;
     }
 
-    /// NOP aka No-Operation
-    #[allow(dead_code)]
-    fn nop(&mut self) {
-        self.registers.pc+=1;
+
+    // 0x00 - NOP ; no operation
+    fn nop (&mut self) { }
+
+    // 0x01 - LD BC, d16 ; load the 2 following bytes of immediate data into BC
+    fn ld_bc(&mut self) {
+        // self.registers.c = mmu.LOAD?(self.registers.pc + 1)
+        // self.registers.b = mmu.LOAD?(self.registers.pc + 2)
     }
 
+    // 0x02 - LD (BC), A : store contents of A in memory location specified by registers BC
+    fn ld_bc_a(&mut self) {
+        // mmu.STORE?(self.registers.a, (self.registers.b << 8) + self.registers.c)
+    }
 }
