@@ -20,14 +20,8 @@ struct Registers{
     t: u16,
 }
 
-impl Z80 {
-
-
-
-
-}
-
 // Suggestion: Maybe this can come in handy
+#[allow(dead_code)]
 type Opcode = u8;
 
 
@@ -47,6 +41,7 @@ struct Z80 {
 impl Z80 {
 
     // Initialization / creation of a Z80 CPU
+    #[allow(dead_code)]
     fn init() -> Z80 {
 
         Z80 {
@@ -74,6 +69,7 @@ impl Z80 {
 
 
     // Basic execution of the current operation at the program-counter (PC) register
+    #[allow(dead_code)]
     fn step(&mut self) {
 
         // Test variable to test the match statement
@@ -89,7 +85,7 @@ impl Z80 {
     }
 
     /// NOP aka No-Operation
-    #[warn(dead_code)]
+    #[allow(dead_code)]
     fn nop(&mut self) {
         self.registers.pc+=1;
     }
