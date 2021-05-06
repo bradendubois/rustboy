@@ -150,7 +150,21 @@ impl Opcode {
         }
     }
 
-    ///
+    /// 0x13 - INC DE : Increment the contents of registers DE by 1
+    fn inc_de() -> Opcode {
+        Opcode{
+            size:1,
+            clock_timing: Clock{
+                m: 2, t: 8
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.e = (cpu.registers.e+1)&255;
+                if !cpu.registers.e {
+                    cpu.registers.d=(cpu.registers.d+1)&255;
+                }
+            }
+        }
+    }
 
 }
 
