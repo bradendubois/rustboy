@@ -124,9 +124,9 @@ impl Opcode {
         }
     }
     /// 0x10 - STOP : Stops the system clock and oscillator circuit.
-        /// LCD controller is also stopped.
-        /// Internal RAM register ports remain unchanged
-        /// Cancelled by RESET signal
+    /// LCD controller is also stopped.
+    /// Internal RAM register ports remain unchanged
+    /// Cancelled by RESET signal
     fn stop() -> Opcode {
         Opcode{
             size: 2,
@@ -138,6 +138,7 @@ impl Opcode {
             }
         }
     }
+
     /// 0x11 - LD DE, d16 : Loads 2 bytes of immediate data into registers D,E
     /// First byte is the lower byte, second byte is higher. Love Little endian -.-
     fn ld_de() -> Opcode {
