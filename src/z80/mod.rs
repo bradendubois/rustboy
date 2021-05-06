@@ -188,6 +188,33 @@ impl Opcode {
         }
     }
 
+    // 0x23 - INC HL
+    fn inc_hl() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 2,
+                t: 8
+            },
+            instruction: |cpu: &mut Z80| {
+                match cpu.registers.l.checked_add(1) {
+                    Some(x) => cpu.registers.l = x,
+                    None => {
+                        cpu.registers.l += 1;
+                        cpu.registers.f |= 0x10;
+                        match cpu.registers.h.checked_add(1) {
+                            Some(x) => cpu.registers.h = x,
+                            None => {
+                                cpu.registers.h += 1;
+                                cpu.registers.f |= 0x10;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 
 }
 
