@@ -215,6 +215,25 @@ impl Opcode {
         }
     }
 
+    // 0x24 - INC H
+    fn inc_h() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 1,
+                t: 4
+            },
+            instruction: |cpu: &mut Z80| {
+                match cpu.registers.h.checked_add(1) {
+                    Some(x) => cpu.registers.h = x,
+                    None => {
+                        cpu.registers.h += 1;
+                        cpu.registers.f |= 0x10;
+                    }
+                }
+            }
+        }
+    }
 
 }
 
