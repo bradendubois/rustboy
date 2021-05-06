@@ -16,6 +16,7 @@ pub struct MMU {
 impl MMU {
 
     pub fn init() -> MMU {
+
         MMU {
 
             in_bios: false,

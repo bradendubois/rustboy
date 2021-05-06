@@ -18,13 +18,7 @@ struct Registers{
     f: u8,
     pc: u16,
     sp: u16,
-    m: u16,
-    t: u16,
 }
-
-// Suggestion: Maybe this can come in handy
-#[allow(dead_code)]
-type Opcode = u8;
 
 
 // Struct representing the Z80 CPU
@@ -39,6 +33,67 @@ struct Z80 {
 
     // Struct representing the memory unit
     mmu: mmu::MMU
+}
+
+
+// Struct representing one instruction
+struct Opcode {
+    size: u16,                      // size in bytes of the opcode; should be 1, 2, 3, no larger
+    clock_timing: Clock,            // the timing of m and t cycles taken in one instruction
+    instruction: fn(&mut Z80)       // the actual function that will
+}
+
+impl Opcode {
+
+    pub fn lookup(code: u8) -> Opcode {
+        match code {
+            0x00 => Opcode::nop(),
+            0x01 => Opcode::ld_bc(),
+            0x02 => Opcode::ld_bc_a(),
+            _ => panic!("Unmapped opcode {}", code)
+        }
+    }
+
+    // 0x00 - NOP ; no operation
+    fn nop() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 1,
+                t: 4
+            },
+            instruction: |_cpu: &mut Z80| { }
+        }
+    }
+
+    // 0x01 - LD BC, d16 ; load the 2 following bytes of immediate data into BC
+    fn ld_bc() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 3,
+                t: 12
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.c = cpu.mmu.read(cpu.registers.pc + 1);
+                cpu.registers.b = cpu.mmu.read(cpu.registers.pc + 2);
+            }
+        }
+    }
+
+    // 0x02 - LD (BC), A : store contents of A in memory location specified by registers BC
+    fn ld_bc_a() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 3,
+                t: 12
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.mmu.write(cpu.registers.a, ((cpu.registers.b << 8) + cpu.registers.c).into());
+            }
+        }
+    }
 }
 
 #[allow(dead_code)]
@@ -61,8 +116,6 @@ impl Z80 {
                 f: 0,
                 pc: 0,
                 sp: 0,
-                m: 0,
-                t: 0
             },
 
             // Clock begins at 0
@@ -77,34 +130,20 @@ impl Z80 {
     // Basic execution of the current operation at the program-counter (PC) register
     fn step(&mut self) {
 
-        // Test variable to test the match statement
-        let x = 3;
+        // Get the opcode number to execute
+        let opcode = self.mmu.read(self.registers.pc);
 
-        /* Basic match of opcode -> function execution, catch-all at end will be to
-         * panic on any unmapped opcode execution as this should (probably) never occur
-         * */
-        match x {
-            0x00 => self.nop(),
-            _ => panic!("execution of unmapped opcode: {}", x)
-        };
+        // Fetch the opcode
+        let opcode = Opcode::lookup(opcode);
 
-        // Increment program counter to next position in memory; it's unsigned, 16 bit, so overflow
-        // may occur and resets back to position 0
-        self.registers.pc += 1;
-    }
+        // Execute
+        (opcode.instruction)(self);
 
+        // Adjust clock and program counter (PC)
+        self.clock.m += opcode.clock_timing.m;
+        self.clock.t += opcode.clock_timing.t;
 
-    // 0x00 - NOP ; no operation
-    fn nop (&mut self) { }
-
-    // 0x01 - LD BC, d16 ; load the 2 following bytes of immediate data into BC
-    fn ld_bc(&mut self) {
-        self.registers.c = self.mmu.read(self.registers.pc + 1);
-        self.registers.b = self.mmu.read(self.registers.pc + 2);
-    }
-
-    // 0x02 - LD (BC), A : store contents of A in memory location specified by registers BC
-    fn ld_bc_a(&mut self) {
-        self.mmu.write(self.registers.a, ((self.registers.b << 8) + self.registers.c).into());
+        self.registers.pc += opcode.size;
     }
 }
+
