@@ -63,7 +63,7 @@ impl Opcode {
         }
     }
 
-    // 0x00 - NOP ; no operation
+    // 0x00 - NOP
     fn nop() -> Opcode {
         Opcode {
             size: 1,
@@ -75,7 +75,7 @@ impl Opcode {
         }
     }
 
-    // 0x01 - LD BC, d16 ; load the 2 following bytes of immediate data into BC
+    // 0x01 - LD BC, d16
     fn ld_bc() -> Opcode {
         Opcode {
             size: 1,
@@ -90,7 +90,7 @@ impl Opcode {
         }
     }
 
-    // 0x02 - LD (BC), A : store contents of A in memory location specified by registers BC
+    // 0x02 - LD (BC), A
     fn ld_bc_a() -> Opcode {
         Opcode {
             size: 1,
@@ -104,8 +104,24 @@ impl Opcode {
         }
     }
 
-
+    // 0x03 - INC BC
+    fn inc_bc() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 2,
+                t: 8
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.c += 1;
+                if cpu.registers.c == 0 {
+                    cpu.registers.b += 1;
+                }
+            }
+        }
+    }
 }
+
 
 #[allow(dead_code)]
 impl Z80 {
