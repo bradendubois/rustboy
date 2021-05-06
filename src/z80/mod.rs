@@ -1,4 +1,5 @@
 use super::mmu;
+use crate::z80::Status::STOPPED;
 
 #[derive(Debug)]
 struct Clock {
@@ -103,6 +104,21 @@ impl Opcode {
     }
 
 
+    /// 0x10 - STOP : Stops the system clock and oscillator circuit.
+    /// LCD controller is also stopped.
+    /// Internal RAM register ports remain unchanged
+    /// Cancelled by RESET signal
+    fn stop() -> Opcode {
+        Opcode{
+            size: 2,
+            clock_timing: Clock{
+                m: 1, t: 4,
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.status = STOPPED;
+            }
+        }
+    }
 }
 
 #[allow(dead_code)]
