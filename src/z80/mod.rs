@@ -64,7 +64,7 @@ impl Opcode {
         }
     }
 
-    // 0x00 - NOP ; no operation
+    // 0x00 - NOP
     fn nop() -> Opcode {
         Opcode {
             size: 1,
@@ -76,7 +76,7 @@ impl Opcode {
         }
     }
 
-    // 0x01 - LD BC, d16 ; load the 2 following bytes of immediate data into BC
+    // 0x01 - LD BC, d16
     fn ld_bc() -> Opcode {
         Opcode {
             size: 1,
@@ -91,7 +91,7 @@ impl Opcode {
         }
     }
 
-    // 0x02 - LD (BC), A : store contents of A in memory location specified by registers BC
+    // 0x02 - LD (BC), A
     fn ld_bc_a() -> Opcode {
         Opcode {
             size: 1,
@@ -105,6 +105,22 @@ impl Opcode {
         }
     }
 
+
+    /// 0x10 - STOP : Stops the system clock and oscillator circuit.
+    /// LCD controller is also stopped.
+    /// Internal RAM register ports remain unchanged
+    /// Cancelled by RESET signal
+    fn stop() -> Opcode {
+        Opcode{
+            size: 2,
+            clock_timing: Clock{
+                m: 1, t: 4,
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.status = STOPPED;
+            }
+        }
+    }
 
     /// 0x10 - STOP : Stops the system clock and oscillator circuit.
     /// LCD controller is also stopped.
