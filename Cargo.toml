@@ -14,4 +14,3 @@ opt-level = 3
 lto = true
 
 [dependencies]
-gfx = "0.18.2"

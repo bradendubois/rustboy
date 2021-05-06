@@ -5,7 +5,11 @@ struct Clock {
     m: u16,
     t: u16
 }
-
+enum Status{
+    STOPPED,
+    HALTED,
+    RUNNING
+}
 #[derive(Debug)]
 struct Registers{
     a: u8,
@@ -30,6 +34,9 @@ struct Z80 {
 
     // Struct representing the clock of the Z80 for purposes of timing
     clock: Clock,
+
+    // Enum representing the Z80's current running status
+    status: Status,
 
     // Struct representing the memory unit
     mmu: mmu::MMU
@@ -94,6 +101,8 @@ impl Opcode {
             }
         }
     }
+
+
 }
 
 #[allow(dead_code)]
@@ -120,6 +129,9 @@ impl Z80 {
 
             // Clock begins at 0
             clock: Clock { m: 0, t: 0 },
+
+            // status enum starts as running.
+            status: Status{RUNNING},
 
             // MMU Unit
             mmu
