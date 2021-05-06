@@ -280,6 +280,23 @@ impl Opcode {
             }
         }
     }
+
+    /// 0x11 - LD DE, d16 : Loads 2 bytes of immediate data into registers D,E
+    /// First byte is the lower byte, second byte is higher. Love Little endian -.-
+    fn ld_de() -> Opcode {
+        Opcode {
+            size: 3,
+            clock_timing: Clock {
+                m: 3,
+                t: 12,
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.e = cpu.mmu.read(cpu.registers.pc + 1);
+                cpu.registers.d = cpu.mmu.read(cpu.registers.pc + 2);
+            }
+        }
+    }
+
 }
 
 
