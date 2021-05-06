@@ -255,6 +255,20 @@ impl Opcode {
             }
         }
     }
+
+    // 0x26 - LD H d8
+    fn ld_h_d8() -> Opcode {
+        Opcode {
+            size: 2,
+            clock_timing: Clock {
+                m: 2,
+                t: 4
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.h = cpu.mmu.read(cpu.registers.pc+1);
+            }
+        }
+    }
 }
 
 
