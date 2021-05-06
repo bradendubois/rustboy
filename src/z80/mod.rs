@@ -5,11 +5,17 @@ struct Clock {
     m: u16,
     t: u16
 }
+
+
+#[allow(dead_code)]
+#[derive(Debug)]
 enum Status{
     STOPPED,
     HALTED,
     RUNNING
 }
+
+
 #[derive(Debug)]
 struct Registers{
     a: u8,
@@ -54,9 +60,25 @@ impl Opcode {
 
     pub fn lookup(code: u8) -> Opcode {
         match code {
+
+            // 0x0X
             0x00 => Opcode::nop(),
             0x01 => Opcode::ld_bc(),
             0x02 => Opcode::ld_bc_a(),
+            0x03 => Opcode::inc_bc(),
+            0x04 => Opcode::inc_b(),
+            0x05 => Opcode::dec_b(),
+            0x06 => Opcode::ld_b(),
+            0x07 => Opcode::rlca(),
+            0x08 => Opcode::ld_a16_sp(),
+            0x09 => Opcode::add_hl_bc(),
+            0x0A => Opcode::ld_a_bc(),
+            0x0B => Opcode::dec_bc(),
+            0x0C => Opcode::inc_c(),
+            0x0D => Opcode::dec_c(),
+            0x0E => Opcode::ld_c(),
+            0x0F => Opcode::rrca(),
+
             _ => panic!("Unmapped opcode {}", code)
         }
     }
@@ -76,7 +98,7 @@ impl Opcode {
     // 0x01 - LD BC, d16
     fn ld_bc() -> Opcode {
         Opcode {
-            size: 1,
+            size: 3,
             clock_timing: Clock {
                 m: 3,
                 t: 12
@@ -111,10 +133,238 @@ impl Opcode {
                 t: 8
             },
             instruction: |cpu: &mut Z80| {
-                cpu.registers.c += 1;
-                if cpu.registers.c == 0 {
-                    cpu.registers.b += 1;
+                match cpu.registers.c.checked_add(1) {
+                    Some(x) => cpu.registers.c = x,
+                    None => {
+                        cpu.registers.c += 1;
+                        match cpu.registers.b.checked_add(1) {
+                            Some(i) => cpu.registers.b = i,
+                            None => {
+                                cpu.registers.b += 1;
+                                cpu.registers.f |= 0x10;
+                            }
+                        }
+                    }
                 }
+            }
+        }
+    }
+
+    // 0x04 - INC B
+    fn inc_b() -> Opcode {
+        Opcode{
+            size: 1,
+            clock_timing: Clock {
+                m: 1,
+                t: 4
+            },
+            instruction: |cpu: &mut Z80| {
+                match cpu.registers.b.checked_add(1) {
+                    Some(x) => cpu.registers.b = x,
+                    None => {
+                        cpu.registers.b += 1;
+                        cpu.registers.f |= 0x10;
+                    }
+                }
+            }
+        }
+    }
+
+    // 0x05 - DEC b
+    fn dec_b() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 1,
+                t: 4
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.f |= 0x40;
+                match cpu.registers.b.checked_sub(1) {
+                    Some(x) => cpu.registers.b = x,
+                    None => {
+                        cpu.registers.b -= 1;
+                        cpu.registers.f |= 0x10;
+                    }
+                }
+            }
+        }
+    }
+
+    // 0x06 - LD B, d8
+    fn ld_b() -> Opcode {
+        Opcode {
+            size: 2,
+            clock_timing: Clock {
+                m: 4,
+                t: 8
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.b = cpu.mmu.read(cpu.registers.pc+1);
+            }
+        }
+    }
+
+    // 0x07 - RLCA
+    fn rlca() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 1,
+                t: 4
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.a = (cpu.registers.a << 1) | (cpu.registers.a >> 7);
+            }
+        }
+    }
+
+    // 0x08 - LD (a16), SP
+    fn ld_a16_sp() -> Opcode {
+        Opcode {
+            size: 3,
+            clock_timing: Clock {
+                m: 5,
+                t: 15
+            },
+            instruction: |cpu: &mut Z80| {
+                let addr_lower = cpu.mmu.read(cpu.registers.pc + 1);
+                let addr_upper = cpu.mmu.read(cpu.registers.pc + 2);
+                let addr = ((addr_upper << 8) + addr_lower).into();
+                cpu.mmu.write((cpu.registers.sp >> 8) as u8, addr);
+            }
+        }
+    }
+
+    // 0x09 - ADD HL, BC
+    fn add_hl_bc() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 2,
+                t: 8
+            },
+            instruction: |cpu: &mut Z80| {
+                let bc: u16 = ((cpu.registers.b << 8) + cpu.registers.c).into();
+                let hl: u16 = ((cpu.registers.h << 8) + cpu.registers.l).into();
+
+                if hl.checked_add(bc).is_none() {
+                    cpu.registers.f |= 0x80;
+                }
+
+                let hl = hl + bc;
+                cpu.registers.h = (hl >> 8) as u8;
+                cpu.registers.l = hl as u8;
+            }
+        }
+    }
+
+    // 0x0A - LD A, (BC)
+    fn ld_a_bc() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 2,
+                t: 8
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.a = cpu.mmu.read(((cpu.registers.b << 8) + cpu.registers.c).into());
+            }
+        }
+    }
+
+    // 0x0B - DEC BC
+    fn dec_bc() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 2,
+                t: 8
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.f |= 0x40;
+                match cpu.registers.c.checked_sub(1) {
+                    Some(x) => cpu.registers.c = x,
+                    None => {
+                        cpu.registers.c -= 1;
+                        match cpu.registers.b.checked_sub(1) {
+                            Some(x) => cpu.registers.b = x,
+                            None => {
+                                cpu.registers.b -= 1;
+                                cpu.registers.f |= 0x10;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 0x0C - INC C
+    fn inc_c() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 1,
+                t: 4
+            },
+            instruction: |cpu: &mut Z80| {
+                match cpu.registers.c.checked_add(1) {
+                    Some(x) => cpu.registers.c = x,
+                    None => {
+                        cpu.registers.c += 1;
+                        cpu.registers.f |= 0x10;
+                    }
+                }
+            }
+        }
+    }
+
+    // 0x0D - DEC C
+    fn dec_c() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 1,
+                t: 4
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.f |= 0x40;
+                match cpu.registers.c.checked_sub(1) {
+                    Some(x) => cpu.registers.c = x,
+                    None => {
+                        cpu.registers.c -= 1;
+                        cpu.registers.f |= 0x10;
+                    }
+                }
+            }
+        }
+    }
+
+    // 0x0E - LD C, d8
+    fn ld_c() -> Opcode {
+        Opcode {
+            size: 2,
+            clock_timing: Clock {
+                m: 2,
+                t: 8
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.c = cpu.mmu.read(cpu.registers.pc+1);
+            }
+        }
+    }
+
+    // 0x0F - RRCA
+    fn rrca() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 1,
+                t: 4
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.a = (cpu.registers.a >> 1) | (cpu.registers.a << 7);
             }
         }
     }
@@ -147,13 +397,12 @@ impl Z80 {
             clock: Clock { m: 0, t: 0 },
 
             // status enum starts as running.
-            status: Status{RUNNING},
+            status: Status::RUNNING,
 
             // MMU Unit
             mmu
         }
     }
-
 
     // Basic execution of the current operation at the program-counter (PC) register
     fn step(&mut self) {
