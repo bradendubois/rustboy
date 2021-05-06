@@ -64,7 +64,7 @@ impl Opcode {
         }
     }
 
-    // 0x00 - NOP
+    // 0x00 - NOP ; no operation
     fn nop() -> Opcode {
         Opcode {
             size: 1,
@@ -76,7 +76,7 @@ impl Opcode {
         }
     }
 
-    // 0x01 - LD BC, d16
+    // 0x01 - LD BC, d16 ; load the 2 following bytes of immediate data into BC
     fn ld_bc() -> Opcode {
         Opcode {
             size: 1,
@@ -91,7 +91,7 @@ impl Opcode {
         }
     }
 
-    // 0x02 - LD (BC), A
+    // 0x02 - LD (BC), A : store contents of A in memory location specified by registers BC
     fn ld_bc_a() -> Opcode {
         Opcode {
             size: 1,
@@ -106,10 +106,27 @@ impl Opcode {
     }
 
 
+
+    // 0x03 - INC BC
+    fn inc_bc() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 2,
+                t: 8
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.c += 1;
+                if cpu.registers.c == 0 {
+                    cpu.registers.b += 1;
+                }
+            }
+        }
+    }
     /// 0x10 - STOP : Stops the system clock and oscillator circuit.
-    /// LCD controller is also stopped.
-    /// Internal RAM register ports remain unchanged
-    /// Cancelled by RESET signal
+        /// LCD controller is also stopped.
+        /// Internal RAM register ports remain unchanged
+        /// Cancelled by RESET signal
     fn stop() -> Opcode {
         Opcode{
             size: 2,
@@ -121,23 +138,6 @@ impl Opcode {
             }
         }
     }
-
-    /// 0x10 - STOP : Stops the system clock and oscillator circuit.
-    /// LCD controller is also stopped.
-    /// Internal RAM register ports remain unchanged
-    /// Cancelled by RESET signal
-    fn stop() -> Opcode {
-        Opcode{
-            size: 2,
-            clock_timing: Clock{
-                m: 1, t: 4,
-            },
-            instruction: |cpu: &mut Z80| {
-                cpu.status = STOPPED;
-            }
-        }
-    }
-
     /// 0x11 - LD DE, d16 : Loads 2 bytes of immediate data into registers D,E
     /// First byte is the lower byte, second byte is higher. Love Little endian -.-
     fn ld_de() -> Opcode {
@@ -264,54 +264,6 @@ impl Opcode {
             }
         }
     }
-    // 0x03 - INC BC
-    fn inc_bc() -> Opcode {
-        Opcode {
-            size: 1,
-            clock_timing: Clock {
-                m: 2,
-                t: 8
-            },
-            instruction: |cpu: &mut Z80| {
-                cpu.registers.c += 1;
-                if cpu.registers.c == 0 {
-                    cpu.registers.b += 1;
-                }
-            }
-        }
-    }
-
-    /// 0x11 - LD DE, d16 : Loads 2 bytes of immediate data into registers D,E
-    /// First byte is the lower byte, second byte is higher. Love Little endian -.-
-    fn ld_de() -> Opcode {
-        Opcode {
-            size: 3,
-            clock_timing: Clock {
-                m: 3,
-                t: 12,
-            },
-            instruction: |cpu: &mut Z80| {
-                cpu.registers.e = cpu.mmu.read(cpu.registers.pc + 1);
-                cpu.registers.d = cpu.mmu.read(cpu.registers.pc + 2);
-            }
-        }
-    }
-
-    /// 0x12 - LD (DE), A : store contents of A in memory location specified by registers DE
-    fn ld_de_a()-> Opcode{
-        Opcode {
-            size: 1,
-            clock_timing: Clock {
-                m: 2,
-                t: 8
-            },
-            instruction: |cpu: &mut Z80| {
-                cpu.mmu.write(cpu.registers.a, ((cpu.registers.d << 8) + cpu.registers.e).into());
-            }
-        }
-    }
-
-    ///
 
 }
 
