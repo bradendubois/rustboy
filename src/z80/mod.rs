@@ -166,6 +166,21 @@ impl Opcode {
         }
     }
 
+    /// 0x14 - INC D : Increment the contents of D
+    fn inc_d() -> Opcode {
+        Opcode{
+            size: 1,
+            clock_timing: Clock{m:1,t:4},
+            instruction: |cpu: &mut Z80| {
+                match cpu.registers.d.checked_add(1){
+                    Some(x) => cpu.registers.d = x,
+                    None => {cpu.registers.d += 1; cpu.registers.f |= 0x10;}
+                }
+
+            }
+        }
+    }
+
 }
 
 #[allow(dead_code)]
