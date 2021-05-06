@@ -248,7 +248,24 @@ impl Opcode {
             }
         }
     }
+    // 0x03 - INC BC
+    fn inc_bc() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 2,
+                t: 8
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.c += 1;
+                if cpu.registers.c == 0 {
+                    cpu.registers.b += 1;
+                }
+            }
+        }
+    }
 }
+
 
 #[allow(dead_code)]
 impl Z80 {
