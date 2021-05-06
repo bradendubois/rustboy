@@ -210,6 +210,20 @@ impl Opcode {
         }
     }
 
+    /// 0x16 - LD D, d8: Load the 8-bit immediate operand d8 into reg D
+    fn ld_d() -> Opcode {
+        Opcode {
+            size: 2,
+            clock_timing: Clock {
+                m: 2,
+                t: 8
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.d = cpu.mmu.read(cpu.registers.pc+1);
+            }
+        }
+    }
+
 }
 
 #[allow(dead_code)]
