@@ -111,13 +111,14 @@ impl Opcode {
                 t: 8
             },
             instruction: |cpu: &mut Z80| {
-                cpu.registers.c += 1;
-                if cpu.registers.c == 0 {
-                    cpu.registers.b += 1;
-                }
+                match cpu.register_add(cpu.registers.c, 1) {
+                    None => None,
+                    Some(x) => cpu.register_add(cpu.registers.b, x)
+                };
             }
         }
     }
+
 }
 
 
@@ -172,6 +173,54 @@ impl Z80 {
         self.clock.t += opcode.clock_timing.t;
 
         self.registers.pc += opcode.size;
+    }
+
+    fn set_nonzero(&mut self) {
+        self.registers.f ^= 0x80;
+    }
+
+    fn set_zero(&mut self) {
+        self.registers.f |= 0x80;
+    }
+
+    fn subtraction(&mut self) {
+        self.registers.f |= 0x40;
+    }
+
+    fn half_carry(&mut self, before: u8, after: u8) {
+        if (before >> 4) > (after >> 4) {
+            self.registers.f |= 0x20;
+        }
+    }
+
+    fn full_carry(&mut self) {
+        self.registers.f |= 0x10;
+    }
+
+    fn register_add(&mut self, &mut register: u8, amount: u8) -> Option<u8> {
+
+        let before: u8 = register;
+
+        let result = match register.checked_add(amount) {
+
+            // No overflow - set as normal and return None
+            Some(x) => {
+                register = x;
+                None
+            },
+
+            // Overflow, recompute, set flags
+            None => {
+                self.full_carry();
+                register += amount;
+                Some(x)
+            }
+        };
+
+        // Always check (in either case) if a half-carry occurred
+        self.half_carry(before, register);
+
+        result
     }
 }
 
