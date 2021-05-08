@@ -32,6 +32,15 @@ impl Opcode {
             0x0E => Opcode::ld_c(),
             0x0F => Opcode::rrca(),
 
+            // 0x2X
+            0x20 => Opcode::jr_nz_s8(),
+            0x21 => Opcode::ld_hl_d16(),
+            0x22 => Opcode::ld_hlp_a(),
+            0x23 => Opcode::inc_hl(),
+            0x24 => Opcode::inc_h(),
+            0x25 => Opcode::dec_h(),
+            0x26 => Opcode::ld_h_d8(),
+
             _ => panic!("Unmapped opcode {}", code)
         }
     }
@@ -290,6 +299,153 @@ impl Opcode {
                     true => cpu.set_full_carry(),
                     false => cpu.unset_full_carry()
                 };
+            }
+        }
+    }
+
+
+
+
+
+    // 0x20 - JR NZ s8
+    fn jr_nz_s8() -> Opcode {
+        Opcode {
+            size: 0,    // Real: 2 bytes, but directly modified in instruction
+            clock_timing: z80::Clock {
+                m: 3,
+                t: 2
+            },
+            instruction: |cpu: &mut z80::Z80| {
+                match cpu.registers.f >> 7 {
+                    0 => cpu.registers.pc += 2,
+                    1 => cpu.registers.pc += cpu.mmu.read(cpu.registers.pc + 1) as u16,
+                    _ => panic!("Somehow, the single-bit Z flag was neither 0 nor 1.")
+                }
+            }
+        }
+    }
+
+    // 0x21 - LD HL d16
+    fn ld_hl_d16() -> Opcode {
+        Opcode {
+            size: 3,
+            clock_timing: z80::Clock {
+                m: 3,
+                t: 0
+            },
+            instruction: |cpu: &mut z80::Z80| {
+                cpu.registers.h = cpu.mmu.read(cpu.registers.pc + 2);
+                cpu.registers.l = cpu.mmu.read(cpu.registers.pc + 1);
+            }
+        }
+    }
+
+    // 0x22 - LD (HL+) A
+    fn ld_hlp_a() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: z80::Clock {
+                m: 2,
+                t: 8
+            },
+            instruction: |cpu: &mut z80::Z80| {
+                cpu.mmu.write(cpu.registers.a, ((cpu.registers.h << 8) + cpu.registers.l).into());
+                match cpu.registers.l.checked_add(1) {
+                    Some(x) => cpu.registers.l = x,
+                    None => {
+                        cpu.registers.l += 1;
+                        cpu.registers.f |= 0x10;
+                        match cpu.registers.h.checked_add(1) {
+                            Some(x) => cpu.registers.h = x,
+                            None => {
+                                cpu.registers.h += 1;
+                                cpu.registers.f |= 0x10;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 0x23 - INC HL
+    fn inc_hl() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: z80::Clock {
+                m: 2,
+                t: 8
+            },
+            instruction: |cpu: &mut z80::Z80| {
+                match cpu.registers.l.checked_add(1) {
+                    Some(x) => cpu.registers.l = x,
+                    None => {
+                        cpu.registers.l += 1;
+                        cpu.registers.f |= 0x10;
+                        match cpu.registers.h.checked_add(1) {
+                            Some(x) => cpu.registers.h = x,
+                            None => {
+                                cpu.registers.h += 1;
+                                cpu.registers.f |= 0x10;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 0x24 - INC H
+    fn inc_h() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: z80::Clock {
+                m: 1,
+                t: 4
+            },
+            instruction: |cpu: &mut z80::Z80| {
+                match cpu.registers.h.checked_add(1) {
+                    Some(x) => cpu.registers.h = x,
+                    None => {
+                        cpu.registers.h += 1;
+                        cpu.registers.f |= 0x10;
+                    }
+                }
+            }
+        }
+    }
+
+    // 0x25 - DEC H
+    fn dec_h() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: z80::Clock {
+                m: 1,
+                t: 4
+            },
+            instruction: |cpu: &mut z80::Z80| {
+                match cpu.registers.h.checked_sub(1) {
+                    Some(x) => cpu.registers.h = x,
+                    None => {
+                        cpu.registers.h -= 1;
+                        cpu.registers.f |= 0x10;
+                        cpu.registers.f |= 0x40;
+                    }
+                }
+            }
+        }
+    }
+
+    // 0x26 - LD H d8
+    fn ld_h_d8() -> Opcode {
+        Opcode {
+            size: 2,
+            clock_timing: z80::Clock {
+                m: 2,
+                t: 4
+            },
+            instruction: |cpu: &mut z80::Z80| {
+                cpu.registers.h = cpu.mmu.read(cpu.registers.pc+1);
             }
         }
     }
