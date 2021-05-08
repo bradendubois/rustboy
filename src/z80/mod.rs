@@ -465,125 +465,11 @@ impl Z80 {
         (after >> 4) > (before >> 4)
     }
 
-    // Register-specific arithmetic, setting necessary flags
-/*
-    fn register_add(&mut self, source: u8, amount: u8) -> (u8, FlagResult, bool) {
+    /*************************/
+    /*          ALU          */
+    /*************************/
 
-        let mut result: u8;
-        let mut carry: bool;
-
-        let overflow = match source.checked_add(amount) {
-
-            // No overflow - set as normal and return None
-            Some(x) => {
-                carry = false;
-                result = x;
-                false
-            },
-
-            // Overflow, recompute, set flags
-            None => {
-                carry = true;
-                result = source + amount;
-                true
-            }
-        };
-
-        let flags = FlagResult {
-            z: result == 0,
-            o: false,
-            c: carry,
-            h: self.half_carry(source, result)
-        };
-
-        (result, flags, overflow)
-    }
-
-    fn register_sub(&mut self, source: u8, amount: u8) -> (u8, FlagResult, bool) {
-
-        let mut result: u8;
-        let mut carry: bool;
-
-        let underflow = match register.checked_sub(amount) {
-
-            // No underflow
-            Some(x) => {
-                carry = false;
-                result = x;
-                false
-            },
-
-            // Underflow
-            None => {
-                carry = true;
-                result = source - amount;
-                true
-            }
-        };
-
-        let flags = FlagResult {
-            z: result == 0,
-            o: true,
-            c: carry,
-            h: self.half_carry(source, result)
-        };
-
-        (result, flags, underflow)
-    }
-
-    fn pair_add(&mut self, r_upper: u8, r_lower: u8, add_upper: u8, add_lower :u8) -> (u8, u8, FlagResult, bool) {
-
-        let mut u_result = self.register_add(r_upper, add_upper);
-        let mut l_result = self.register_add(r_lower, add_lower);
-
-        // No overflow from lower into upper - finish early
-        if let false = l_result.2 {
-
-            u_result.1.z &= l_result.1.z;
-            u_result.c |= l_result.1.c;
-            u_result.h |= l_result.1.h;
-
-            return (u_result.0, l_result.0, u_result.1, false);
-        }
-
-        // overflow from lower into upper
-        let c_result = self.register_add(upper_result, l_result.0);
-
-        u_result.1.c |= c_result.1.c;
-        u_result.1.h |= c_result.1.h;
-
-        match c_result.2 {
-
-            true => {
-                u_result.1.z = true;
-                (0, 0, u_result.1, true)
-            },
-
-            false => {
-                u_result.1.z = false;
-                (c_result.0, 0, u_result.1, false)
-            }
-        }
-    }
-
-    fn pair_sub(&mut self, r_upper: &mut u8, r_lower: &mut u8, sub_upper: u8, sub_lower: u8) -> (u8, u8, FlagResult) {
-
-        let original_half_carry = self.is_half_carry();
-
-        if let Some(x) = self.register_sub(r_lower, sub_lower) {
-            self.register_sub(r_upper, x);
-        }
-
-        self.register_sub(r_upper, sub_upper);
-
-        match original_half_carry {
-            true => self.set_half_carry(),
-            false => self.unset_half_carry()
-        };
-    }
-*/
-
-    // ALU
+    // Add
 
     fn add_8(&mut self, s: u8, t: u8, flag: bool) -> u8 {
 
@@ -618,6 +504,8 @@ impl Z80 {
         result
     }
 
+    // Sub
+
     fn sub_8(&mut self, s: u8, t: u8, flag: bool) -> u8 {
 
         let result = s.wrapping_sub(t);
@@ -640,6 +528,8 @@ impl Z80 {
         result
     }
 
+    // Inc
+
     fn inc_8(&mut self, s: u8, flag: bool) -> u8 {
 
         let result = s.wrapping_add(1);
@@ -650,6 +540,19 @@ impl Z80 {
 
         result
     }
+
+    fn inc_16(&mut self, s: u16, flag: bool) -> u16 {
+
+        let result = s.wrapping_add(1);
+
+        if flag {
+
+        }
+
+        result
+    }
+
+    // Dec
 
     fn dec_8(&mut self, s: u8, flag: bool) -> u8 {
 
@@ -662,17 +565,8 @@ impl Z80 {
         result
     }
 
-    /*
-    fn sub_16(s: u16, t: u16) -> (u16, FlagResult) {
 
-        let result = s.wrapping_sub(t);
-
-        (result, FlagResult {
-            z: result == 0,
-            o: true,
-            h: (s &)
-        })
-    }*/
+    // Conversions
 
     fn u16_from_u8(x: u8, y: u8) -> u16 {
         ((x << 8) + y).into()
@@ -681,6 +575,10 @@ impl Z80 {
     fn u8_pair(x: u16) -> (u8, u8) {
         ((x >> 8) as u8, x as u8)
     }
+
+    /*************************/
+    /*     Register Pairs    */
+    /*************************/
 
     // AF
     fn get_af(&self) -> u16 {
@@ -725,5 +623,141 @@ impl Z80 {
         self.registers.h = u8_pair.0;
         self.registers.l = u8_pair.1;
     }
+
+
+
+
+
+    // Register-specific arithmetic, setting necessary flags
+    /*
+        fn register_add(&mut self, source: u8, amount: u8) -> (u8, FlagResult, bool) {
+
+            let mut result: u8;
+            let mut carry: bool;
+
+            let overflow = match source.checked_add(amount) {
+
+                // No overflow - set as normal and return None
+                Some(x) => {
+                    carry = false;
+                    result = x;
+                    false
+                },
+
+                // Overflow, recompute, set flags
+                None => {
+                    carry = true;
+                    result = source + amount;
+                    true
+                }
+            };
+
+            let flags = FlagResult {
+                z: result == 0,
+                o: false,
+                c: carry,
+                h: self.half_carry(source, result)
+            };
+
+            (result, flags, overflow)
+        }
+
+        fn register_sub(&mut self, source: u8, amount: u8) -> (u8, FlagResult, bool) {
+
+            let mut result: u8;
+            let mut carry: bool;
+
+            let underflow = match register.checked_sub(amount) {
+
+                // No underflow
+                Some(x) => {
+                    carry = false;
+                    result = x;
+                    false
+                },
+
+                // Underflow
+                None => {
+                    carry = true;
+                    result = source - amount;
+                    true
+                }
+            };
+
+            let flags = FlagResult {
+                z: result == 0,
+                o: true,
+                c: carry,
+                h: self.half_carry(source, result)
+            };
+
+            (result, flags, underflow)
+        }
+
+        fn pair_add(&mut self, r_upper: u8, r_lower: u8, add_upper: u8, add_lower :u8) -> (u8, u8, FlagResult, bool) {
+
+            let mut u_result = self.register_add(r_upper, add_upper);
+            let mut l_result = self.register_add(r_lower, add_lower);
+
+            // No overflow from lower into upper - finish early
+            if let false = l_result.2 {
+
+                u_result.1.z &= l_result.1.z;
+                u_result.c |= l_result.1.c;
+                u_result.h |= l_result.1.h;
+
+                return (u_result.0, l_result.0, u_result.1, false);
+            }
+
+            // overflow from lower into upper
+            let c_result = self.register_add(upper_result, l_result.0);
+
+            u_result.1.c |= c_result.1.c;
+            u_result.1.h |= c_result.1.h;
+
+            match c_result.2 {
+
+                true => {
+                    u_result.1.z = true;
+                    (0, 0, u_result.1, true)
+                },
+
+                false => {
+                    u_result.1.z = false;
+                    (c_result.0, 0, u_result.1, false)
+                }
+            }
+        }
+
+        fn pair_sub(&mut self, r_upper: &mut u8, r_lower: &mut u8, sub_upper: u8, sub_lower: u8) -> (u8, u8, FlagResult) {
+
+            let original_half_carry = self.is_half_carry();
+
+            if let Some(x) = self.register_sub(r_lower, sub_lower) {
+                self.register_sub(r_upper, x);
+            }
+
+            self.register_sub(r_upper, sub_upper);
+
+            match original_half_carry {
+                true => self.set_half_carry(),
+                false => self.unset_half_carry()
+            };
+        }
+    */
+
+
+    /*
+    fn sub_16(s: u16, t: u16) -> (u16, FlagResult) {
+
+        let result = s.wrapping_sub(t);
+
+        (result, FlagResult {
+            z: result == 0,
+            o: true,
+            h: (s &)
+        })
+    }*/
+
 
 }
