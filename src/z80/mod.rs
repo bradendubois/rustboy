@@ -30,7 +30,6 @@ struct Registers{
     sp: u16,
 }
 
-
 // Struct representing the Z80 CPU
 #[derive(Debug)]
 struct Z80 {
@@ -133,14 +132,14 @@ impl Opcode {
                 t: 8
             },
             instruction: |cpu: &mut Z80| {
-                match cpu.register_add(cpu.registers.c, 1) {
-                    None => None,
-                    Some(x) => cpu.register_add(cpu.registers.b, x)
-                };
+
+                let bc = cpu.get_bc();
+                let bc = cpu.add_16(bc, 1, false);
+
+                cpu.set_bc(bc);
             }
         }
     }
-
 
     // 0x04 - INC B
     fn inc_b() -> Opcode {
@@ -151,13 +150,7 @@ impl Opcode {
                 t: 4
             },
             instruction: |cpu: &mut Z80| {
-                match cpu.registers.b.checked_add(1) {
-                    Some(x) => cpu.registers.b = x,
-                    None => {
-                        cpu.registers.b += 1;
-                        cpu.registers.f |= 0x10;
-                    }
-                }
+                cpu.registers.b = cpu.add_8(cpu.registers.b, 1, true);
             }
         }
     }
@@ -171,14 +164,7 @@ impl Opcode {
                 t: 4
             },
             instruction: |cpu: &mut Z80| {
-                cpu.registers.f |= 0x40;
-                match cpu.registers.b.checked_sub(1) {
-                    Some(x) => cpu.registers.b = x,
-                    None => {
-                        cpu.registers.b -= 1;
-                        cpu.registers.f |= 0x10;
-                    }
-                }
+                cpu.registers.b = cpu.sub_8(cpu.registers.b, 1, true);
             }
         }
     }
@@ -207,6 +193,14 @@ impl Opcode {
             },
             instruction: |cpu: &mut Z80| {
                 cpu.registers.a = (cpu.registers.a << 1) | (cpu.registers.a >> 7);
+                cpu.unset_zero();
+                cpu.unset_subtraction();
+                cpu.unset_half_carry();
+
+                match cpu.registers.a & 0x80 {
+                    0x80 => cpu.set_full_carry(),
+                    _ => cpu.unset_full_carry()
+                };
             }
         }
     }
@@ -223,6 +217,8 @@ impl Opcode {
                 let addr_lower = cpu.mmu.read(cpu.registers.pc + 1);
                 let addr_upper = cpu.mmu.read(cpu.registers.pc + 2);
                 let addr = ((addr_upper << 8) + addr_lower).into();
+
+                cpu.mmu.write(cpu.registers.sp as u8, addr);
                 cpu.mmu.write((cpu.registers.sp >> 8) as u8, addr);
             }
         }
@@ -237,16 +233,13 @@ impl Opcode {
                 t: 8
             },
             instruction: |cpu: &mut Z80| {
-                let bc: u16 = ((cpu.registers.b << 8) + cpu.registers.c).into();
-                let hl: u16 = ((cpu.registers.h << 8) + cpu.registers.l).into();
 
-                if hl.checked_add(bc).is_none() {
-                    cpu.registers.f |= 0x80;
-                }
+                let hl = cpu.get_hl();
+                let bc = cpu.get_bc();
 
-                let hl = hl + bc;
-                cpu.registers.h = (hl >> 8) as u8;
-                cpu.registers.l = hl as u8;
+                let hl = cpu.sub_16(hl, bc, true);
+
+                cpu.set_hl(hl);
             }
         }
     }
@@ -274,20 +267,11 @@ impl Opcode {
                 t: 8
             },
             instruction: |cpu: &mut Z80| {
-                cpu.registers.f |= 0x40;
-                match cpu.registers.c.checked_sub(1) {
-                    Some(x) => cpu.registers.c = x,
-                    None => {
-                        cpu.registers.c -= 1;
-                        match cpu.registers.b.checked_sub(1) {
-                            Some(x) => cpu.registers.b = x,
-                            None => {
-                                cpu.registers.b -= 1;
-                                cpu.registers.f |= 0x10;
-                            }
-                        }
-                    }
-                }
+
+                let bc = cpu.get_bc();
+                let bc = cpu.sub_16(bc, 1, false);
+
+                cpu.set_bc(bc);
             }
         }
     }
@@ -301,13 +285,7 @@ impl Opcode {
                 t: 4
             },
             instruction: |cpu: &mut Z80| {
-                match cpu.registers.c.checked_add(1) {
-                    Some(x) => cpu.registers.c = x,
-                    None => {
-                        cpu.registers.c += 1;
-                        cpu.registers.f |= 0x10;
-                    }
-                }
+                cpu.registers.c = cpu.inc_8(cpu.registers.c, true);
             }
         }
     }
@@ -321,14 +299,7 @@ impl Opcode {
                 t: 4
             },
             instruction: |cpu: &mut Z80| {
-                cpu.registers.f |= 0x40;
-                match cpu.registers.c.checked_sub(1) {
-                    Some(x) => cpu.registers.c = x,
-                    None => {
-                        cpu.registers.c -= 1;
-                        cpu.registers.f |= 0x10;
-                    }
-                }
+                cpu.registers.c = cpu.dec_8(cpu.registers.c, true);
             }
         }
     }
@@ -357,6 +328,14 @@ impl Opcode {
             },
             instruction: |cpu: &mut Z80| {
                 cpu.registers.a = (cpu.registers.a >> 1) | (cpu.registers.a << 7);
+                cpu.unset_zero();
+                cpu.unset_subtraction();
+                cpu.unset_half_carry();
+
+                match cpu.registers.a >> 7 != 0{
+                    true => cpu.set_full_carry(),
+                    false => cpu.unset_full_carry()
+                };
             }
         }
     }
@@ -415,52 +394,324 @@ impl Z80 {
         self.registers.pc += opcode.size;
     }
 
-    fn set_nonzero(&mut self) {
-        self.registers.f ^= 0x80;
-    }
+    // Set CPU F flags
+
+    // Zero
 
     fn set_zero(&mut self) {
         self.registers.f |= 0x80;
     }
 
-    fn subtraction(&mut self) {
+    fn unset_zero(&mut self) {
+        self.registers.f ^= 0x80;
+    }
+
+    fn is_zero(&self) -> bool {
+        self.registers.f & 0x80 != 0
+    }
+
+    // Subtraction
+
+    fn set_subtraction(&mut self) {
         self.registers.f |= 0x40;
     }
 
-    fn half_carry(&mut self, before: u8, after: u8) {
-        if (before >> 4) > (after >> 4) {
-            self.registers.f |= 0x20;
-        }
+    fn unset_subtraction(&mut self) {
+        self.registers.f ^= 0x40;
     }
 
-    fn full_carry(&mut self) {
+    fn is_subtraction(&self) -> bool {
+        self.registers.f & 0x40 != 0
+    }
+
+    // Half Carry
+
+    fn set_half_carry(&mut self) {
+        self.registers.f |= 0x20;
+    }
+
+    fn unset_half_carry(&mut self) {
+        self.registers.f ^= 0x20;
+    }
+
+    fn is_half_carry(&self) -> bool {
+        self.registers.f & 0x20 != 0
+    }
+
+    // Full Carry
+
+    fn set_full_carry(&mut self) {
         self.registers.f |= 0x10;
     }
 
-    fn register_add(&mut self, &mut register: u8, amount: u8) -> Option<u8> {
+    fn unset_full_carry(&mut self) {
+        self.registers.f ^= 0x10;
+    }
 
-        let before: u8 = register;
+    fn is_full_carry(&self) -> bool {
+        self.registers.f & 0x10 != 0
+    }
 
-        let result = match register.checked_add(amount) {
+    // Context specific flag methods - give parameters to see whether flags should be set
+
+    fn zero(&mut self, result: u16) {
+        match result {
+            0 => self.set_zero(),
+            _ => self.unset_zero()
+        };
+    }
+
+    fn half_carry(&mut self, before: u8, after: u8) -> bool {
+        (after >> 4) > (before >> 4)
+    }
+
+    // Register-specific arithmetic, setting necessary flags
+/*
+    fn register_add(&mut self, source: u8, amount: u8) -> (u8, FlagResult, bool) {
+
+        let mut result: u8;
+        let mut carry: bool;
+
+        let overflow = match source.checked_add(amount) {
 
             // No overflow - set as normal and return None
             Some(x) => {
-                register = x;
-                None
+                carry = false;
+                result = x;
+                false
             },
 
             // Overflow, recompute, set flags
             None => {
-                self.full_carry();
-                register += amount;
-                Some(x)
+                carry = true;
+                result = source + amount;
+                true
             }
         };
 
-        // Always check (in either case) if a half-carry occurred
-        self.half_carry(before, register);
+        let flags = FlagResult {
+            z: result == 0,
+            o: false,
+            c: carry,
+            h: self.half_carry(source, result)
+        };
+
+        (result, flags, overflow)
+    }
+
+    fn register_sub(&mut self, source: u8, amount: u8) -> (u8, FlagResult, bool) {
+
+        let mut result: u8;
+        let mut carry: bool;
+
+        let underflow = match register.checked_sub(amount) {
+
+            // No underflow
+            Some(x) => {
+                carry = false;
+                result = x;
+                false
+            },
+
+            // Underflow
+            None => {
+                carry = true;
+                result = source - amount;
+                true
+            }
+        };
+
+        let flags = FlagResult {
+            z: result == 0,
+            o: true,
+            c: carry,
+            h: self.half_carry(source, result)
+        };
+
+        (result, flags, underflow)
+    }
+
+    fn pair_add(&mut self, r_upper: u8, r_lower: u8, add_upper: u8, add_lower :u8) -> (u8, u8, FlagResult, bool) {
+
+        let mut u_result = self.register_add(r_upper, add_upper);
+        let mut l_result = self.register_add(r_lower, add_lower);
+
+        // No overflow from lower into upper - finish early
+        if let false = l_result.2 {
+
+            u_result.1.z &= l_result.1.z;
+            u_result.c |= l_result.1.c;
+            u_result.h |= l_result.1.h;
+
+            return (u_result.0, l_result.0, u_result.1, false);
+        }
+
+        // overflow from lower into upper
+        let c_result = self.register_add(upper_result, l_result.0);
+
+        u_result.1.c |= c_result.1.c;
+        u_result.1.h |= c_result.1.h;
+
+        match c_result.2 {
+
+            true => {
+                u_result.1.z = true;
+                (0, 0, u_result.1, true)
+            },
+
+            false => {
+                u_result.1.z = false;
+                (c_result.0, 0, u_result.1, false)
+            }
+        }
+    }
+
+    fn pair_sub(&mut self, r_upper: &mut u8, r_lower: &mut u8, sub_upper: u8, sub_lower: u8) -> (u8, u8, FlagResult) {
+
+        let original_half_carry = self.is_half_carry();
+
+        if let Some(x) = self.register_sub(r_lower, sub_lower) {
+            self.register_sub(r_upper, x);
+        }
+
+        self.register_sub(r_upper, sub_upper);
+
+        match original_half_carry {
+            true => self.set_half_carry(),
+            false => self.unset_half_carry()
+        };
+    }
+*/
+
+    // ALU
+
+    fn add_8(&mut self, s: u8, t: u8, flag: bool) -> u8 {
+
+        let result = s.wrapping_add(t);
+
+        if flag {
+            self.zero(result as u16);
+
+            /*
+            self.o = false;
+            self.h = false; // TODO - Detect half carry  (s & 0xF) + (t & 0xF) > 0xF,
+            self.c = false; // TODO - detect carry (s as u16 + t as u16) > 0xFF
+             */
+        }
 
         result
     }
-}
 
+    fn add_16(&mut self, s: u16, t: u16, flag: bool) -> u16 {
+
+        let result = s.wrapping_add(t);
+
+        if flag {
+
+            /*
+            self.o = false;
+            self.h = false; // TODO - Detect half carry  (s & 0xF) + (t & 0xF) > 0xF,
+            self.c = false; // TODO - detect carry (s as u16 + t as u16) > 0xFF
+             */
+        }
+
+        result
+    }
+
+    fn sub_8(&mut self, s: u8, t: u8, flag: bool) -> u8 {
+
+        let result = s.wrapping_sub(t);
+
+        if flag {
+            self.zero(result as u16);
+        }
+
+        result
+    }
+
+    fn sub_16(&mut self, s: u16, t: u16, flag: bool) -> u16 {
+
+        let result = s.wrapping_sub(t);
+
+        if flag {
+            self.zero(result as u16);
+        }
+
+        result
+    }
+
+    fn inc_8(&mut self, s: u8, flag: bool) -> u8 {
+
+        let result = s.wrapping_add(1);
+
+        if flag {
+
+        }
+
+        result
+    }
+
+    fn dec_8(&mut self, s: u8, flag: bool) -> u8 {
+
+        let result = s.wrapping_sub(1);
+
+        if flag {
+
+        }
+
+        result
+    }
+
+    /*
+    fn sub_16(s: u16, t: u16) -> (u16, FlagResult) {
+
+        let result = s.wrapping_sub(t);
+
+        (result, FlagResult {
+            z: result == 0,
+            o: true,
+            h: (s &)
+        })
+    }*/
+
+    // AF
+    fn get_af(&self) -> u16 {
+        ((self.registers.a << 8) + self.registers.f).into()
+    }
+
+    fn set_af(&mut self, x: u16) {
+        self.registers.a = (x >> 8) as u8;
+        self.registers.f = x as u8;
+    }
+
+    // BC
+    fn get_bc(&self) -> u16 {
+        ((self.registers.b << 8) + self.registers.c).into()
+    }
+
+    fn set_bc(&mut self, x: u16) {
+        self.registers.b = (x >> 8) as u8;
+        self.registers.c = x as u8;
+    }
+
+    // DE
+    fn get_de(&self) -> u16 {
+        ((self.registers.d << 8) + self.registers.e).into()
+    }
+
+    fn set_de(&mut self, x: u16) {
+        self.registers.d = (x >> 8) as u8;
+        self.registers.e = x as u8;
+    }
+
+    // HL
+    fn get_hl(&self) -> u16 {
+        ((self.registers.h << 8) + self.registers.l).into()
+    }
+
+    fn set_hl(&mut self, x: u16) {
+        self.registers.h = (x >> 8) as u8;
+        self.registers.l = x as u8;
+    }
+
+}
