@@ -674,44 +674,56 @@ impl Z80 {
         })
     }*/
 
+    fn u16_from_u8(x: u8, y: u8) -> u16 {
+        ((x << 8) + y).into()
+    }
+
+    fn u8_pair(x: u16) -> (u8, u8) {
+        ((x >> 8) as u8, x as u8)
+    }
+
     // AF
     fn get_af(&self) -> u16 {
-        ((self.registers.a << 8) + self.registers.f).into()
+        Z80::u16_from_u8(self.registers.a, self.registers.f)
     }
 
     fn set_af(&mut self, x: u16) {
-        self.registers.a = (x >> 8) as u8;
-        self.registers.f = x as u8;
+        let u8_pair = Z80::u8_pair(x);
+        self.registers.a = u8_pair.0;
+        self.registers.f = u8_pair.1;
     }
 
     // BC
     fn get_bc(&self) -> u16 {
-        ((self.registers.b << 8) + self.registers.c).into()
+        Z80::u16_from_u8(self.registers.b, self.registers.c)
     }
 
     fn set_bc(&mut self, x: u16) {
-        self.registers.b = (x >> 8) as u8;
-        self.registers.c = x as u8;
+        let u8_pair = Z80::u8_pair(x);
+        self.registers.b = u8_pair.0;
+        self.registers.c = u8_pair.1;
     }
 
     // DE
     fn get_de(&self) -> u16 {
-        ((self.registers.d << 8) + self.registers.e).into()
+        Z80::u16_from_u8(self.registers.d, self.registers.e)
     }
 
     fn set_de(&mut self, x: u16) {
-        self.registers.d = (x >> 8) as u8;
-        self.registers.e = x as u8;
+        let u8_pair = Z80::u8_pair(x);
+        self.registers.d = u8_pair.0;
+        self.registers.e = u8_pair.1;
     }
 
     // HL
     fn get_hl(&self) -> u16 {
-        ((self.registers.h << 8) + self.registers.l).into()
+        Z80::u16_from_u8(self.registers.h, self.registers.l)
     }
 
     fn set_hl(&mut self, x: u16) {
-        self.registers.h = (x >> 8) as u8;
-        self.registers.l = x as u8;
+        let u8_pair = Z80::u8_pair(x);
+        self.registers.h = u8_pair.0;
+        self.registers.l = u8_pair.1;
     }
 
 }
