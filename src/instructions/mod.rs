@@ -49,6 +49,25 @@ impl Opcode {
             0x2E => Opcode::ld_l_d8(),
             0x2F => Opcode::cpl(),
 
+            // 0x4X
+            0x40 => Opcode::ld_b_b(),
+            0x41 => Opcode::ld_b_c(),
+            0x42 => Opcode::ld_b_d(),
+            0x43 => Opcode::ld_b_e(),
+            0x44 => Opcode::ld_b_h(),
+            0x45 => Opcode::ld_b_l(),
+            0x46 => Opcode::ld_b_hl(),
+            0x47 => Opcode::ld_b_a(),
+            0x48 => Opcode::ld_c_b(),
+            0x49 => Opcode::ld_c_c(),
+            0x5A => Opcode::ld_c_d(),
+            0x5B => Opcode::ld_c_e(),
+            0x5C => Opcode::ld_c_h(),
+            0x5D => Opcode::ld_c_l(),
+            0x5E => Opcode::ld_c_hl(),
+            0x5F => Opcode::ld_c_a(),
+
+
             _ => panic!("Unmapped opcode {}", code)
         }
     }
@@ -802,4 +821,7 @@ impl Opcode {
         }
     }
 
+
+
+    // 0x60
 }
