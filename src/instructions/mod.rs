@@ -41,6 +41,13 @@ impl Opcode {
             0x26 => Opcode::ld_h_d8(),
             0x27 => Opcode::daa(),
             0x28 => Opcode::jr_z_s8(),
+            0x29 => Opcode::add_hl_hl(),
+            0x2A => Opcode::ld_a_hlp(),
+            0x2B => Opcode::dec_hl(),
+            0x2C => Opcode::inc_l(),
+            0x2D => Opcode::dec_l(),
+            0x2E => Opcode::ld_l_d8(),
+            0x2F => Opcode::cpl(),
 
             _ => panic!("Unmapped opcode {}", code)
         }
@@ -567,4 +574,137 @@ impl Opcode {
             }
         }
     }
+
+
+
+
+    // 0x40 - LD B B
+    fn ld_b_b() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 1,
+                t: 0
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.b = cpu.registers.b;      // ah, yes
+            }
+        }
+    }
+
+    // 0x41 - LD B B
+    fn ld_b_c() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 1,
+                t: 0
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.b = cpu.registers.c;
+            }
+        }
+    }
+
+    // 0x42 - LD B D
+    fn ld_b_d() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 1,
+                t: 0
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.b = cpu.registers.d
+            }
+        }
+    }
+
+    // 0x43 - LD B E
+    fn ld_b_e() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 1,
+                t: 0
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.b = cpu.registers.e;
+            }
+        }
+    }
+
+    // 0x44 - LD B H
+    fn ld_b_h() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 1,
+                t: 0
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.b = cpu.registers.h;
+            }
+        }
+    }
+
+    // 0x45 - LD B L
+    fn ld_b_l() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 1,
+                t: 0
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.b = cpu.registers.l;
+            }
+        }
+    }
+
+    // 0x46 - LD B (HL)
+    fn ld_b_hl() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 2,
+                t: 0
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.b = cpu.mmu.read(cpu.registers.pc);
+            }
+        }
+    }
+
+    // 0x47 - LD B A
+    fn ld_b_a() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 1,
+                t: 0
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.b = cpu.registers.a;
+            }
+        }
+    }
+
+    // 0x48 - LD C B
+    fn ld_c_b() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 1,
+                t: 0
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.c = cpu.registers.b;
+            }
+        }
+    }
+
+
+
+
 }
