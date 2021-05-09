@@ -400,10 +400,25 @@ impl Opcode {
             instruction: |cpu: &mut z80::Z80| {
                 let temp = cpu.is_full_carry();
                 if cpu.registers.a & 0x80 {cpu.set_full_carry()}else{cpu.unset_full_carry()}
-                cpu.registers.a = (cpu.registers.a << 1) | (cpu.registers.a >> 7);
+                cpu.registers.a = cpu.registers.a << 1 | temp;
                 cpu.registers.a |= temp;
             }
         }
     }
+
+    ///0x18 - JR s8 : Jump s8 steps from current address in program counter
+    fn jr_s8() -> Opcode {
+        Opcode {
+            size: 2,
+            clock_timing: z80::Clock { m: 3, t: 12 },
+            instruction: |cpu: &mut z80::Z80| {
+                let next = cpu.mmu.reade(cpu.registers.pc + 1) as i8;
+                let conv = (cpu.registers.pc as u32 as i32) + (next as i32);
+                cpu.registers.pc = conv as u16;
+            }
+        }
+    }
+
+    ///0x0
 
 }
