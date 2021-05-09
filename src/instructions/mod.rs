@@ -1,11 +1,10 @@
-use super::z80;
-
+use super::z80::{Clock, Z80};
 
 // Struct representing one instruction
 pub struct Opcode {
     pub size: u16,                      // size in bytes of the opcode; should be 1, 2, 3, no larger
-    pub clock_timing: z80::Clock,            // the timing of m and t cycles taken in one instruction
-    pub instruction: fn(&mut z80::Z80)       // the actual function that will
+    pub clock_timing: Clock,            // the timing of m and t cycles taken in one instruction
+    pub instruction: fn(&mut Z80)       // the actual function that will
 }
 
 
@@ -51,11 +50,11 @@ impl Opcode {
     fn nop() -> Opcode {
         Opcode {
             size: 1,
-            clock_timing: z80::Clock {
+            clock_timing: Clock {
                 m: 1,
                 t: 4
             },
-            instruction: |_cpu: &mut z80::Z80| { }
+            instruction: |_cpu: &mut Z80| { }
         }
     }
 
@@ -63,11 +62,11 @@ impl Opcode {
     fn ld_bc() -> Opcode {
         Opcode {
             size: 3,
-            clock_timing: z80::Clock {
+            clock_timing: Clock {
                 m: 3,
                 t: 12
             },
-            instruction: |cpu: &mut z80::Z80| {
+            instruction: |cpu: &mut Z80| {
                 cpu.registers.c = cpu.mmu.read(cpu.registers.pc + 1);
                 cpu.registers.b = cpu.mmu.read(cpu.registers.pc + 2);
             }
@@ -78,11 +77,11 @@ impl Opcode {
     fn ld_bc_a() -> Opcode {
         Opcode {
             size: 1,
-            clock_timing: z80::Clock {
+            clock_timing: Clock {
                 m: 3,
                 t: 12
             },
-            instruction: |cpu: &mut z80::Z80| {
+            instruction: |cpu: &mut Z80| {
                 cpu.mmu.write(cpu.registers.a, ((cpu.registers.b << 8) + cpu.registers.c).into());
             }
         }
@@ -92,11 +91,11 @@ impl Opcode {
     fn inc_bc() -> Opcode {
         Opcode {
             size: 1,
-            clock_timing: z80::Clock {
+            clock_timing: Clock {
                 m: 2,
                 t: 8
             },
-            instruction: |cpu: &mut z80::Z80| {
+            instruction: |cpu: &mut Z80| {
 
                 let bc = cpu.get_bc();
                 let bc = cpu.add_16(bc, 1, false);
@@ -110,11 +109,11 @@ impl Opcode {
     fn inc_b() -> Opcode {
         Opcode{
             size: 1,
-            clock_timing: z80::Clock {
+            clock_timing: Clock {
                 m: 1,
                 t: 4
             },
-            instruction: |cpu: &mut z80::Z80| {
+            instruction: |cpu: &mut Z80| {
                 cpu.registers.b = cpu.add_8(cpu.registers.b, 1, true);
             }
         }
@@ -124,11 +123,11 @@ impl Opcode {
     fn dec_b() -> Opcode {
         Opcode {
             size: 1,
-            clock_timing: z80::Clock {
+            clock_timing: Clock {
                 m: 1,
                 t: 4
             },
-            instruction: |cpu: &mut z80::Z80| {
+            instruction: |cpu: &mut Z80| {
                 cpu.registers.b = cpu.sub_8(cpu.registers.b, 1, true);
             }
         }
@@ -138,11 +137,11 @@ impl Opcode {
     fn ld_b() -> Opcode {
         Opcode {
             size: 2,
-            clock_timing: z80::Clock {
+            clock_timing: Clock {
                 m: 4,
                 t: 8
             },
-            instruction: |cpu: &mut z80::Z80| {
+            instruction: |cpu: &mut Z80| {
                 cpu.registers.b = cpu.mmu.read(cpu.registers.pc+1);
             }
         }
@@ -152,11 +151,11 @@ impl Opcode {
     fn rlca() -> Opcode {
         Opcode {
             size: 1,
-            clock_timing: z80::Clock {
+            clock_timing: Clock {
                 m: 1,
                 t: 4
             },
-            instruction: |cpu: &mut z80::Z80| {
+            instruction: |cpu: &mut Z80| {
                 cpu.registers.a = (cpu.registers.a << 1) | (cpu.registers.a >> 7);
                 cpu.unset_zero();
                 cpu.unset_subtraction();
@@ -174,11 +173,11 @@ impl Opcode {
     fn ld_a16_sp() -> Opcode {
         Opcode {
             size: 3,
-            clock_timing: z80::Clock {
+            clock_timing: Clock {
                 m: 5,
                 t: 15
             },
-            instruction: |cpu: &mut z80::Z80| {
+            instruction: |cpu: &mut Z80| {
                 let addr_lower = cpu.mmu.read(cpu.registers.pc + 1);
                 let addr_upper = cpu.mmu.read(cpu.registers.pc + 2);
                 let addr = ((addr_upper << 8) + addr_lower).into();
@@ -193,11 +192,11 @@ impl Opcode {
     fn add_hl_bc() -> Opcode {
         Opcode {
             size: 1,
-            clock_timing: z80::Clock {
+            clock_timing: Clock {
                 m: 2,
                 t: 8
             },
-            instruction: |cpu: &mut z80::Z80| {
+            instruction: |cpu: &mut Z80| {
 
                 let hl = cpu.get_hl();
                 let bc = cpu.get_bc();
@@ -213,11 +212,11 @@ impl Opcode {
     fn ld_a_bc() -> Opcode {
         Opcode {
             size: 1,
-            clock_timing: z80::Clock {
+            clock_timing: Clock {
                 m: 2,
                 t: 8
             },
-            instruction: |cpu: &mut z80::Z80| {
+            instruction: |cpu: &mut Z80| {
                 cpu.registers.a = cpu.mmu.read(((cpu.registers.b << 8) + cpu.registers.c).into());
             }
         }
@@ -227,11 +226,11 @@ impl Opcode {
     fn dec_bc() -> Opcode {
         Opcode {
             size: 1,
-            clock_timing: z80::Clock {
+            clock_timing: Clock {
                 m: 2,
                 t: 8
             },
-            instruction: |cpu: &mut z80::Z80| {
+            instruction: |cpu: &mut Z80| {
 
                 let bc = cpu.get_bc();
                 let bc = cpu.sub_16(bc, 1, false);
@@ -245,11 +244,11 @@ impl Opcode {
     fn inc_c() -> Opcode {
         Opcode {
             size: 1,
-            clock_timing: z80::Clock {
+            clock_timing: Clock {
                 m: 1,
                 t: 4
             },
-            instruction: |cpu: &mut z80::Z80| {
+            instruction: |cpu: &mut Z80| {
                 cpu.registers.c = cpu.inc_8(cpu.registers.c, true);
             }
         }
@@ -259,11 +258,11 @@ impl Opcode {
     fn dec_c() -> Opcode {
         Opcode {
             size: 1,
-            clock_timing: z80::Clock {
+            clock_timing: Clock {
                 m: 1,
                 t: 4
             },
-            instruction: |cpu: &mut z80::Z80| {
+            instruction: |cpu: &mut Z80| {
                 cpu.registers.c = cpu.dec_8(cpu.registers.c, true);
             }
         }
@@ -273,11 +272,11 @@ impl Opcode {
     fn ld_c() -> Opcode {
         Opcode {
             size: 2,
-            clock_timing: z80::Clock {
+            clock_timing: Clock {
                 m: 2,
                 t: 8
             },
-            instruction: |cpu: &mut z80::Z80| {
+            instruction: |cpu: &mut Z80| {
                 cpu.registers.c = cpu.mmu.read(cpu.registers.pc+1);
             }
         }
@@ -287,11 +286,11 @@ impl Opcode {
     fn rrca() -> Opcode {
         Opcode {
             size: 1,
-            clock_timing: z80::Clock {
+            clock_timing: Clock {
                 m: 1,
                 t: 4
             },
-            instruction: |cpu: &mut z80::Z80| {
+            instruction: |cpu: &mut Z80| {
                 cpu.registers.a = (cpu.registers.a >> 1) | (cpu.registers.a << 7);
                 cpu.unset_zero();
                 cpu.unset_subtraction();
@@ -313,11 +312,11 @@ impl Opcode {
     fn jr_nz_s8() -> Opcode {
         Opcode {
             size: 0,    // Real: 2 bytes, but directly modified in instruction
-            clock_timing: z80::Clock {
+            clock_timing: Clock {
                 m: 3,
                 t: 2
             },
-            instruction: |cpu: &mut z80::Z80| {
+            instruction: |cpu: &mut Z80| {
                 match cpu.is_zero() {
                     true => {
                         let next = cpu.mmu.read(cpu.registers.pc + 1) as i8;
@@ -334,11 +333,11 @@ impl Opcode {
     fn ld_hl_d16() -> Opcode {
         Opcode {
             size: 3,
-            clock_timing: z80::Clock {
+            clock_timing: Clock {
                 m: 3,
                 t: 0
             },
-            instruction: |cpu: &mut z80::Z80| {
+            instruction: |cpu: &mut Z80| {
                 cpu.registers.h = cpu.mmu.read(cpu.registers.pc + 2);
                 cpu.registers.l = cpu.mmu.read(cpu.registers.pc + 1);
             }
@@ -349,11 +348,11 @@ impl Opcode {
     fn ld_hlp_a() -> Opcode {
         Opcode {
             size: 1,
-            clock_timing: z80::Clock {
+            clock_timing: Clock {
                 m: 2,
                 t: 8
             },
-            instruction: |cpu: &mut z80::Z80| {
+            instruction: |cpu: &mut Z80| {
                 let hl = cpu.get_hl();
                 cpu.mmu.write(cpu.registers.a, hl);
                 let hl = cpu.inc_16(hl, false);
@@ -366,11 +365,11 @@ impl Opcode {
     fn inc_hl() -> Opcode {
         Opcode {
             size: 1,
-            clock_timing: z80::Clock {
+            clock_timing: Clock {
                 m: 2,
                 t: 8
             },
-            instruction: |cpu: &mut z80::Z80| {
+            instruction: |cpu: &mut Z80| {
                 let hl = cpu.get_hl();
                 let hl = cpu.inc_16(hl, false);
                 cpu.set_hl(hl);
@@ -382,11 +381,11 @@ impl Opcode {
     fn inc_h() -> Opcode {
         Opcode {
             size: 1,
-            clock_timing: z80::Clock {
+            clock_timing: Clock {
                 m: 1,
                 t: 4
             },
-            instruction: |cpu: &mut z80::Z80| {
+            instruction: |cpu: &mut Z80| {
                 let h = cpu.registers.h;
                 let h = cpu.inc_8(h, true);
                 cpu.registers.h = h;
@@ -398,11 +397,11 @@ impl Opcode {
     fn dec_h() -> Opcode {
         Opcode {
             size: 1,
-            clock_timing: z80::Clock {
+            clock_timing: Clock {
                 m: 1,
                 t: 4
             },
-            instruction: |cpu: &mut z80::Z80| {
+            instruction: |cpu: &mut Z80| {
                 let h = cpu.registers.h;
                 let h = cpu.dec_8(h, true);
                 cpu.registers.h = h;
@@ -414,11 +413,11 @@ impl Opcode {
     fn ld_h_d8() -> Opcode {
         Opcode {
             size: 2,
-            clock_timing: z80::Clock {
+            clock_timing: Clock {
                 m: 2,
                 t: 4
             },
-            instruction: |cpu: &mut z80::Z80| {
+            instruction: |cpu: &mut Z80| {
                 cpu.registers.h = cpu.mmu.read(cpu.registers.pc+1);
             }
         }
@@ -428,11 +427,11 @@ impl Opcode {
     fn daa() -> Opcode {
        Opcode {
            size: 1,
-           clock_timing: z80::Clock {
+           clock_timing: Clock {
                m: 1,
                t: 0
            },
-           instruction: |cpu: &mut z80::Z80| {
+           instruction: |cpu: &mut Z80| {
                cpu.daa();
            }
        }
@@ -442,11 +441,11 @@ impl Opcode {
     fn jr_z_s8() -> Opcode {
         Opcode {
             size: 0,    // Real: 2 bytes, but directly modified in instruction
-            clock_timing: z80::Clock {
+            clock_timing: Clock {
                 m: 3,
                 t: 2
             },
-            instruction: |cpu: &mut z80::Z80| {
+            instruction: |cpu: &mut Z80| {
                 match cpu.is_zero() {
                     true => cpu.registers.pc += 2,
                     false => {
@@ -459,4 +458,113 @@ impl Opcode {
         }
     }
 
+    // 0x29 - ADD HL HL
+    fn add_hl_hl() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 2,
+                t: 0
+            },
+            instruction: |cpu: &mut Z80| {
+                let hl = cpu.get_hl();
+                let hl = cpu.add_16(hl, hl, true);
+                cpu.set_hl(hl);
+            }
+        }
+    }
+
+    // 0x2A LD A HL+
+    fn ld_a_hlp () -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 2,
+                t: 0
+            },
+            instruction: |cpu: &mut Z80| {
+                let hl = cpu.get_hl();
+                cpu.registers.a = cpu.mmu.read(hl);
+                let hl = cpu.inc_16(hl, false);
+                cpu.set_hl(hl);
+            }
+        }
+    }
+
+    // 0x2B - DEC HL
+    fn dec_hl() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 2,
+                t: 0
+            },
+            instruction: |cpu: &mut Z80| {
+                let hl = cpu.get_hl();
+                let hl = cpu.dec_16(hl, false);
+                cpu.set_hl(hl);
+            }
+        }
+    }
+
+    // 0x2C - INC L
+    fn inc_l() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 1,
+                t: 0
+            },
+            instruction: |cpu: &mut Z80| {
+                let l = cpu.registers.l;
+                let l = cpu.inc_8(l, true);
+                cpu.registers.l = l;
+            }
+        }
+    }
+
+    // 0x2D - DEC L
+    fn dec_l() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 1,
+                t: 0
+            },
+            instruction: |cpu: &mut Z80| {
+                let l = cpu.registers.l;
+                let l = cpu.dec_8(l, true);
+                cpu.registers.l = l;
+            }
+        }
+    }
+
+    // 0x2E - LD L d8
+    fn ld_l_d8() -> Opcode {
+        Opcode {
+            size: 2,
+            clock_timing: Clock {
+                m: 2,
+                t: 0
+            },
+            instruction: |cpu: &mut Z80| {
+                let addr = cpu.registers.pc + 1;
+                cpu.registers.l = cpu.mmu.read(addr);
+            }
+        }
+    }
+
+    // 0x2F - CPL
+    fn cpl() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 1,
+                t: 0
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.a = !cpu.registers.a;
+            }
+        }
+    }
 }

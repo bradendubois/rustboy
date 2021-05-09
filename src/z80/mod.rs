@@ -300,6 +300,16 @@ impl Z80 {
         result
     }
 
+    pub fn dec_16(&mut self, s: u16, flag: bool) -> u16 {
+
+        let result = s.wrapping_sub(1);
+
+        if flag {
+
+        }
+
+        result
+    }
 
     // Conversions
 
