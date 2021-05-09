@@ -163,20 +163,46 @@ impl Z80 {
 
     // Context specific flag methods - give parameters to see whether flags should be set
 
-    pub fn zero(&mut self, result: u16) {
+    fn zero(&mut self, result: u16) {
         match result {
             0 => self.set_zero(),
             _ => self.unset_zero()
         };
     }
 
-    pub fn half_carry(&mut self, before: u8, after: u8) -> bool {
+    fn half_carry(&mut self, before: u8, after: u8) -> bool {
         (after >> 4) > (before >> 4)
     }
 
     /*************************/
     /*          ALU          */
     /*************************/
+
+    pub fn daa(&mut self) {
+
+        let mut a = self.registers.a;
+        let mut adj = 0x00;
+
+        if self.is_full_carry() { adj |= 0x60; }
+        if self.is_half_carry() { adj |= 0x06; }
+
+        if !self.is_subtraction() {
+            if a & 0x0F > 0x09 { adj |= 0x06; };
+            if a > 0x99 { adj |= 0x60; };
+        }
+
+        a = a.wrapping_add(adj);
+
+        match adj >= 0x60 {
+            true => self.set_full_carry(),
+            false => self.unset_full_carry()
+        };
+
+        self.unset_half_carry();
+        self.zero(a.into());
+
+        self.registers.a = a;
+    }
 
     // Add
 

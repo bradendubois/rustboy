@@ -40,6 +40,8 @@ impl Opcode {
             0x24 => Opcode::inc_h(),
             0x25 => Opcode::dec_h(),
             0x26 => Opcode::ld_h_d8(),
+            0x27 => Opcode::daa(),
+            0x28 => Opcode::jr_z_s8(),
 
             _ => panic!("Unmapped opcode {}", code)
         }
@@ -316,10 +318,13 @@ impl Opcode {
                 t: 2
             },
             instruction: |cpu: &mut z80::Z80| {
-                match cpu.registers.f >> 7 {
-                    0 => cpu.registers.pc += 2,
-                    1 => cpu.registers.pc += cpu.mmu.read(cpu.registers.pc + 1) as u16,
-                    _ => panic!("Somehow, the single-bit Z flag was neither 0 nor 1.")
+                match cpu.is_zero() {
+                    true => {
+                        let next = cpu.mmu.read(cpu.registers.pc + 1) as i8;
+                        let conv = (cpu.registers.pc as u32 as i32) + (next as i32);
+                        cpu.registers.pc = conv as u16;
+                    },
+                    false => cpu.registers.pc += 2,
                 }
             }
         }
@@ -349,21 +354,10 @@ impl Opcode {
                 t: 8
             },
             instruction: |cpu: &mut z80::Z80| {
-                cpu.mmu.write(cpu.registers.a, ((cpu.registers.h << 8) + cpu.registers.l).into());
-                match cpu.registers.l.checked_add(1) {
-                    Some(x) => cpu.registers.l = x,
-                    None => {
-                        cpu.registers.l += 1;
-                        cpu.registers.f |= 0x10;
-                        match cpu.registers.h.checked_add(1) {
-                            Some(x) => cpu.registers.h = x,
-                            None => {
-                                cpu.registers.h += 1;
-                                cpu.registers.f |= 0x10;
-                            }
-                        }
-                    }
-                }
+                let hl = cpu.get_hl();
+                cpu.mmu.write(cpu.registers.a, hl);
+                let hl = cpu.inc_16(hl, false);
+                cpu.set_hl(hl);
             }
         }
     }
@@ -377,20 +371,9 @@ impl Opcode {
                 t: 8
             },
             instruction: |cpu: &mut z80::Z80| {
-                match cpu.registers.l.checked_add(1) {
-                    Some(x) => cpu.registers.l = x,
-                    None => {
-                        cpu.registers.l += 1;
-                        cpu.registers.f |= 0x10;
-                        match cpu.registers.h.checked_add(1) {
-                            Some(x) => cpu.registers.h = x,
-                            None => {
-                                cpu.registers.h += 1;
-                                cpu.registers.f |= 0x10;
-                            }
-                        }
-                    }
-                }
+                let hl = cpu.get_hl();
+                let hl = cpu.inc_16(hl, false);
+                cpu.set_hl(hl);
             }
         }
     }
@@ -404,13 +387,9 @@ impl Opcode {
                 t: 4
             },
             instruction: |cpu: &mut z80::Z80| {
-                match cpu.registers.h.checked_add(1) {
-                    Some(x) => cpu.registers.h = x,
-                    None => {
-                        cpu.registers.h += 1;
-                        cpu.registers.f |= 0x10;
-                    }
-                }
+                let h = cpu.registers.h;
+                let h = cpu.inc_8(h, true);
+                cpu.registers.h = h;
             }
         }
     }
@@ -424,14 +403,9 @@ impl Opcode {
                 t: 4
             },
             instruction: |cpu: &mut z80::Z80| {
-                match cpu.registers.h.checked_sub(1) {
-                    Some(x) => cpu.registers.h = x,
-                    None => {
-                        cpu.registers.h -= 1;
-                        cpu.registers.f |= 0x10;
-                        cpu.registers.f |= 0x40;
-                    }
-                }
+                let h = cpu.registers.h;
+                let h = cpu.dec_8(h, true);
+                cpu.registers.h = h;
             }
         }
     }
@@ -449,4 +423,40 @@ impl Opcode {
             }
         }
     }
+
+    // 0x27 - DAA
+    fn daa() -> Opcode {
+       Opcode {
+           size: 1,
+           clock_timing: z80::Clock {
+               m: 1,
+               t: 0
+           },
+           instruction: |cpu: &mut z80::Z80| {
+               cpu.daa();
+           }
+       }
+    }
+
+    // 0x28 - JR Z s8
+    fn jr_z_s8() -> Opcode {
+        Opcode {
+            size: 0,    // Real: 2 bytes, but directly modified in instruction
+            clock_timing: z80::Clock {
+                m: 3,
+                t: 2
+            },
+            instruction: |cpu: &mut z80::Z80| {
+                match cpu.is_zero() {
+                    true => cpu.registers.pc += 2,
+                    false => {
+                        let next = cpu.mmu.read(cpu.registers.pc + 1) as i8;
+                        let conv = (cpu.registers.pc as u32 as i32) + (next as i32);
+                        cpu.registers.pc = conv as u16;
+                    },
+                }
+            }
+        }
+    }
+
 }
