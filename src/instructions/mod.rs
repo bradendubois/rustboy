@@ -419,6 +419,72 @@ impl Opcode {
         }
     }
 
-    ///0x0
+    ///0x19 - ADD HL DE : add the contents of de to hl
+    fn add_hl_de() -> Opcode{
+        Opcode{
+            size:1,
+            clock_timing: z80::Clock {
+                m: 2,
+                t: 8
+            },
+            instruction: |cpu: &mut z80::Z80| {
+                let hl = cpu.get_hl();
+                let de = cpu.get_de();
+                let hl = cpu.add_16(hl,de,true);
+                cpu.set_hl(hl);
+            }
+        }
+    }
+
+    ///0x1A - LD A, (DE) : Load the 8-bit contents of memory specified by de into a
+    fn ld_a_de() -> Opcode {
+        Opcode{
+            size: 1,
+            clock_timing: z80::Clock{
+                m: 2,
+                t: 8
+            },
+            instruction: |cpu: &mut z80::Z80| {
+                cpu.registers.a = cpu.mmu.read(((cpu.registers.d << 8)+ cpu.registers.e).into());
+            }
+        }
+    }
+
+    /// 0x1B - DEC DE : decrement contents of de by 1!
+    ///
+    fn dec_de() -> Opcode{
+        Opcode{
+            size:1,
+            clock_timing:z80::Clock{m: 2, t:8},
+            instruction: |cpu: &mut z80::Z80| {
+                let de = cpu.get_de();
+                cpu.set_de(cpu.add_16(de,1,false));
+            }
+        }
+    }
+
+    /// 0x1C - INC E
+    fn inc_e() -> Opcode {
+        Opcode{
+            size: 1,
+            clock_timing: z80::Clock{m:1,t:4},
+            instruction: |cpu: &mut z80::Z80| {
+                cpu.registers.e = cpu.inc_8(cpu.registers.e,true);
+            }
+        }
+    }
+
+    ///0x1D - DEC E
+    fn dec_e() -> Opcode {
+        Opcode{
+            size: 1,
+            clock_timing: z80::Clock{m:1,t:4},
+            instruction: |cpu: &mut z80::Z80| {
+                cpu.registers.e = cpu.dec_8(cpu.registers.e,true);
+            }
+        }
+    }
+
+    ///
 
 }
