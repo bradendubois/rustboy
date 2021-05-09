@@ -398,6 +398,9 @@ impl Opcode {
             size: 1,
             clock_timing: z80::Clock{m: 1, t: 4},
             instruction: |cpu: &mut z80::Z80| {
+                cpu.unset_zero();
+                cpu.unset_subtraction();
+                cpu.unset_half_carry();
                 let temp = cpu.is_full_carry();
                 if cpu.registers.a & 0x80 {cpu.set_full_carry()}else{cpu.unset_full_carry()}
                 cpu.registers.a = cpu.registers.a << 1 | temp;
@@ -485,6 +488,35 @@ impl Opcode {
         }
     }
 
-    ///
+    ///0x1E - LD E d8 : load 8 bit operand d8 into e
+    fn ld_e_d8() -> Opcode{
+        Opcode{
+            size: 2,
+            clock_timing: z80::Clock {
+                m: 2,
+                t: 8
+            },
+            instruction: |cpu: &mut z80::Z80|{
+                cpu.registers.e = cpu.mmu.read(cpu.registers.pc+1);
+            }
+        }
+    }
 
+    ///0x1F - RRA : rotate register A to the right,
+    /// through the carry flag,
+    fn rra() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: z80::Clock{m: 1, t: 4},
+            instruction: |cpu: &mut z80::Z80| {
+                let temp = cpu.is_full_carry();
+                cpu.unset_zero();
+                cpu.unset_subtraction();
+                cpu.unset_half_carry();
+                if cpu.registers.a & 0x01 != 0 {cpu.set_full_carry()}else{cpu.unset_full_carry()}
+                cpu.registers.a = cpu.registers.a | (temp as u8) << 7;
+
+            }
+        }
+    }
 }
