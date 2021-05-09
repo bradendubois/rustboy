@@ -106,7 +106,21 @@ impl Opcode {
     }
 
 
-
+    /// 0x10 - STOP : Stops the system clock and oscillator circuit.
+    /// LCD controller is also stopped.
+    /// Internal RAM register ports remain unchanged
+    /// Cancelled by RESET signal
+    fn stop() -> Opcode {
+        Opcode{
+            size: 2,
+            clock_timing: Clock{
+                m: 1, t: 4,
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.status = STOPPED;
+            }
+        }
+    }
     // 0x03 - INC BC
     fn inc_bc() -> Opcode {
         Opcode {
@@ -120,21 +134,6 @@ impl Opcode {
                 if cpu.registers.c == 0 {
                     cpu.registers.b += 1;
                 }
-            }
-        }
-    }
-    /// 0x10 - STOP : Stops the system clock and oscillator circuit.
-    /// LCD controller is also stopped.
-    /// Internal RAM register ports remain unchanged
-    /// Cancelled by RESET signal
-    fn stop() -> Opcode {
-        Opcode{
-            size: 2,
-            clock_timing: Clock{
-                m: 1, t: 4,
-            },
-            instruction: |cpu: &mut Z80| {
-                cpu.status = STOPPED;
             }
         }
     }
