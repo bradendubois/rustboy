@@ -293,4 +293,148 @@ impl Opcode {
             }
         }
     }
+
+    /// 0x10 - STOP : Stops the system clock and oscillator circuit.
+    /// LCD controller is also stopped.
+    /// Internal RAM register ports remain unchanged
+    /// Cancelled by RESET signal
+    fn stop() -> Opcode {
+        Opcode{
+            size: 2,
+            clock_timing: z80::Clock{
+                m: 1, t: 4,
+            },
+            instruction: |cpu: &mut z80::Z80| {
+                cpu.status = z80::STOPPED;
+            }
+        }
+    }
+
+    /// 0x11 - LD DE, d16 : Loads 2 bytes of immediate data into registers D,E
+    /// First byte is the lower byte, second byte is higher. Love Little endian -.-
+    fn ld_de() -> Opcode {
+        Opcode {
+            size: 3,
+            clock_timing: z80::Clock {
+                m: 3,
+                t: 12,
+            },
+            instruction: |cpu: &mut z80::Z80| {
+                cpu.registers.e = cpu.mmu.read(cpu.registers.pc + 1);
+                cpu.registers.d = cpu.mmu.read(cpu.registers.pc + 2);
+            }
+        }
+    }
+
+    /// 0x12 - LD (DE), A : store contents of A in memory location specified by registers DE
+    fn ld_de_a()-> Opcode{
+        Opcode {
+            size: 1,
+            clock_timing: z80::Clock {
+                m: 2,
+                t: 8
+            },
+            instruction: |cpu: &mut z80::Z80| {
+                cpu.mmu.write(cpu.registers.a, ((cpu.registers.d << 8) + cpu.registers.e).into());
+            }
+        }
+    }
+
+    /// 0x13 - INC DE : Increment the contents of registers DE by 1
+    fn inc_de() -> Opcode {
+        Opcode{
+            size:1,
+            clock_timing: z80::Clock{
+                m: 2, t: 8
+            },
+            instruction: |cpu: &mut z80::Z80| {
+                match cpu.registers.e.checked_add(1){
+                    Some(x) => cpu.registers.e = x,
+                    None => {
+                        cpu.registers.e += 1;
+                        match cpu.registers.e.checked_add(1){
+                            Some(i) => cpu.registers.d = i,
+                            None => {
+                                cpu.registers.d += 1;
+                                cpu.registers.f |= 0x10;
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+
+    /// 0x14 - INC D : Increment the contents of D
+    fn inc_d() -> Opcode {
+        Opcode{
+            size: 1,
+            clock_timing: z80::Clock{m:1,t:4},
+            instruction: |cpu: &mut z80::Z80| {
+                match cpu.registers.d.checked_add(1){
+                    Some(x) => cpu.registers.d = x,
+                    None => {cpu.registers.d += 1; cpu.registers.f |= 0x10;}
+                }
+
+            }
+        }
+    }
+
+    /// 0x15 - DEC D: Decrement the register D
+    fn dec_d() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: z80::Clock { m: 1, t: 4 },
+            instruction: |cpu: &mut z80::Z80| {
+                cpu.registers.f |= 0x40;
+                match cpu.registers.d.checked_sub(1) {
+                    Some(x) => cpu.registers.d = x,
+                    None => {
+                        cpu.registers.d -= 1;
+                        cpu.registers.f |= 0x10;
+                    }
+                }
+            }
+
+        }
+    }
+
+    /// 0x16 - LD D, d8: Load the 8-bit immediate operand d8 into reg D
+    fn ld_d() -> Opcode {
+        Opcode {
+            size: 2,
+            clock_timing: z80::Clock {
+                m: 2,
+                t: 8
+            },
+            instruction: |cpu: &mut z80::Z80| {
+                cpu.registers.d = cpu.mmu.read(cpu.registers.pc+1);
+            }
+        }
+    }
+
+    ///0x17 - RLA : Rotate contents of register A to the left,
+    fn rca() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: z80::Clock{m: 1, t: 4},
+            instruction: |cpu: &mut z80::Z80| {
+                cpu.registers.a = (cpu.registers.a << 1) | (cpu.registers.a >> 7);
+                // save contents of carry flag
+                /* other way to write this, more inline with the js tutorial we're following
+                idk, it's mighty sus.
+                let ci = if cpu.registers.f&0x10 {1} else {0};
+                let co = if cpu.registers.a&0x80 {0x10} else {0};
+                cpu.registers.a = cpu.registers.a << 1;
+                match cpu.registers.a(ci){
+                    Some(x) => cpu.registers.a = x,
+                    None => {
+                        cpu.registers.a += ci;
+                        cpu.registers.f = (cpu.registers.f&0xEF)+co;
+                    }*/
+            }
+        }
+    }
+
 }
