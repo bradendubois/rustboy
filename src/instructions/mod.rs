@@ -704,7 +704,102 @@ impl Opcode {
         }
     }
 
+    // 0x49 - LD C C
+    fn ld_c_c() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 1,
+                t: 0
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.c = cpu.registers.c;      // ok
+            }
+        }
+    }
 
+    // 0x4A
+    fn ld_c_d() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 1,
+                t: 0
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.c = cpu.registers.d;
+            }
+        }
+    }
 
+    // 0x4B
+    fn ld_c_e() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 1,
+                t: 0
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.c = cpu.registers.e;
+            }
+        }
+    }
+
+    // 0x4C
+    fn ld_c_h() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 1,
+                t: 0
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.c = cpu.registers.h;
+            }
+        }
+    }
+
+    // 0x4D
+    fn ld_c_l() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 1,
+                t: 0
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.c = cpu.registers.l;
+            }
+        }
+    }
+
+    // 0x4E
+    fn ld_c_hl() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 2,
+                t: 0
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.c = cpu.mmu.read(cpu.get_hl());
+            }
+        }
+    }
+
+    // 0x4F
+    fn ld_c_a() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 1,
+                t: 0
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.c = cpu.registers.a;
+            }
+        }
+    }
 
 }
