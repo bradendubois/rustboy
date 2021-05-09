@@ -8,7 +8,19 @@ pub struct Opcode {
 }
 
 
+
 impl Opcode {
+
+    pub fn opcode_1_1() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 1,
+                t: 0
+            },
+            instruction: |cpu: &mut Z80| {}
+        }
+    }
 
     pub fn lookup(code: u8) -> Opcode {
         match code {
@@ -67,6 +79,23 @@ impl Opcode {
             0x5E => Opcode::ld_c_hl(),
             0x5F => Opcode::ld_c_a(),
 
+            // 0x6X
+            0x60 => Opcode::ld_h_b(),
+            0x61 => Opcode::ld_h_c(),
+            0x62 => Opcode::ld_h_d(),
+            0x63 => Opcode::ld_h_e(),
+            0x64 => Opcode::ld_h_h(),
+            0x65 => Opcode::ld_h_l(),
+            0x66 => Opcode::ld_h_hl(),
+            0x67 => Opcode::ld_h_a(),
+            0x68 => Opcode::ld_l_b(),
+            0x69 => Opcode::ld_l_c(),
+            0x6A => Opcode::ld_l_d(),
+            0x6B => Opcode::ld_l_e(),
+            0x6C => Opcode::ld_l_h(),
+            0x6D => Opcode::ld_l_l(),
+            0x6E => Opcode::ld_l_hl(),
+            0x6F => Opcode::ld_l_a(),
 
             _ => panic!("Unmapped opcode {}", code)
         }
@@ -545,23 +574,20 @@ impl Opcode {
                 let l = cpu.registers.l;
                 let l = cpu.inc_8(l, true);
                 cpu.registers.l = l;
-            }
+            },
+            ..Opcode::opcode_1_1()
         }
     }
 
     // 0x2D - DEC L
     fn dec_l() -> Opcode {
         Opcode {
-            size: 1,
-            clock_timing: Clock {
-                m: 1,
-                t: 0
-            },
             instruction: |cpu: &mut Z80| {
                 let l = cpu.registers.l;
                 let l = cpu.dec_8(l, true);
                 cpu.registers.l = l;
-            }
+            },
+            ..Opcode::opcode_1_1()
         }
     }
 
@@ -583,14 +609,10 @@ impl Opcode {
     // 0x2F - CPL
     fn cpl() -> Opcode {
         Opcode {
-            size: 1,
-            clock_timing: Clock {
-                m: 1,
-                t: 0
-            },
             instruction: |cpu: &mut Z80| {
                 cpu.registers.a = !cpu.registers.a;
-            }
+            },
+            ..Opcode::opcode_1_1()
         }
     }
 
@@ -600,84 +622,60 @@ impl Opcode {
     // 0x40 - LD B B
     fn ld_b_b() -> Opcode {
         Opcode {
-            size: 1,
-            clock_timing: Clock {
-                m: 1,
-                t: 0
-            },
             instruction: |cpu: &mut Z80| {
                 cpu.registers.b = cpu.registers.b;      // ah, yes
-            }
+            },
+            ..Opcode::opcode_1_1()
         }
     }
 
-    // 0x41 - LD B B
+    // 0x41 - LD B C
     fn ld_b_c() -> Opcode {
         Opcode {
-            size: 1,
-            clock_timing: Clock {
-                m: 1,
-                t: 0
-            },
             instruction: |cpu: &mut Z80| {
                 cpu.registers.b = cpu.registers.c;
-            }
+            },
+            ..Opcode::opcode_1_1()
         }
     }
 
     // 0x42 - LD B D
     fn ld_b_d() -> Opcode {
         Opcode {
-            size: 1,
-            clock_timing: Clock {
-                m: 1,
-                t: 0
-            },
             instruction: |cpu: &mut Z80| {
                 cpu.registers.b = cpu.registers.d
-            }
+            },
+            ..Opcode::opcode_1_1()
         }
     }
 
     // 0x43 - LD B E
     fn ld_b_e() -> Opcode {
         Opcode {
-            size: 1,
-            clock_timing: Clock {
-                m: 1,
-                t: 0
-            },
             instruction: |cpu: &mut Z80| {
                 cpu.registers.b = cpu.registers.e;
-            }
+            },
+            ..Opcode::opcode_1_1()
         }
     }
 
     // 0x44 - LD B H
     fn ld_b_h() -> Opcode {
         Opcode {
-            size: 1,
-            clock_timing: Clock {
-                m: 1,
-                t: 0
-            },
             instruction: |cpu: &mut Z80| {
                 cpu.registers.b = cpu.registers.h;
-            }
+            },
+            ..Opcode::opcode_1_1()
         }
     }
 
     // 0x45 - LD B L
     fn ld_b_l() -> Opcode {
         Opcode {
-            size: 1,
-            clock_timing: Clock {
-                m: 1,
-                t: 0
-            },
             instruction: |cpu: &mut Z80| {
                 cpu.registers.b = cpu.registers.l;
-            }
+            },
+            ..Opcode::opcode_1_1()
         }
     }
 
@@ -698,98 +696,70 @@ impl Opcode {
     // 0x47 - LD B A
     fn ld_b_a() -> Opcode {
         Opcode {
-            size: 1,
-            clock_timing: Clock {
-                m: 1,
-                t: 0
-            },
             instruction: |cpu: &mut Z80| {
                 cpu.registers.b = cpu.registers.a;
-            }
+            },
+            ..Opcode::opcode_1_1()
         }
     }
 
     // 0x48 - LD C B
     fn ld_c_b() -> Opcode {
         Opcode {
-            size: 1,
-            clock_timing: Clock {
-                m: 1,
-                t: 0
-            },
             instruction: |cpu: &mut Z80| {
                 cpu.registers.c = cpu.registers.b;
-            }
+            },
+            ..Opcode::opcode_1_1()
         }
     }
 
     // 0x49 - LD C C
     fn ld_c_c() -> Opcode {
         Opcode {
-            size: 1,
-            clock_timing: Clock {
-                m: 1,
-                t: 0
-            },
             instruction: |cpu: &mut Z80| {
                 cpu.registers.c = cpu.registers.c;      // ok
-            }
+            },
+            ..Opcode::opcode_1_1()
         }
     }
 
     // 0x4A
     fn ld_c_d() -> Opcode {
         Opcode {
-            size: 1,
-            clock_timing: Clock {
-                m: 1,
-                t: 0
-            },
             instruction: |cpu: &mut Z80| {
                 cpu.registers.c = cpu.registers.d;
-            }
+            },
+            ..Opcode::opcode_1_1()
         }
     }
 
     // 0x4B
     fn ld_c_e() -> Opcode {
         Opcode {
-            size: 1,
-            clock_timing: Clock {
-                m: 1,
-                t: 0
-            },
             instruction: |cpu: &mut Z80| {
                 cpu.registers.c = cpu.registers.e;
-            }
+            },
+            ..Opcode::opcode_1_1()
         }
     }
 
     // 0x4C
     fn ld_c_h() -> Opcode {
         Opcode {
-            size: 1,
-            clock_timing: Clock {
-                m: 1,
-                t: 0
-            },
             instruction: |cpu: &mut Z80| {
                 cpu.registers.c = cpu.registers.h;
-            }
+            },
+            ..Opcode::opcode_1_1()
         }
     }
 
     // 0x4D
     fn ld_c_l() -> Opcode {
         Opcode {
-            size: 1,
-            clock_timing: Clock {
-                m: 1,
-                t: 0
-            },
             instruction: |cpu: &mut Z80| {
                 cpu.registers.c = cpu.registers.l;
-            }
+            },
+            ..Opcode::opcode_1_1()
         }
     }
 
@@ -810,18 +780,181 @@ impl Opcode {
     // 0x4F
     fn ld_c_a() -> Opcode {
         Opcode {
-            size: 1,
-            clock_timing: Clock {
-                m: 1,
-                t: 0
-            },
             instruction: |cpu: &mut Z80| {
                 cpu.registers.c = cpu.registers.a;
-            }
+            },
+            ..Opcode::opcode_1_1()
         }
     }
 
 
 
-    // 0x60
+
+    // 0x60 - LD H B
+    fn ld_h_b() -> Opcode {
+        Opcode {
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.h = cpu.registers.b;
+            },
+            ..Opcode::opcode_1_1()
+        }
+    }
+
+    // 0x61 - LD H C
+    fn ld_h_c() -> Opcode {
+        Opcode {
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.h = cpu.registers.c;
+            },
+            ..Opcode::opcode_1_1()
+        }
+    }
+
+    // 0x62 - LD H D
+    fn ld_h_d() -> Opcode {
+        Opcode {
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.h = cpu.registers.d
+            },
+            ..Opcode::opcode_1_1()
+        }
+    }
+
+    // 0x63 - LD H E
+    fn ld_h_e() -> Opcode {
+        Opcode {
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.h = cpu.registers.e;
+            },
+            ..Opcode::opcode_1_1()
+        }
+    }
+
+    // 0x64 - LD H H
+    fn ld_h_h() -> Opcode {
+        Opcode {
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.h = cpu.registers.h;      // sure
+            },
+            ..Opcode::opcode_1_1()
+        }
+    }
+
+    // 0x65 - LD H L
+    fn ld_h_l() -> Opcode {
+        Opcode {
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.h = cpu.registers.l;
+            },
+            ..Opcode::opcode_1_1()
+        }
+    }
+
+    // 0x66 - LD H (HL)
+    fn ld_h_hl() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 2,
+                t: 0
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.h = cpu.mmu.read(cpu.registers.pc);
+            }
+        }
+    }
+
+    // 0x67 - LD H A
+    fn ld_h_a() -> Opcode {
+        Opcode {
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.h = cpu.registers.a;
+            },
+            ..Opcode::opcode_1_1()
+        }
+    }
+
+    // 0x68 - LD L B
+    fn ld_l_b() -> Opcode {
+        Opcode {
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.l = cpu.registers.b;
+            },
+            ..Opcode::opcode_1_1()
+        }
+    }
+
+    // 0x69 - LD L C
+    fn ld_l_c() -> Opcode {
+        Opcode {
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.l = cpu.registers.c;
+            },
+            ..Opcode::opcode_1_1()
+        }
+    }
+
+    // 0x6A - LD L D
+    fn ld_l_d() -> Opcode {
+        Opcode {
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.l = cpu.registers.d;
+            },
+            ..Opcode::opcode_1_1()
+        }
+    }
+
+    // 0x6B - LD L E
+    fn ld_l_e() -> Opcode {
+        Opcode {
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.l = cpu.registers.e;
+            },
+            ..Opcode::opcode_1_1()
+        }
+    }
+
+    // 0x6C - LD L H
+    fn ld_l_h() -> Opcode {
+        Opcode {
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.l = cpu.registers.h;
+            },
+            ..Opcode::opcode_1_1()
+        }
+    }
+
+    // 0x6D - LD L L
+    fn ld_l_l() -> Opcode {
+        Opcode {
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.l = cpu.registers.l;      // ok
+            },
+            ..Opcode::opcode_1_1()
+        }
+    }
+
+    // 0x6E - LD (HL)
+    fn ld_l_hl() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: Clock {
+                m: 2,
+                t: 0
+            },
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.l = cpu.mmu.read(cpu.get_hl());
+            }
+        }
+    }
+
+    // 0x6F - LD L A
+    fn ld_l_a() -> Opcode {
+        Opcode {
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.l = cpu.registers.a;
+            },
+            ..Opcode::opcode_1_1()
+        }
+    }
 }
