@@ -348,20 +348,9 @@ impl Opcode {
                 m: 2, t: 8
             },
             instruction: |cpu: &mut z80::Z80| {
-                match cpu.registers.e.checked_add(1){
-                    Some(x) => cpu.registers.e = x,
-                    None => {
-                        cpu.registers.e += 1;
-                        match cpu.registers.e.checked_add(1){
-                            Some(i) => cpu.registers.d = i,
-                            None => {
-                                cpu.registers.d += 1;
-                                cpu.registers.f |= 0x10;
-                            }
-                        }
-                    }
-                }
-
+                let de = cpu.get_de();
+                let de = cpu.add_16(de, 1, false);
+                cpu.set_de(de);
             }
         }
     }
@@ -372,11 +361,7 @@ impl Opcode {
             size: 1,
             clock_timing: z80::Clock{m:1,t:4},
             instruction: |cpu: &mut z80::Z80| {
-                match cpu.registers.d.checked_add(1){
-                    Some(x) => cpu.registers.d = x,
-                    None => {cpu.registers.d += 1; cpu.registers.f |= 0x10;}
-                }
-
+                cpu.registers.d = cpu.add_8(cpu.registers.d, 1, true);
             }
         }
     }
@@ -387,14 +372,7 @@ impl Opcode {
             size: 1,
             clock_timing: z80::Clock { m: 1, t: 4 },
             instruction: |cpu: &mut z80::Z80| {
-                cpu.registers.f |= 0x40;
-                match cpu.registers.d.checked_sub(1) {
-                    Some(x) => cpu.registers.d = x,
-                    None => {
-                        cpu.registers.d -= 1;
-                        cpu.registers.f |= 0x10;
-                    }
-                }
+                cpu.registers.d = cpu.sub_8(cpu.registers.d, 1, true)
             }
 
         }
@@ -415,24 +393,15 @@ impl Opcode {
     }
 
     ///0x17 - RLA : Rotate contents of register A to the left,
-    fn rca() -> Opcode {
+    fn rla() -> Opcode {
         Opcode {
             size: 1,
             clock_timing: z80::Clock{m: 1, t: 4},
             instruction: |cpu: &mut z80::Z80| {
+                let temp = cpu.is_full_carry();
+                if cpu.registers.a & 0x80 {cpu.set_full_carry()}else{cpu.unset_full_carry()}
                 cpu.registers.a = (cpu.registers.a << 1) | (cpu.registers.a >> 7);
-                // save contents of carry flag
-                /* other way to write this, more inline with the js tutorial we're following
-                idk, it's mighty sus.
-                let ci = if cpu.registers.f&0x10 {1} else {0};
-                let co = if cpu.registers.a&0x80 {0x10} else {0};
-                cpu.registers.a = cpu.registers.a << 1;
-                match cpu.registers.a(ci){
-                    Some(x) => cpu.registers.a = x,
-                    None => {
-                        cpu.registers.a += ci;
-                        cpu.registers.f = (cpu.registers.f&0xEF)+co;
-                    }*/
+                cpu.registers.a |= temp;
             }
         }
     }
