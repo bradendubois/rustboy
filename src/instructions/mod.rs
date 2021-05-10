@@ -869,4 +869,96 @@ impl Opcode {
             }
         }
     }
+
+
+
+
+    // 0x80 - ADD A,B
+    fn add_a_b() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.a = cpu.add_8(cpu.registers.a, cpu.registers.b, true);
+                4
+            }
+        }
+    }
+
+    // 0x81 - ADD A,C
+    fn add_a_c() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.a = cpu.add_8(cpu.registers.a, cpu.registers.c, true);
+                4
+            }
+        }
+    }
+
+    // 0x82 - ADD A,D
+    fn add_a_d() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.a = cpu.add_8(cpu.registers.a, cpu.registers.d, true);
+                4
+            }
+        }
+    }
+
+    // 0x83 - ADD A,E
+    fn add_a_e() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.a = cpu.add_8(cpu.registers.a, cpu.registers.e, true);
+                4
+            }
+        }
+    }
+
+    // 0x84 - ADD A,H
+    fn add_a_h() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.a = cpu.add_8(cpu.registers.a, cpu.registers.h, true);
+                4
+            }
+        }
+    }
+
+    // 0x85 - ADD A,L
+    fn add_a_l() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.a = cpu.add_8(cpu.registers.a, cpu.registers.l, true);
+                4
+            }
+        }
+    }
+
+    // 0x86 - ADD A,(HL)
+    fn add_a_hl() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                let value = cpu.mmu.read(cpu.get_hl());
+                cpu.registers.a = cpu.add_8(cpu.registers.a, value, true);
+                4
+            }
+        }
+    }
+
+    // 0x87 - ADD A,A
+    fn add_a_a() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.a = cpu.add_8(cpu.registers.a, cpu.registers.a, true);
+                4
+            }
+        }
+    }
 }
