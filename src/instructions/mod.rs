@@ -1069,4 +1069,94 @@ impl Opcode {
             }
         }
     }
+
+
+    // 0xA0 - AND B
+    fn and_b() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.and(cpu.registers.b);
+                4
+            }
+        }
+    }
+
+    // 0xA1 - AND C
+    fn and_c() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.and(cpu.registers.c);
+                4
+            }
+        }
+    }
+
+    // 0xA2 - AND D
+    fn and_d() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.and(cpu.registers.d);
+                4
+            }
+        }
+    }
+
+    // 0xA3 - AND E
+    fn and_e() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.and(cpu.registers.e);
+                4
+            }
+        }
+    }
+
+    // 0xA4 - AND H
+    fn and_h() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.and(cpu.registers.h);
+                4
+            }
+        }
+    }
+
+    // 0xA5 - AND L
+    fn and_l() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.and(cpu.registers.l);
+                4
+            }
+        }
+    }
+
+    // 0xA6 - AND (HL)
+    fn and_hl() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                let value = cpu.mmu.read(cpu.get_hl());
+                cpu.and(value);
+                8
+            }
+        }
+    }
+
+    // 0xA7 - AND A
+    fn and_a() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.and(cpu.registers.a);   // ok
+                4
+            }
+        }
+    }
 }
