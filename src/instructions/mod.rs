@@ -1159,4 +1159,93 @@ impl Opcode {
             }
         }
     }
+
+    // 0xA8 - XOR B
+    fn xor_b() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.xor(cpu.registers.b);
+                4
+            }
+        }
+    }
+
+    // 0xA9 - XOR C
+    fn xor_c() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.xor(cpu.registers.c);
+                4
+            }
+        }
+    }
+
+    // 0xAA - XOR D
+    fn xor_d() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.xor(cpu.registers.d);
+                4
+            }
+        }
+    }
+
+    // 0xAB - XOR E
+    fn xor_e() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.xor(cpu.registers.e);
+                4
+            }
+        }
+    }
+
+    // 0xAC - XOR H
+    fn xor_h() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.xor(cpu.registers.h);
+                4
+            }
+        }
+    }
+
+    // 0xAD - XOR L
+    fn xor_l() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.xor(cpu.registers.l);
+                4
+            }
+        }
+    }
+
+    // 0xAE - XOR (HL)
+    fn xor_hl() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                let value = cpu.mmu.read(cpu.get_hl());
+                cpu.xor(value);
+                8
+            }
+        }
+    }
+
+    // 0xAF - XOR A
+    fn xor_a() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.xor(cpu.registers.a);   // why not
+                4
+            }
+        }
+    }
 }
