@@ -133,7 +133,7 @@ impl Opcode {
                 t: 4
             },
             instruction: |cpu: &mut z80::Z80| {
-                cpu.registers.b = cpu.sub_8(cpu.registers.b, 1, true);
+                cpu.registers.b = cpu.dec_8(cpu.registers.b,  true);
             }
         }
     }
@@ -320,7 +320,7 @@ impl Opcode {
                 m: 1, t: 4,
             },
             instruction: |cpu: &mut z80::Z80| {
-                cpu.status = z80::STOPPED;
+                cpu.status = z80::Status::STOPPED;
             }
         }
     }
@@ -350,6 +350,7 @@ impl Opcode {
                 t: 8
             },
             instruction: |cpu: &mut z80::Z80| {
+                //TODO Revisit this when we've modularized this conversion
                 cpu.mmu.write(cpu.registers.a, ((cpu.registers.d << 8) + cpu.registers.e).into());
             }
         }
@@ -376,7 +377,7 @@ impl Opcode {
             size: 1,
             clock_timing: z80::Clock{m:1,t:4},
             instruction: |cpu: &mut z80::Z80| {
-                cpu.registers.d = cpu.add_8(cpu.registers.d, 1, true);
+                cpu.registers.d = cpu.inc_8(cpu.registers.d, true);
             }
         }
     }
@@ -417,9 +418,9 @@ impl Opcode {
                 cpu.unset_subtraction();
                 cpu.unset_half_carry();
                 let temp = cpu.is_full_carry();
-                if cpu.registers.a & 0x80 {cpu.set_full_carry()}else{cpu.unset_full_carry()}
-                cpu.registers.a = cpu.registers.a << 1 | temp;
-                cpu.registers.a |= temp;
+                if cpu.registers.a & 0x80 == 1 {cpu.set_full_carry()}else{cpu.unset_full_carry()}
+                cpu.registers.a = (cpu.registers.a << 1);
+                cpu.registers.a |= temp as u8;
             }
         }
     }
