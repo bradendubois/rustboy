@@ -419,7 +419,7 @@ impl Opcode {
                 cpu.unset_half_carry();
                 let temp = cpu.is_full_carry();
                 if cpu.registers.a & 0x80 == 1 {cpu.set_full_carry()}else{cpu.unset_full_carry()}
-                cpu.registers.a = (cpu.registers.a << 1);
+                cpu.registers.a = cpu.registers.a << 1;
                 cpu.registers.a |= temp as u8;
             }
         }
@@ -477,7 +477,8 @@ impl Opcode {
             clock_timing:z80::Clock{m: 2, t:8},
             instruction: |cpu: &mut z80::Z80| {
                 let de = cpu.get_de();
-                cpu.set_de(cpu.add_16(de,1,false));
+                let res = cpu.sub_16(de, 1, false);
+                cpu.set_de(res);
             }
         }
     }
