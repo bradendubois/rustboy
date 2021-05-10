@@ -115,7 +115,7 @@ impl Opcode {
         Opcode {
             size: 1,
             instruction: |cpu: &mut Z80| {
-                cpu.mmu.write(cpu.registers.a, ((cpu.registers.b << 8) + cpu.registers.c).into());
+                cpu.mmu.write(cpu.registers.a, Z80::u16_from_u8(cpu.registers.b, cpu.registers.c));
                 8
             }
         }
@@ -193,7 +193,7 @@ impl Opcode {
             instruction: |cpu: &mut Z80| {
                 let addr_lower = cpu.byte();
                 let addr_upper = cpu.byte();
-                let addr = ((addr_upper << 8) + addr_lower).into();
+                let addr = Z80::u16_from_u8 (addr_upper, addr_lower);
                 cpu.mmu.write(cpu.registers.sp as u8, addr);
                 cpu.mmu.write((cpu.registers.sp >> 8) as u8, addr);
                 20
