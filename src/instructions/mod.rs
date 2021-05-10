@@ -946,7 +946,7 @@ impl Opcode {
             instruction: |cpu: &mut Z80| {
                 let value = cpu.mmu.read(cpu.get_hl());
                 cpu.registers.a = cpu.add_8(cpu.registers.a, value, true);
-                4
+                8
             }
         }
     }
@@ -957,6 +957,95 @@ impl Opcode {
             size: 1,
             instruction: |cpu: &mut Z80| {
                 cpu.registers.a = cpu.add_8(cpu.registers.a, cpu.registers.a, true);
+                4
+            }
+        }
+    }
+
+    // 0x88 - ADC A,B
+    fn adc_a_b() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.a = cpu.adc_8(cpu.registers.a, cpu.registers.b);
+                4
+            }
+        }
+    }
+
+    // 0x89 - ADC A,C
+    fn adc_a_c() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.a = cpu.adc_8(cpu.registers.a, cpu.registers.c);
+                4
+            }
+        }
+    }
+
+    // 0x8A - ADC A,D
+    fn adc_a_d() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.a = cpu.adc_8(cpu.registers.a, cpu.registers.d);
+                4
+            }
+        }
+    }
+
+    // 0x8B - ADC A,E
+    fn adc_a_e() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.a = cpu.adc_8(cpu.registers.a, cpu.registers.e);
+                4
+            }
+        }
+    }
+
+    // 0x8C - ADC A,H
+    fn adc_a_h() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.a = cpu.adc_8(cpu.registers.a, cpu.registers.h);
+                4
+            }
+        }
+    }
+
+    // 0x8D - ADC A,L
+    fn adc_a_l() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.a = cpu.adc_8(cpu.registers.a, cpu.registers.l);
+                4
+            }
+        }
+    }
+
+    // 0x8E - ADC A,(HL)
+    fn adc_a_hl() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                let value = cpu.mmu.read(cpu.get_hl());
+                cpu.registers.a = cpu.adc_8(cpu.registers.a, value);
+                8
+            }
+        }
+    }
+
+    // 0x8F - ADC A,A
+    fn adc_a_a() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.a = cpu.adc_8(cpu.registers.a, cpu.registers.a);
                 4
             }
         }
