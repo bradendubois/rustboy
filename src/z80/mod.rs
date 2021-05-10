@@ -224,9 +224,15 @@ impl Z80 {
         let result = s.wrapping_add(t);
 
         if flag {
+
+            match result {
+                0 => self.set_zero(),
+                _ => self.unset_zero()
+            };
+
             self.unset_subtraction();
 
-            match (s & 0xF) + (t & 0xF) > 0xF {
+            match ((s & 0xF) + (t & 0xF)) > 0xF {
                 true => self.set_half_carry(),
                 false => self.unset_half_carry()
             };
@@ -296,7 +302,7 @@ impl Z80 {
             self.zero(result as u16);
             self.unset_subtraction();
 
-            match (s & 0xF) + (t & 0xF) > 0xF  {
+            match (s & 0xF) + (s+1 & 0xF) > 0xF  {
                 true => self.set_half_carry(),
                 false => self.unset_half_carry()
             };
