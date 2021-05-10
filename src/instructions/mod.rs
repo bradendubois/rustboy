@@ -431,7 +431,7 @@ impl Opcode {
             size: 2,
             clock_timing: z80::Clock { m: 3, t: 12 },
             instruction: |cpu: &mut z80::Z80| {
-                let next = cpu.mmu.reade(cpu.registers.pc + 1) as i8;
+                let next = cpu.mmu.read(cpu.registers.pc + 1) as i8;
                 let conv = (cpu.registers.pc as u32 as i32) + (next as i32);
                 cpu.registers.pc = conv as u16;
             }
