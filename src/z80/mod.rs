@@ -364,6 +364,24 @@ impl Z80 {
         self.add_8(s, t + carry, true)
     }
 
+    // AND
+
+    pub fn and(&mut self, t: u8) {
+
+        let result = self.registers.a & t;
+
+        match result == 0 {
+            true => self.set_zero(),
+            false => self.unset_zero()
+        };
+
+        self.unset_subtraction();
+        self.set_full_carry();
+        self.unset_half_carry();
+
+        self.registers.a = result;
+    }
+
     // Conversions
 
     pub fn u16_from_u8(x: u8, y: u8) -> u16 {
