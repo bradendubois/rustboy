@@ -376,10 +376,26 @@ impl Z80 {
         };
 
         self.unset_subtraction();
-        self.set_full_carry();
         self.unset_half_carry();
+        self.set_full_carry();
 
         self.registers.a = result;
+    }
+
+    // XOR
+
+    pub fn xor(&mut self, t: u8) {
+
+        let result = self.registers.a ^ t;
+
+        match result == 0 {
+            true => self.set_zero(),
+            false => self.unset_zero()
+        };
+
+        self.unset_subtraction();
+        self.unset_half_carry();
+        self.unset_full_carry();
     }
 
     // Conversions
