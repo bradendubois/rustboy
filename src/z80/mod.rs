@@ -224,13 +224,17 @@ impl Z80 {
         let result = s.wrapping_add(t);
 
         if flag {
-            self.zero(result as u16);
+            self.unset_subtraction();
 
-            /*
-            self.o = false;
-            self.h = false; // TODO - Detect half carry  (s & 0xF) + (t & 0xF) > 0xF,
-            self.c = false; // TODO - detect carry (s as u16 + t as u16) > 0xFF
-             */
+            match (s & 0xF) + (t & 0xF) > 0xF {
+                true => self.set_half_carry(),
+                false => self.unset_half_carry()
+            };
+
+            match s.checked_add(t) {
+                None => self.set_full_carry(),
+                Some(_) => self.unset_full_carry()
+            };
         }
 
         result
@@ -241,12 +245,17 @@ impl Z80 {
         let result = s.wrapping_add(t);
 
         if flag {
+            self.unset_subtraction();
 
-            /*
-            self.o = false;
-            self.h = false; // TODO - Detect half carry  (s & 0xF) + (t & 0xF) > 0xF,
-            self.c = false; // TODO - detect carry (s as u16 + t as u16) > 0xFF
-             */
+            match (s & 0x07FF) + (t & 0x07FF) > 0x07FF  {
+                true => self.set_half_carry(),
+                false => self.unset_half_carry()
+            };
+
+            match s.checked_add(t) {
+                None => self.set_full_carry(),
+                Some(_) => self.unset_full_carry()
+            };
         }
 
         result
@@ -271,6 +280,7 @@ impl Z80 {
 
         if flag {
             self.zero(result as u16);
+
         }
 
         result
@@ -283,7 +293,13 @@ impl Z80 {
         let result = s.wrapping_add(1);
 
         if flag {
+            self.zero(result as u16);
+            self.unset_subtraction();
 
+            match (s & 0xF) + (t & 0xF) > 0xF  {
+                true => self.set_half_carry(),
+                false => self.unset_half_carry()
+            };
         }
 
         result
@@ -294,7 +310,13 @@ impl Z80 {
         let result = s.wrapping_add(1);
 
         if flag {
+            self.zero(result);
+            self.unset_subtraction();
 
+            match (s & 0x07FF) + (s+1 & 0x07FF) > 0x07FF  {
+                true => self.set_half_carry(),
+                false => self.unset_half_carry()
+            };
         }
 
         result
