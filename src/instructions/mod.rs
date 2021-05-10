@@ -31,7 +31,22 @@ impl Opcode {
             0x0D => Opcode::dec_c(),
             0x0E => Opcode::ld_c(),
             0x0F => Opcode::rrca(),
-
+            0x10 => Opcode::stop(),
+            0x11 => Opcode::ld_de(),
+            0x12 => Opcode::ld_de_a(),
+            0x13 => Opcode::inc_de(),
+            0x14 => Opcode::inc_d(),
+            0x15 => Opcode::dec_d(),
+            0x16 => Opcode::ld_d(),
+            0x17 => Opcode::rla(),
+            0x18 => Opcode::jr_s8(),
+            0x19 => Opcode::add_hl_de(),
+            0x1A => Opcode::ld_a_de(),
+            0x1B => Opcode::dec_de(),
+            0x1C => Opcode::inc_e(),
+            0x1D => Opcode::dec_e(),
+            0x1E => Opcode::ld_e_d8(),
+            0x1F => Opcode::rra(),
             _ => panic!("Unmapped opcode {}", code)
         }
     }
@@ -118,7 +133,7 @@ impl Opcode {
                 t: 4
             },
             instruction: |cpu: &mut z80::Z80| {
-                cpu.registers.b = cpu.sub_8(cpu.registers.b, 1, true);
+                cpu.registers.b = cpu.dec_8(cpu.registers.b,  true);
             }
         }
     }
@@ -290,6 +305,234 @@ impl Opcode {
                     true => cpu.set_full_carry(),
                     false => cpu.unset_full_carry()
                 };
+            }
+        }
+    }
+
+    /// 0x10 - STOP : Stops the system clock and oscillator circuit.
+    /// LCD controller is also stopped.
+    /// Internal RAM register ports remain unchanged
+    /// Cancelled by RESET signal
+    fn stop() -> Opcode {
+        Opcode{
+            size: 2,
+            clock_timing: z80::Clock{
+                m: 1, t: 4,
+            },
+            instruction: |cpu: &mut z80::Z80| {
+                cpu.status = z80::Status::STOPPED;
+            }
+        }
+    }
+
+    /// 0x11 - LD DE, d16 : Loads 2 bytes of immediate data into registers D,E
+    /// First byte is the lower byte, second byte is higher. Love Little endian -.-
+    fn ld_de() -> Opcode {
+        Opcode {
+            size: 3,
+            clock_timing: z80::Clock {
+                m: 3,
+                t: 12,
+            },
+            instruction: |cpu: &mut z80::Z80| {
+                cpu.registers.e = cpu.mmu.read(cpu.registers.pc + 1);
+                cpu.registers.d = cpu.mmu.read(cpu.registers.pc + 2);
+            }
+        }
+    }
+
+    /// 0x12 - LD (DE), A : store contents of A in memory location specified by registers DE
+    fn ld_de_a()-> Opcode{
+        Opcode {
+            size: 1,
+            clock_timing: z80::Clock {
+                m: 2,
+                t: 8
+            },
+            instruction: |cpu: &mut z80::Z80| {
+                //TODO Revisit this when we've modularized this conversion
+                cpu.mmu.write(cpu.registers.a, ((cpu.registers.d << 8) + cpu.registers.e).into());
+            }
+        }
+    }
+
+    /// 0x13 - INC DE : Increment the contents of registers DE by 1
+    fn inc_de() -> Opcode {
+        Opcode{
+            size:1,
+            clock_timing: z80::Clock{
+                m: 2, t: 8
+            },
+            instruction: |cpu: &mut z80::Z80| {
+                let de = cpu.get_de();
+                let de = cpu.add_16(de, 1, false);
+                cpu.set_de(de);
+            }
+        }
+    }
+
+    /// 0x14 - INC D : Increment the contents of D
+    fn inc_d() -> Opcode {
+        Opcode{
+            size: 1,
+            clock_timing: z80::Clock{m:1,t:4},
+            instruction: |cpu: &mut z80::Z80| {
+                cpu.registers.d = cpu.inc_8(cpu.registers.d, true);
+            }
+        }
+    }
+
+    /// 0x15 - DEC D: Decrement the register D
+    fn dec_d() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: z80::Clock { m: 1, t: 4 },
+            instruction: |cpu: &mut z80::Z80| {
+                cpu.registers.d = cpu.sub_8(cpu.registers.d, 1, true)
+            }
+
+        }
+    }
+
+    /// 0x16 - LD D, d8: Load the 8-bit immediate operand d8 into reg D
+    fn ld_d() -> Opcode {
+        Opcode {
+            size: 2,
+            clock_timing: z80::Clock {
+                m: 2,
+                t: 8
+            },
+            instruction: |cpu: &mut z80::Z80| {
+                cpu.registers.d = cpu.mmu.read(cpu.registers.pc+1);
+            }
+        }
+    }
+
+    ///0x17 - RLA : Rotate contents of register A to the left,
+    fn rla() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: z80::Clock{m: 1, t: 4},
+            instruction: |cpu: &mut z80::Z80| {
+                cpu.unset_zero();
+                cpu.unset_subtraction();
+                cpu.unset_half_carry();
+                let temp = cpu.is_full_carry();
+                if cpu.registers.a & 0x80 == 1 {cpu.set_full_carry()}else{cpu.unset_full_carry()}
+                cpu.registers.a = cpu.registers.a << 1;
+                cpu.registers.a |= temp as u8;
+            }
+        }
+    }
+
+    ///0x18 - JR s8 : Jump s8 steps from current address in program counter
+    fn jr_s8() -> Opcode {
+        Opcode {
+            size: 2,
+            clock_timing: z80::Clock { m: 3, t: 12 },
+            instruction: |cpu: &mut z80::Z80| {
+                let next = cpu.mmu.read(cpu.registers.pc + 1) as i8;
+                let conv = (cpu.registers.pc as u32 as i32) + (next as i32);
+                cpu.registers.pc = conv as u16;
+            }
+        }
+    }
+
+    ///0x19 - ADD HL DE : add the contents of de to hl
+    fn add_hl_de() -> Opcode{
+        Opcode{
+            size:1,
+            clock_timing: z80::Clock {
+                m: 2,
+                t: 8
+            },
+            instruction: |cpu: &mut z80::Z80| {
+                let hl = cpu.get_hl();
+                let de = cpu.get_de();
+                let hl = cpu.add_16(hl,de,true);
+                cpu.set_hl(hl);
+            }
+        }
+    }
+
+    ///0x1A - LD A, (DE) : Load the 8-bit contents of memory specified by de into a
+    fn ld_a_de() -> Opcode {
+        Opcode{
+            size: 1,
+            clock_timing: z80::Clock{
+                m: 2,
+                t: 8
+            },
+            instruction: |cpu: &mut z80::Z80| {
+                cpu.registers.a = cpu.mmu.read(((cpu.registers.d << 8)+ cpu.registers.e).into());
+            }
+        }
+    }
+
+    /// 0x1B - DEC DE : decrement contents of de by 1!
+    ///
+    fn dec_de() -> Opcode{
+        Opcode{
+            size:1,
+            clock_timing:z80::Clock{m: 2, t:8},
+            instruction: |cpu: &mut z80::Z80| {
+                let de = cpu.get_de();
+                let res = cpu.sub_16(de, 1, false);
+                cpu.set_de(res);
+            }
+        }
+    }
+
+    /// 0x1C - INC E
+    fn inc_e() -> Opcode {
+        Opcode{
+            size: 1,
+            clock_timing: z80::Clock{m:1,t:4},
+            instruction: |cpu: &mut z80::Z80| {
+                cpu.registers.e = cpu.inc_8(cpu.registers.e,true);
+            }
+        }
+    }
+
+    ///0x1D - DEC E
+    fn dec_e() -> Opcode {
+        Opcode{
+            size: 1,
+            clock_timing: z80::Clock{m:1,t:4},
+            instruction: |cpu: &mut z80::Z80| {
+                cpu.registers.e = cpu.dec_8(cpu.registers.e,true);
+            }
+        }
+    }
+
+    ///0x1E - LD E d8 : load 8 bit operand d8 into e
+    fn ld_e_d8() -> Opcode{
+        Opcode{
+            size: 2,
+            clock_timing: z80::Clock {
+                m: 2,
+                t: 8
+            },
+            instruction: |cpu: &mut z80::Z80|{
+                cpu.registers.e = cpu.mmu.read(cpu.registers.pc+1);
+            }
+        }
+    }
+
+    ///0x1F - RRA : rotate register A to the right,
+    /// through the carry flag,
+    fn rra() -> Opcode {
+        Opcode {
+            size: 1,
+            clock_timing: z80::Clock{m: 1, t: 4},
+            instruction: |cpu: &mut z80::Z80| {
+                let temp = cpu.is_full_carry();
+                cpu.unset_zero();
+                cpu.unset_subtraction();
+                cpu.unset_half_carry();
+                if cpu.registers.a & 0x01 != 0 {cpu.set_full_carry()}else{cpu.unset_full_carry()}
+                cpu.registers.a = cpu.registers.a | (temp as u8) << 7;
+
             }
         }
     }
