@@ -352,6 +352,18 @@ impl Z80 {
         result
     }
 
+    // ADC
+
+    pub fn adc_8(&mut self, s: u8, t: u8) -> u8 {
+
+        let carry = match self.is_full_carry() {
+            true => 1,
+            false => 0
+        };
+
+        self.add_8(s, t + carry, true)
+    }
+
     // Conversions
 
     pub fn u16_from_u8(x: u8, y: u8) -> u16 {
