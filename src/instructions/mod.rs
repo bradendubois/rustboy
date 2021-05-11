@@ -140,6 +140,19 @@ impl Opcode {
             0xCE => Opcode::adc_a_d(),
             0xCF => Opcode::add_rst_08h(),
 
+            // 0xEX
+            0xE0 => Opcode::ldh_a8_a(),
+            0xE1 => Opcode::pop_hl(),
+            0xE2 => Opcode::ld_c_a_ram(),
+            0xE5 => Opcode::push_hl(),
+            0xE6 => Opcode::and_d8(),
+            0xE7 => Opcode::add_rst_20h(),
+            0xE8 => Opcode::add_sp_r8(),
+            0xE9 => Opcode::jp_hl(),
+            0xEA => Opcode::ld_a16_a(),
+            0xEE => Opcode::xor_d8(),
+            0xEF => Opcode::add_rst_28h(),
+
 
             _ => panic!("Unmapped opcode {}", code)
         }
