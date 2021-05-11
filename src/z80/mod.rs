@@ -1,11 +1,4 @@
 use super::mmu;
-use super::instructions;
-
-#[derive(Debug)]
-pub struct Clock {
-    pub m: u16,
-    pub t: u16
-}
 
 
 #[allow(dead_code)]
@@ -40,10 +33,13 @@ pub struct Z80 {
     pub registers: Registers,
 
     // Struct representing the clock of the Z80 for purposes of timing
-    pub clock: Clock,
+    pub clock: u64,
 
     // Enum representing the Z80's current running status
     pub status: Status,
+
+    // CB Flag : Will set whether to use the default table or the CB Prefix table
+    pub use_cb_table: bool,
 
     // Struct representing the memory unit
     pub mmu: mmu::MMU
@@ -54,233 +50,307 @@ pub struct Z80 {
 #[allow(dead_code)]
 impl Z80 {
 
-    // Initialization / creation of a Z80 CPU
-    pub fn init(mmu: mmu::MMU) -> Z80 {
+    /// Initializer for a Z80 CPU
+    pub fn new(mmu: mmu::MMU) -> Z80 {
 
         Z80 {
 
             // All registers begin empty
             registers: Registers {
-                a: 0,
-                b: 0,
-                c: 0,
-                d: 0,
-                e: 0,
-                h: 0,
-                l: 0,
-                f: 0,
-                pc: 0,
-                sp: 0,
+                a: 0x01,
+                f: 0xB0,
+
+                b: 0x00,
+                c: 0x13,
+
+                d: 0x00,
+                e: 0xD8,
+
+                h: 0x01,
+                l: 0x4D,
+
+                pc: 0x0100,
+                sp: 0xFFFE,
             },
 
             // Clock begins at 0
-            clock: Clock { m: 0, t: 0 },
+            clock: 0,
 
             // status enum starts as running.
             status: Status::RUNNING,
+
+            use_cb_table: false,
 
             // MMU Unit
             mmu
         }
     }
 
-    // Basic execution of the current operation at the program-counter (PC) register
+    /// Run the CPU, fetching/decoding/executing at the PC until otherwise halted / interrupted
     pub fn step(&mut self) {
 
-        // Get the opcode number to execute
-        let opcode = self.mmu.read(self.registers.pc);
+        loop {
 
-        // Fetch the opcode
-        let opcode = instructions::Opcode::lookup(opcode);
+            // Get the opcode number to execute
+            let opcode = self.byte();
 
-        // Execute
-        (opcode.instruction)(self);
+            // Execute from standard table
+            let cycles = self.call_instruction(opcode);
 
-        // Adjust clock and program counter (PC)
-        self.clock.m += opcode.clock_timing.m;
-        self.clock.t += opcode.clock_timing.t;
-
-        self.registers.pc += opcode.size;
-    }
-
-    // Set CPU F flags
-
-    // Zero
-
-    pub fn set_zero(&mut self) {
-        self.registers.f |= 0x80;
-    }
-
-    pub fn unset_zero(&mut self) {
-        self.registers.f ^= 0x80;
-    }
-
-    pub fn is_zero(&self) -> bool {
-        self.registers.f & 0x80 != 0
-    }
-
-    // Subtraction
-
-    pub fn set_subtraction(&mut self) {
-        self.registers.f |= 0x40;
-    }
-
-    pub fn unset_subtraction(&mut self) {
-        self.registers.f ^= 0x40;
-    }
-
-    pub fn is_subtraction(&self) -> bool {
-        self.registers.f & 0x40 != 0
-    }
-
-    // Half Carry
-
-    pub fn set_half_carry(&mut self) {
-        self.registers.f |= 0x20;
-    }
-
-    pub fn unset_half_carry(&mut self) {
-        self.registers.f ^= 0x20;
-    }
-
-    pub fn is_half_carry(&self) -> bool {
-        self.registers.f & 0x20 != 0
-    }
-
-    // Full Carry
-
-    pub fn set_full_carry(&mut self) {
-        self.registers.f |= 0x10;
-    }
-
-    pub fn unset_full_carry(&mut self) {
-        self.registers.f ^= 0x10;
-    }
-
-    pub fn is_full_carry(&self) -> bool {
-        self.registers.f & 0x10 != 0
-    }
-
-    // Context specific flag methods - give parameters to see whether flags should be set
-
-    pub fn zero(&mut self, result: u16) {
-        match result {
-            0 => self.set_zero(),
-            _ => self.unset_zero()
-        };
-    }
-
-    pub fn half_carry(&mut self, before: u8, after: u8) -> bool {
-        (after >> 4) > (before >> 4)
+            // Adjust clock and program counter (PC)
+            self.clock += cycles as u64;
+        }
     }
 
     /*************************/
     /*          ALU          */
     /*************************/
 
-    // Add
+    /*        Addition       */
 
-    pub fn add_8(&mut self, s: u8, t: u8, flag: bool) -> u8 {
-
-        let result = s.wrapping_add(t);
-
-        if flag {
-            self.zero(result as u16);
-
-            /*
-            self.o = false;
-            self.h = false; // TODO - Detect half carry  (s & 0xF) + (t & 0xF) > 0xF,
-            self.c = false; // TODO - detect carry (s as u16 + t as u16) > 0xFF
-             */
-        }
-
-        result
-    }
-
-    pub fn add_16(&mut self, s: u16, t: u16, flag: bool) -> u16 {
+    /// Add two u8s together, handling overflow and the Z/N/H/C flags of the F register
+    pub fn add_8(&mut self, s: u8, t: u8) -> u8 {
 
         let result = s.wrapping_add(t);
 
-        if flag {
+        match result {
+            0 => self.set_zero(),
+            _ => self.unset_zero()
+        };
 
-            /*
-            self.o = false;
-            self.h = false; // TODO - Detect half carry  (s & 0xF) + (t & 0xF) > 0xF,
-            self.c = false; // TODO - detect carry (s as u16 + t as u16) > 0xFF
-             */
-        }
+        self.unset_subtraction();
+
+        match ((s & 0xF) + (t & 0xF)) > 0xF {
+            true => self.set_half_carry(),
+            false => self.unset_half_carry()
+        };
+
+        match s.checked_add(t) {
+            None => self.set_full_carry(),
+            Some(_) => self.unset_full_carry()
+        };
 
         result
     }
 
-    // Sub
+    /// Add two u16s together, handling overflow and the Z/N/H/C flags of the F register
+    pub fn add_16(&mut self, s: u16, t: u16) -> u16 {
 
-    pub fn sub_8(&mut self, s: u8, t: u8, flag: bool) -> u8 {
+        let result = s.wrapping_add(t);
+
+        self.unset_subtraction();
+
+        match (s & 0x07FF) + (t & 0x07FF) > 0x07FF  {
+            true => self.set_half_carry(),
+            false => self.unset_half_carry()
+        };
+
+        match s.checked_add(t) {
+            None => self.set_full_carry(),
+            Some(_) => self.unset_full_carry()
+        };
+
+        result
+    }
+
+    /// ADC - Add the given value and the carry (C) flag to the accumulator (A) register
+    pub fn adc_8(&mut self, s: u8) {
+
+        let carry = match self.is_full_carry() {
+            true => 1,
+            false => 0
+        };
+
+        self.registers.a = self.add_8(self.registers.a, s + carry);
+    }
+
+    /*      Subtraction      */
+
+    /// Subtract t (u8) from s (u8), handling underflow and the Z/N/H/C flags of the F register
+    pub fn sub_8(&mut self, s: u8, t: u8) -> u8 {
 
         let result = s.wrapping_sub(t);
 
-        if flag {
-            self.zero(result as u16);
-        }
+        match result == 0 {
+            true => self.set_zero(),
+            false => self.unset_zero()
+        };
+
+        self.set_subtraction();
+        match ((s & 0xf) - (t & 0xf)) & 0x10 != 0 {
+            true => self.set_half_carry(),
+            false => self.unset_half_carry()
+        };
 
         result
     }
 
-    pub fn sub_16(&mut self, s: u16, t: u16, flag: bool) -> u16 {
+    /*     Incrementation    */
 
-        let result = s.wrapping_sub(t);
+    /// Increment a given u8, handling overflow and the Z/N/H/C flags of the F register
+    pub fn inc_8(&mut self, s: u8) -> u8 {
 
-        if flag {
-            self.zero(result as u16);
-        }
+        // Save the carry flag as it is changed by sub
+        let carry = self.is_full_carry();
+        let result = self.add_8(s, 1);
 
-        result
-    }
-
-    // Inc
-
-    pub fn inc_8(&mut self, s: u8, flag: bool) -> u8 {
-
-        let result = s.wrapping_add(1);
-
-        if flag {
-
-        }
+        // Restore the carry flag state after sub operation
+        match carry {
+            true => self.set_full_carry(),
+            false => self.unset_full_carry()
+        };
 
         result
     }
 
-    pub fn inc_16(&mut self, s: u16, flag: bool) -> u16 {
+    /// Increment a given u16, handling overflow and the Z/N/H/C flags of the F register
+    pub fn inc_16(&mut self, s: u16) -> u16 {
 
-        let result = s.wrapping_add(1);
+        // Save the carry flag as it is changed by sub
+        let carry = self.is_full_carry();
+        let result = self.add_16(s, 1);
 
-        if flag {
-
-        }
+        // Restore the carry flag state after sub operation
+        match carry {
+            true => self.set_full_carry(),
+            false => self.unset_full_carry()
+        };
 
         result
     }
 
-    // Dec
+    /*      Decrementing     */
 
-    pub fn dec_8(&mut self, s: u8, flag: bool) -> u8 {
+    /// Decrement a given u8, handling overflow and the Z/N/H/C flags of the F register
+    pub fn dec_8(&mut self, s: u8) -> u8 {
 
+        // Save the carry flag as it is changed by sub
+        let carry = self.is_full_carry();
+        let result = self.sub_8(s, 1);
+
+        // Restore the carry flag state after sub operation
+        match carry {
+            true => self.set_full_carry(),
+            false => self.unset_full_carry()
+        };
+
+        result
+    }
+
+    /// Decrement a given u16, handling overflow and the Z/N/H/C flags of the F register
+    pub fn dec_16(&mut self, s: u16) -> u16 {
+
+        // Save the carry flag as it is changed by sub
+        let carry = self.is_full_carry();
         let result = s.wrapping_sub(1);
 
-        if flag {
-
-        }
+        // Restore the carry flag state after sub operation
+        match carry {
+            true => self.set_full_carry(),
+            false => self.unset_full_carry()
+        };
 
         result
     }
 
+    /*   Bitwise Operations  */
 
-    // Conversions
+    /// AND - AND the given value with the accumulator register (A) and store the result in A
+    pub fn and(&mut self, t: u8) {
 
+        self.registers.a &= t;
+
+        match self.registers.a == 0 {
+            true => self.set_zero(),
+            false => self.unset_zero()
+        };
+
+        self.unset_subtraction();
+        self.unset_half_carry();
+        self.set_full_carry();
+    }
+
+    /// XOR - XOR the given value with the accumulator register (A) and store the result in A
+    pub fn xor(&mut self, v: u8) {
+
+        self.registers.a ^= v;
+
+        match self.registers.a == 0 {
+            true => self.set_zero(),
+            false => self.unset_zero()
+        };
+
+        self.unset_subtraction();
+        self.unset_half_carry();
+        self.unset_full_carry();
+    }
+
+    /*  Program Counter (PC) */
+
+    pub fn byte(&mut self) -> u8 {
+        let next_byte = self.mmu.read(self.registers.pc);
+        self.registers.pc += 1;
+        next_byte
+    }
+
+    pub fn word(&mut self) -> u16 {
+        let lower = self.byte();
+        let upper = self.byte();
+        Z80::u16_from_u8(upper, lower)
+    }
+
+    /*   Stack Pointer (SP)  */
+
+    /// Push 16 bits to the stack (SP)
+    pub fn push_sp(&mut self, v: u16) {
+        let value = Z80::u8_pair(v);
+        self.registers.sp -= 2;
+        self.mmu.write(value.1, self.registers.sp);
+        self.mmu.write(value.0, self.registers.sp+1);
+    }
+
+    /// Pop and return 16 bits from the stack (SP)
+    pub fn pop_sp(&mut self) -> u16 {
+        let lower = self.mmu.read(self.registers.sp);
+        let upper = self.mmu.read(self.registers.sp+1);
+        self.registers.sp += 2;
+        Z80::u16_from_u8(upper, lower)
+    }
+
+    /*        Control       */
+
+    // RST - Restore the PC by popping the stack by 16 bits to acquire a previously-pushed location
+    pub fn rst(&mut self, rst: u16) {
+        self.push_sp(self.registers.pc);
+        self.registers.pc = rst;
+    }
+
+    /// CALL - Store the current PC address on the stack and move PC to the given address
+    pub fn call(&mut self, addr: u16) {
+        self.push_sp(self.registers.pc);
+        self.registers.pc = addr;
+    }
+
+    /// RET - Pop the stack by 16 bits and set the PC to the result
+    pub fn ret(&mut self) {
+        self.registers.pc = self.pop_sp();
+    }
+
+    /// JR - Adjust the PC by the given i8
+    pub fn jr(&mut self, s: i8) {
+        self.registers.pc = ((self.registers.pc as u32 as i32) + (s as i32)) as u16;
+    }
+
+    /*************************/
+    /*      Conversions      */
+    /*************************/
+
+    /// Convert two u8s (given in the order of higher order, lower order) into a u16
     pub fn u16_from_u8(x: u8, y: u8) -> u16 {
         ((x << 8) + y).into()
     }
 
+    /// Convert a u16 into two u8s (given in the order of higher order, lower order)
     pub fn u8_pair(x: u16) -> (u8, u8) {
         ((x >> 8) as u8, x as u8)
     }
@@ -289,184 +359,123 @@ impl Z80 {
     /*     Register Pairs    */
     /*************************/
 
-    // AF
+    /// Get the register pair AF as a u16
     pub fn get_af(&self) -> u16 {
         Z80::u16_from_u8(self.registers.a, self.registers.f)
     }
 
+    /// Set the register pair AF to the given u16
     pub fn set_af(&mut self, x: u16) {
         let u8_pair = Z80::u8_pair(x);
         self.registers.a = u8_pair.0;
         self.registers.f = u8_pair.1;
     }
 
-    // BC
+    /// Get the register pair BC as a u16
     pub fn get_bc(&self) -> u16 {
         Z80::u16_from_u8(self.registers.b, self.registers.c)
     }
 
+    /// Set the register pair BC to the given u16
     pub fn set_bc(&mut self, x: u16) {
         let u8_pair = Z80::u8_pair(x);
         self.registers.b = u8_pair.0;
         self.registers.c = u8_pair.1;
     }
 
-    // DE
+    /// Get the register pair DE as a u16
     pub fn get_de(&self) -> u16 {
         Z80::u16_from_u8(self.registers.d, self.registers.e)
     }
 
+    /// Set the register pair DE to the given u16
     pub fn set_de(&mut self, x: u16) {
         let u8_pair = Z80::u8_pair(x);
         self.registers.d = u8_pair.0;
         self.registers.e = u8_pair.1;
     }
 
-    // HL
+    /// Get the register pair HL as a u16
     pub fn get_hl(&self) -> u16 {
         Z80::u16_from_u8(self.registers.h, self.registers.l)
     }
 
+    /// Set the register pair HL to the given u16
     pub fn set_hl(&mut self, x: u16) {
         let u8_pair = Z80::u8_pair(x);
         self.registers.h = u8_pair.0;
         self.registers.l = u8_pair.1;
     }
 
+    /*************************/
+    /*   Z/N/H/C Flags (F)   */
+    /*************************/
 
+    /*     Zero (Z) Flag     */
 
+    /// Set the Zero (Z) flag of the F register
+    pub fn set_zero(&mut self) {
+        self.registers.f |= 0x80;
+    }
 
+    /// Unset the Zero (Z) flag of the F register
+    pub fn unset_zero(&mut self) {
+        self.registers.f ^= 0x80;
+    }
 
-    // Register-specific arithmetic, setting necessary flags
-    /*
-        pub fn register_add(&mut self, source: u8, amount: u8) -> (u8, FlagResult, bool) {
+    /// Check the Zero(Z) flag of the F register
+    pub fn is_zero(&self) -> bool {
+        self.registers.f & 0x80 != 0
+    }
 
-            let mut result: u8;
-            let mut carry: bool;
+    /*   Subtract (N) flag   */
 
-            let overflow = match source.checked_add(amount) {
+    /// Set the Subtract (N) flag of the F register
+    pub fn set_subtraction(&mut self) {
+        self.registers.f |= 0x40;
+    }
 
-                // No overflow - set as normal and return None
-                Some(x) => {
-                    carry = false;
-                    result = x;
-                    false
-                },
+    /// Unset the Subtract (N) flag of the F register
+    pub fn unset_subtraction(&mut self) {
+        self.registers.f ^= 0x40;
+    }
 
-                // Overflow, recompute, set flags
-                None => {
-                    carry = true;
-                    result = source + amount;
-                    true
-                }
-            };
+    /// Check the Subtract (N) flag of the F register
+    pub fn is_subtraction(&self) -> bool {
+        self.registers.f & 0x40 != 0
+    }
 
-            let flags = FlagResult {
-                z: result == 0,
-                o: false,
-                c: carry,
-                h: self.half_carry(source, result)
-            };
+    /*  Half Carry (H)  Flag */
 
-            (result, flags, overflow)
-        }
+    /// Set the Half Carry (H) flag of the F register
+    pub fn set_half_carry(&mut self) {
+        self.registers.f |= 0x20;
+    }
 
-        pub fn register_sub(&mut self, source: u8, amount: u8) -> (u8, FlagResult, bool) {
+    /// Unset the Half Carry (H) flag of the F register
+    pub fn unset_half_carry(&mut self) {
+        self.registers.f ^= 0x20;
+    }
 
-            let mut result: u8;
-            let mut carry: bool;
+    /// Check the Half Carry (H) flag of the F register
+    pub fn is_half_carry(&self) -> bool {
+        self.registers.f & 0x20 != 0
+    }
 
-            let underflow = match register.checked_sub(amount) {
+    /*     Carry (C) Flag    */
 
-                // No underflow
-                Some(x) => {
-                    carry = false;
-                    result = x;
-                    false
-                },
+    /// Set the Carry (C) flag of the F register
+    pub fn set_full_carry(&mut self) {
+        self.registers.f |= 0x10;
+    }
 
-                // Underflow
-                None => {
-                    carry = true;
-                    result = source - amount;
-                    true
-                }
-            };
+    /// Unset the Carry (C) flag of the F register
+    pub fn unset_full_carry(&mut self) {
+        self.registers.f ^= 0x10;
+    }
 
-            let flags = FlagResult {
-                z: result == 0,
-                o: true,
-                c: carry,
-                h: self.half_carry(source, result)
-            };
-
-            (result, flags, underflow)
-        }
-
-        pub fn pair_add(&mut self, r_upper: u8, r_lower: u8, add_upper: u8, add_lower :u8) -> (u8, u8, FlagResult, bool) {
-
-            let mut u_result = self.register_add(r_upper, add_upper);
-            let mut l_result = self.register_add(r_lower, add_lower);
-
-            // No overflow from lower into upper - finish early
-            if let false = l_result.2 {
-
-                u_result.1.z &= l_result.1.z;
-                u_result.c |= l_result.1.c;
-                u_result.h |= l_result.1.h;
-
-                return (u_result.0, l_result.0, u_result.1, false);
-            }
-
-            // overflow from lower into upper
-            let c_result = self.register_add(upper_result, l_result.0);
-
-            u_result.1.c |= c_result.1.c;
-            u_result.1.h |= c_result.1.h;
-
-            match c_result.2 {
-
-                true => {
-                    u_result.1.z = true;
-                    (0, 0, u_result.1, true)
-                },
-
-                false => {
-                    u_result.1.z = false;
-                    (c_result.0, 0, u_result.1, false)
-                }
-            }
-        }
-
-        pub fn pair_sub(&mut self, r_upper: &mut u8, r_lower: &mut u8, sub_upper: u8, sub_lower: u8) -> (u8, u8, FlagResult) {
-
-            let original_half_carry = self.is_half_carry();
-
-            if let Some(x) = self.register_sub(r_lower, sub_lower) {
-                self.register_sub(r_upper, x);
-            }
-
-            self.register_sub(r_upper, sub_upper);
-
-            match original_half_carry {
-                true => self.set_half_carry(),
-                false => self.unset_half_carry()
-            };
-        }
-    */
-
-
-    /*
-    pub fn sub_16(s: u16, t: u16) -> (u16, FlagResult) {
-
-        let result = s.wrapping_sub(t);
-
-        (result, FlagResult {
-            z: result == 0,
-            o: true,
-            h: (s &)
-        })
-    }*/
-
-
+    /// Check the Carry (C) flag of the F register
+    pub fn is_full_carry(&self) -> bool {
+        self.registers.f & 0x10 != 0
+    }
 }
