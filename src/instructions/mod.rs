@@ -1005,7 +1005,7 @@ impl Opcode {
         Opcode {
             size: 1,
             instruction: |cpu: &mut Z80| {
-                cpu.registers.a = cpu.adc_8(cpu.registers.a, cpu.registers.b);
+                cpu.adc_8(cpu.registers.b);
                 4
             }
         }
@@ -1016,7 +1016,7 @@ impl Opcode {
         Opcode {
             size: 1,
             instruction: |cpu: &mut Z80| {
-                cpu.registers.a = cpu.adc_8(cpu.registers.a, cpu.registers.c);
+                cpu.adc_8(cpu.registers.c);
                 4
             }
         }
@@ -1027,7 +1027,7 @@ impl Opcode {
         Opcode {
             size: 1,
             instruction: |cpu: &mut Z80| {
-                cpu.registers.a = cpu.adc_8(cpu.registers.a, cpu.registers.d);
+                cpu.adc_8(cpu.registers.d);
                 4
             }
         }
@@ -1038,7 +1038,7 @@ impl Opcode {
         Opcode {
             size: 1,
             instruction: |cpu: &mut Z80| {
-                cpu.registers.a = cpu.adc_8(cpu.registers.a, cpu.registers.e);
+                cpu.adc_8(cpu.registers.e);
                 4
             }
         }
@@ -1049,7 +1049,7 @@ impl Opcode {
         Opcode {
             size: 1,
             instruction: |cpu: &mut Z80| {
-                cpu.registers.a = cpu.adc_8(cpu.registers.a, cpu.registers.h);
+                cpu.adc_8(cpu.registers.h);
                 4
             }
         }
@@ -1060,7 +1060,7 @@ impl Opcode {
         Opcode {
             size: 1,
             instruction: |cpu: &mut Z80| {
-                cpu.registers.a = cpu.adc_8(cpu.registers.a, cpu.registers.l);
+                cpu.adc_8(cpu.registers.l);
                 4
             }
         }
@@ -1072,7 +1072,7 @@ impl Opcode {
             size: 1,
             instruction: |cpu: &mut Z80| {
                 let value = cpu.mmu.read(cpu.get_hl());
-                cpu.registers.a = cpu.adc_8(cpu.registers.a, value);
+                cpu.adc_8(value);
                 8
             }
         }
@@ -1083,7 +1083,7 @@ impl Opcode {
         Opcode {
             size: 1,
             instruction: |cpu: &mut Z80| {
-                cpu.registers.a = cpu.adc_8(cpu.registers.a, cpu.registers.a);
+                cpu.adc_8(cpu.registers.a);
                 4
             }
         }
