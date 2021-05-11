@@ -1037,4 +1037,106 @@ impl Z80 {
         self.rst(0x28);
         16
     }
+
+
+
+    /***************** CB Table *****************/
+
+    // 0xCB00 - RLC B
+    fn rlc_b_0xcb00(&mut self) -> u64 {
+        self.registers.b = self.rlc(self.registers.b);
+        8
+    }
+
+    // 0xCB01 - RLC C
+    fn rlc_c_0xcb01(&mut self) -> u64 {
+        self.registers.c = self.rlc(self.registers.c);
+        8
+    }
+
+    // 0xCB02 - RLC D
+    fn rlc_d_0xcb02(&mut self) -> u64 {
+        self.registers.d = self.rlc(self.registers.d);
+        8
+    }
+
+    // 0xCB03 - RLC E
+    fn rlc_e_0xcb03(&mut self) -> u64 {
+        self.registers.e = self.rlc(self.registers.e);
+        8
+    }
+
+    // 0xCB04 - RLC H
+    fn rlc_h_0xcb04(&mut self) -> u64 {
+        self.registers.h = self.rlc(self.registers.h);
+        8
+    }
+
+    // 0xCB05 - RLC L
+    fn rlc_l_0xcb05(&mut self) -> u64 {
+        self.registers.l = self.rlc(self.registers.l);
+        8
+    }
+
+    // 0xCB06 - RLC (HL)
+    fn rlc_hl_0xcb06(&mut self) -> u64 {
+        let value = self.rlc(self.mmu.read(self.get_hl()));
+        self.mmu.write(value, self.get_hl());
+        16
+    }
+
+    // 0xCB07 - RLC A
+    fn rlc_a_0xcb07(&mut self) -> u64 {
+        self.registers.a = self.rlc(self.registers.a);
+        8
+    }
+
+    // 0xCB08 - RRC B
+    fn rrc_b_0xcb08(&mut self) -> u64 {
+        self.registers.b = self.rrc(self.registers.b);
+        8
+    }
+
+    // 0xCB09 - RRC C
+    fn rrc_c_0xcb09(&mut self) -> u64 {
+        self.registers.c = self.rrc(self.registers.c);
+        8
+    }
+
+    // 0xCB0A - RRC D
+    fn rrc_d_0xcb0a(&mut self) -> u64 {
+        self.registers.d = self.rrc(self.registers.d);
+        8
+    }
+
+    // 0xCB0B - RRC E
+    fn rrc_e_0xcb0b(&mut self) -> u64 {
+        self.registers.e = self.rrc(self.registers.e);
+        8
+    }
+
+    // 0xCB0C - RRC H
+    fn rrc_h_0xcb0c(&mut self) -> u64 {
+        self.registers.h = self.rrc(self.registers.h);
+        8
+    }
+
+    // 0xCB0D - RRC L
+    fn rrc_l_0xcb0d(&mut self) -> u64 {
+        self.registers.l = self.rrc(self.registers.l);
+        8
+    }
+
+    // 0xCB0E - RRC (HL)
+    fn rrc_hl_0xcb0e(&mut self) -> u64 {
+        let value = self.rrc(self.mmu.read(self.get_hl()));
+        self.mmu.write(value, self.get_hl());
+        16
+    }
+
+    // 0xCB0F - RRC A
+    fn rrc_a_0xcb0f(&mut self) -> u64 {
+        self.registers.a = self.rrc(self.registers.a);
+        8
+    }
 }

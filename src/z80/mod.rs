@@ -285,6 +285,48 @@ impl Z80 {
         self.unset_full_carry();
     }
 
+    /// RLC - Rotate a number left, and copy the left-most bit shifted into the C register
+    pub fn rlc(&mut self, v: u8) -> u8 {
+
+        let result = (v << 1) | (v >> 7);
+
+        match result == 0 {
+            true => self.set_zero(),
+            false => self.unset_zero()
+        };
+
+        self.unset_subtraction();
+        self.unset_half_carry();
+
+        match result & 0x01 == 0 {
+            true => self.unset_full_carry(),
+            false => self.set_full_carry()
+        };
+
+        result
+    }
+
+    /// RRC - Rotate a number right, and copy the right-most bit shifted into the C register
+    pub fn rrc(&mut self, v: u8) -> u8 {
+
+        let result = (v >> 1) | (v << 7);
+
+        match result == 0 {
+            true => self.set_zero(),
+            false => self.unset_zero()
+        };
+
+        self.unset_subtraction();
+        self.unset_half_carry();
+
+        match result & 0xF0 == 0 {
+            true => self.unset_full_carry(),
+            false => self.set_full_carry()
+        };
+
+        result
+    }
+
     /*  Program Counter (PC) */
 
     pub fn byte(&mut self) -> u8 {
