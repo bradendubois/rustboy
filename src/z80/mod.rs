@@ -358,6 +358,16 @@ impl Z80 {
         result
     }
 
+    // BIT - Store the complement of bit b of s in the Zero (Z) flag
+    pub fn bit(&mut self, s: u8, b: u8) {
+        match (s & (1 << b)) == 0 {
+            true => self.set_zero(),
+            false => self.unset_zero()
+        };
+        self.unset_subtraction();
+        self.set_half_carry();
+    }
+
     /*  Program Counter (PC) */
 
     pub fn byte(&mut self) -> u8 {
