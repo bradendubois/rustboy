@@ -354,14 +354,14 @@ impl Z80 {
 
     // ADC
 
-    pub fn adc_8(&mut self, s: u8, t: u8) -> u8 {
+    pub fn adc_8(&mut self, s: u8) {
 
         let carry = match self.is_full_carry() {
             true => 1,
             false => 0
         };
 
-        self.add_8(s, t + carry, true)
+        self.registers.a = self.add_8(self.registers.a, s + carry, true);
     }
 
     // AND
@@ -396,6 +396,22 @@ impl Z80 {
         self.unset_subtraction();
         self.unset_half_carry();
         self.unset_full_carry();
+    }
+
+    // Push Stack
+
+    pub fn push_sp(&mut self, v: u16) {
+        let value = Z80::u8_pair(v);
+        self.registers.sp -= 2;
+        self.mmu.write(value.1, self.registers.sp);
+        self.mmu.write(value.0, self.registers.sp+1);
+    }
+
+    pub fn pop_sp(&mut self) -> u16 {
+        let lower = self.mmu.read(self.registers.sp);
+        let upper = self.mmu.read(self.registers.sp+1);
+        self.registers.sp += 2;
+        Z80::u16_from_u8(upper, lower)
     }
 
     // Conversions
