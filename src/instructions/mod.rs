@@ -31,6 +31,24 @@ impl Z80 {
                     0x0E => self.ld_c_0x0e(),
                     0x0F => self.rrca_0x0f(),
 
+                    // 0x1x
+                    0x10 => self.stop_0x10(),
+                    0x11 => self.ld_de_0x11(),
+                    0x12 => self.ld_de_a_0x12(),
+                    0x13 => self.inc_de_0x13(),
+                    0x14 => self.inc_d_0x14(),
+                    0x15 => self.dec_d_0x15(),
+                    0x16 => self.ld_d_0x16(),
+                    0x17 => self.rla_0x17(),
+                    0x18 => self.jr_s8_0x18(),
+                    0x19 => self.add_hl_de_0x19(),
+                    0x1A => self.ld_a_de_0x1a(),
+                    0x1B => self.dec_de_0x1b(),
+                    0x1C => self.inc_e_0x1c(),
+                    0x1D => self.dec_e_0x1d(),
+                    0x1E => self.ld_e_d8_0x1e(),
+                    0x1F => self.rra_0x1f(),
+
                     // 0x2X
                     0x20 => self.jr_nz_s8_0x20(),
                     0x21 => self.ld_hl_d16_0x21(),
@@ -342,7 +360,7 @@ impl Z80 {
     }
 
     ///0x17 - RLA : Rotate contents of register A to the left,
-    fn rla(&mut self) -> u64 {
+    fn rla_0x17(&mut self) -> u64 {
         cpu.unset_zero();
         cpu.unset_subtraction();
         cpu.unset_half_carry();
