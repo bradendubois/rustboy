@@ -674,6 +674,14 @@ impl Z80 {
         8
     }
 
+    // 0x3B - DEC SP
+    fn dec_sp_0x3b(&mut self) -> u64{
+        self.registers.sp = self.dec_16(self.registers.sp);
+        8
+    }
+
+    //0x3C -
+
     // 0x40 - LD B B
     fn ld_b_b_0x40(&mut self) -> u64 {
         self.registers.b = self.registers.b;      // ah, yes
