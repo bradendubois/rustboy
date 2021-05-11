@@ -645,8 +645,34 @@ impl Z80 {
         4
     }
 
+    // 0x38 JR C, s8
+    fn jr_c_s8_0x38(&mut self) -> u64 {
+        match self.is_full_carry(){
+            true => {
+                let s8 = self.byte();
+                self.jr(s8 as i8);
+                12
+            },
+            false => 8
+        }
+    }
 
+    // 0x39 - ADD HL SP
+    fn add_hl_sp_0x39(&mut self) -> u64{
+        let sp = self.registers.sp;
+        let hl = self.add_16(hl, sp);
+        self.set_hl(hl);
+        8
+    }
 
+    //0x3A - LD A, (HL-)
+    fn ld_a_hls_0x3a(&mut self) -> u64{
+        let mut hl = self.get_hl();
+        self.registers.a = self.mmu.read(hl);
+        hl = self.inc_16(hl);
+        self.set_hl(hl);
+        8
+    }
 
     // 0x40 - LD B B
     fn ld_b_b_0x40(&mut self) -> u64 {
