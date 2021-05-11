@@ -203,20 +203,9 @@ impl Z80 {
         result
     }
 
-    /// Increment a given u16, handling overflow and the Z/N/H/C flags of the F register
+    /// Increment a given u16, handling overflow
     pub fn inc_16(&mut self, s: u16) -> u16 {
-
-        // Save the carry flag as it is changed by sub
-        let carry = self.is_full_carry();
-        let result = self.add_16(s, 1);
-
-        // Restore the carry flag state after sub operation
-        match carry {
-            true => self.set_full_carry(),
-            false => self.unset_full_carry()
-        };
-
-        result
+        s.wrapping_add(1)
     }
 
     /*      Decrementing     */
@@ -320,6 +309,48 @@ impl Z80 {
         self.unset_half_carry();
 
         match result & 0xF0 == 0 {
+            true => self.unset_full_carry(),
+            false => self.set_full_carry()
+        };
+
+        result
+    }
+
+    /// SLA - Shift a number left, and copy the left-most bit shifted into the C register
+    pub fn sla(&mut self, v: u8) -> u8 {
+
+        let result = v << 1;
+
+        match result == 0 {
+            true => self.set_zero(),
+            false => self.unset_zero()
+        };
+
+        self.unset_subtraction();
+        self.unset_half_carry();
+
+        match v & 0xF0 == 0 {
+            true => self.unset_full_carry(),
+            false => self.set_full_carry()
+        };
+
+        result
+    }
+
+    /// SRA - Shift a number right, and copy the right-most bit shifted into the C register
+    pub fn sra(&mut self, v: u8) -> u8 {
+
+        let result = v >> 1;
+
+        match result == 0 {
+            true => self.set_zero(),
+            false => self.unset_zero()
+        };
+
+        self.unset_subtraction();
+        self.unset_half_carry();
+
+        match v & 0x01 == 0 {
             true => self.unset_full_carry(),
             false => self.set_full_carry()
         };
