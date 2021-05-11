@@ -680,7 +680,19 @@ impl Z80 {
         8
     }
 
-    //0x3C -
+    //0x3C - INC A
+    fn inc_a_0x3c(&mut self) -> u64{
+        self.registers.a = self.inc_8(self.registers.a);
+        4
+    }
+
+    //0x3D - DEC A
+    fn dec_a_0x3d(&mut self) -> u64 {
+        self.registers.a = self.dec_8(self.registers.a);
+        4
+    }
+
+
 
     // 0x40 - LD B B
     fn ld_b_b_0x40(&mut self) -> u64 {
