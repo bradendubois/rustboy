@@ -692,6 +692,14 @@ impl Z80 {
         4
     }
 
+    //0x3E - LD A, d8
+    fn ld_a_d8_0x3e(&mut self) -> u64 {
+        self.registers.a = self.byte();
+        8
+    }
+
+    //0x3F
+
 
 
     // 0x40 - LD B B
