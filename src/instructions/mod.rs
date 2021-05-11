@@ -1,12 +1,12 @@
 use super::z80::{Z80};
 
 
-
 impl Z80 {
 
+    /// Call the instruction corresponding the given opcode, and return the number of cycles taken
     pub fn call_instruction(&mut self, code: u8) -> u64 {
 
-        match self.cb_interpretation {
+        match self.use_cb_table {
 
             // Default LR35902 Opcodes
             false => {
@@ -162,10 +162,11 @@ impl Z80 {
             true => {
 
                 // Can safely unset the flag and interpret the *next* instruction normally
-                self.cb_interpretation = false;
+                self.use_cb_table = false;
 
                 match code {
 
+                    // Dummy line just to test
                     0x00 => 3,
 
                     _ => panic!("Unmapped CB prefix opcode {}", code)
@@ -201,7 +202,7 @@ impl Z80 {
 
     // 0x04 - INC B
     fn inc_b_0x04(&mut self) -> u64 {
-        self.registers.b = self.dec_8(self.registers.b);
+        self.registers.b = self.inc_8(self.registers.b);
         4
     }
 
@@ -349,18 +350,18 @@ impl Z80 {
 
     // 0x27 - DAA
     fn daa_0x27(&mut self) -> u64 {
-        let mut a = self.registers.a;
+
         let mut adj = 0x00;
 
         if self.is_full_carry() { adj |= 0x60; }
         if self.is_half_carry() { adj |= 0x06; }
 
         if !self.is_subtraction() {
-            if a & 0x0F > 0x09 { adj |= 0x06; };
-            if a > 0x99 { adj |= 0x60; };
+            if self.registers.a & 0x0F > 0x09 { adj |= 0x06; };
+            if self.registers.a > 0x99 { adj |= 0x60; };
         }
 
-        a = a.wrapping_add(adj);
+        self.registers.a = self.registers.a.wrapping_add(adj);
 
         match adj >= 0x60 {
             true => self.set_full_carry(),
@@ -368,9 +369,12 @@ impl Z80 {
         };
 
         self.unset_half_carry();
-        self.zero(a.into());
 
-        self.registers.a = a;
+        match self.registers.a == 0 {
+            true => self.set_zero(),
+            false => self.unset_zero()
+        };
+
         4
     }
 
@@ -848,9 +852,9 @@ impl Z80 {
         match self.is_zero() {
             false => {
                 self.registers.pc = value;
-                4
+                16
             },
-            true => 3
+            true => 12
         }
     }
 
@@ -925,7 +929,7 @@ impl Z80 {
 
     // 0xCB - CB PREFIX
     fn cb(&mut self) -> u64 {
-        self.cb_interpretation = true;
+        self.use_cb_table = true;
         4
     }
 
@@ -945,7 +949,7 @@ impl Z80 {
     fn call_a16_0xcd(&mut self) -> u64 {
         let a16 = self.word();
         self.call(a16);
-        6
+        24
     }
 
     // 0xCE - ADC A d8
