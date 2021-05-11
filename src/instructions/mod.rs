@@ -1267,4 +1267,240 @@ impl Opcode {
             }
         }
     }
+
+
+    // 0xC0 - RET NZ
+    fn ret_nz() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                match cpu.is_zero() {
+                    false => 8,
+                    true => {
+                        let lower = cpu.mmu.read(cpu.registers.sp);
+                        cpu.registers.sp += 1;
+                        let upper = cpu.mmu.read(cpu.registers.sp);
+                        cpu.registers.sp += 1;
+                        cpu.registers.pc = Z80::u16_from_u8(upper, lower);
+                        20
+                    }
+                }
+            }
+        }
+    }
+
+    // 0xC1 - POP BC
+    fn pop_bc() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                let lower = cpu.mmu.read(cpu.registers.sp);
+                cpu.registers.sp += 1;
+                let upper = cpu.mmu.read(cpu.registers.sp);
+                cpu.registers.sp += 1;
+                cpu.set_bc(Z80::u16_from_u8(upper, lower));
+                12
+            }
+        }
+    }
+
+    // 0xC2 - JP NZ a16
+    fn jp_nz_a16() -> Opcode {
+        Opcode {
+            size: 3,
+            instruction: |cpu: &mut Z80| {
+                let value = cpu.word();
+                match cpu.is_zero() {
+                    false => {
+                        cpu.registers.pc = value;
+                        4
+                    },
+                    true => 3
+                }
+            }
+        }
+    }
+
+    // 0xC3 - JP a16
+    fn jp_a16() -> Opcode {
+        Opcode {
+            size: 3,
+            instruction: |cpu: &mut Z80| {
+                let value = cpu.word();
+                cpu.registers.pc = value;
+                16
+            }
+        }
+    }
+
+    // 0xC4 - CALL NZ a16
+    fn call_nz_a16() -> Opcode {
+        Opcode {
+            size: 3,
+            instruction: |cpu: &mut Z80| {
+                let value = cpu.word();
+                match cpu.is_zero() {
+                    true => {
+                        let address = Z80::u8_pair(cpu.registers.pc);
+                        cpu.registers.sp -= 2;
+                        cpu.mmu.write(address.1, cpu.registers.sp);
+                        cpu.mmu.write(address.0, cpu.registers.sp+1);
+                        cpu.registers.pc = value;
+                        24
+                    },
+                    false => 12
+                }
+            }
+        }
+    }
+
+    // 0xC5 - PUSH BC
+    fn push_bc() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.push_sp(cpu.get_bc());
+                16
+            }
+        }
+    }
+
+    // 0xC6 - ADD d8
+    fn add_a_d8() -> Opcode {
+        Opcode {
+            size: 2,
+            instruction: |cpu: &mut Z80| {
+                let value = cpu.byte();
+                cpu.registers.a = cpu.add_8(cpu.registers.a, value, true);
+                8
+            }
+        }
+    }
+
+    // 0xC7 - RST 00H
+    fn add_rst_00h() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.push_sp(cpu.registers.pc);
+                cpu.registers.pc = 0x00;
+                16
+            }
+        }
+    }
+
+    // 0xC8 - RET Z
+    fn ret_z() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                match cpu.is_zero() {
+                    true => {
+                        let restore = cpu.pop_sp();
+                        cpu.registers.pc = restore;
+                        20
+                    },
+                    false => {
+                        8
+                    }
+                }
+            }
+        }
+    }
+
+    // 0xC9 - RET
+    fn ret() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                let restore = cpu.pop_sp();
+                cpu.registers.pc = restore;
+                16
+            }
+        }
+    }
+
+    // 0xCA - JP Z a16
+    fn jp_z_a16() -> Opcode {
+        Opcode {
+            size: 3,
+            instruction: |cpu: &mut Z80| {
+                let a16 = cpu.word();
+                match cpu.is_zero() {
+                    true => {
+                        cpu.registers.pc = a16;
+                        4
+                    },
+                    false => 3
+                }
+            }
+        }
+    }
+
+    // 0xCB - CB PREFIX
+    fn cb() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                // TODO - Figure out how to index a different table from here
+                4
+            }
+        }
+    }
+
+    // 0xCC - CALL Z a16
+    fn call_z_a16() -> Opcode {
+        Opcode {
+            size: 3,
+            instruction: |cpu: &mut Z80| {
+                let a16 = cpu.word();
+                match cpu.is_zero() {
+                    true => {
+                        cpu.push_sp(cpu.registers.pc);
+                        cpu.registers.pc = a16;
+                        6
+                    },
+                    false => 3
+                }
+            }
+        }
+    }
+
+    // 0xCD - CALL a16
+    fn call_a16() -> Opcode {
+        Opcode {
+            size: 3,
+            instruction: |cpu: &mut Z80| {
+                let a16 = cpu.word();
+                cpu.push_sp(cpu.registers.pc);
+                cpu.registers.pc = a16;
+                6
+            }
+        }
+    }
+
+    // 0xCE - ADC A d8
+    fn call_adc_a_d8() -> Opcode {
+        Opcode {
+            size: 2,
+            instruction: |cpu: &mut Z80| {
+                let d8 = cpu.byte();
+                cpu.adc_8(d8);
+                8
+            }
+        }
+    }
+
+    // 0xCF - RST 08H
+    fn add_rst_08h() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.push_sp(cpu.registers.pc);
+                cpu.registers.pc = 0x08;
+                16
+            }
+        }
+    }
+
 }
