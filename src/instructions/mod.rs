@@ -293,6 +293,130 @@ impl Z80 {
         4
     }
 
+    /// 0x10 - STOP : Stops the system clock and oscillator circuit.
+    /// LCD controller is also stopped.
+    /// Internal RAM register ports remain unchanged
+    /// Cancelled by RESET signal
+    fn stop_0x10(&mut self) -> u64 {
+            self.status = self::Status::STOPPED;
+            4
+    }
+
+    /// 0x11 - LD DE, d16 : Loads 2 bytes of immediate data into registers D,E
+    /// First byte is the lower byte, second byte is higher. Love Little endian -.-
+    fn ld_de_0x11(&mut self) -> u64 {
+        self.registers.d = self.byte();
+        self.registers.e = self.byte();
+        12
+    }
+
+    /// 0x12 - LD (DE), A : store contents of A in memory location specified by registers DE
+    fn ld_de_a_0x12(&mut self) -> u64 {
+        self.mmu.write(self.registers.a, self.get_de());
+        8
+    }
+
+    /// 0x13 - INC DE : Increment the contents of registers DE by 1
+    fn inc_de_0x13(&mut self) -> u64 {
+        let de = self.inc_16(self.get_de);
+        self.set_de(de);
+        8
+    }
+
+    /// 0x14 - INC D : Increment the contents of D
+    fn inc_d_0x14(&mut self) -> u64 {
+        self.registers.d = self.inc_8(self.registers.d);
+        4
+    }
+
+    /// 0x15 - DEC D: Decrement the register D
+    fn dec_d_0x15(&mut self) -> u64 {
+        self.registers.d = self.dec_8(self.registers.d);
+        4
+    }
+
+    /// 0x16 - LD D, d8: Load the 8-bit immediate operand d8 into reg D
+    fn ld_d_0x16(&mut self) -> u64 {
+        self.registers.d = self.byte();
+        8
+    }
+
+    ///0x17 - RLA : Rotate contents of register A to the left,
+    fn rla(&mut self) -> u64 {
+        cpu.unset_zero();
+        cpu.unset_subtraction();
+        cpu.unset_half_carry();
+        let temp = cpu.is_full_carry();
+        if cpu.registers.a & 0x80 == 1 {
+            cpu.set_full_carry()
+        } else {
+            cpu.unset_full_carry()
+        }
+        cpu.registers.a = cpu.registers.a << 1;
+        cpu.registers.a |= temp as u8;
+        4
+    }
+
+    ///0x18 - JR s8 : Jump s8 steps from current address in program counter
+    fn jr_s8_0x18(&mut self) -> u64 {
+
+        let next = self.byte() as i8;
+        self.jr(next);
+        12
+    }
+
+    ///0x19 - ADD HL DE : add the contents of de to hl
+    fn add_hl_de_0x19(&mut self) -> u64 {
+        let val = cpu.add_16(cpu.get_hl(), cpu.get_de(), true);
+        cpu.set_hl(val);
+        8
+    }
+
+    ///0x1A - LD A, (DE) : Load the 8-bit contents of memory specified by de into a
+    fn ld_a_de_0x1a(&mut self) -> u64 {
+        self.registers.a = self.mmu.read(self.get_de());
+        8
+    }
+
+    /// 0x1B - DEC DE : decrement contents of de by 1!
+    ///
+    fn dec_de_0x1b(&mut self) -> u64 {
+        let de = self.get_de();
+        self.set_de(de);
+        8
+
+    }
+
+    /// 0x1C - INC E
+    fn inc_e_0x1c(&mut self) -> u64 {
+        self.registers.e = self.inc_8(self.registers.e);
+        4
+    }
+
+    ///0x1D - DEC E
+    fn dec_e_0x1d(&mut self) -> u64 {
+        self.registers.e = self.dec_8(self.registers.e);
+        4
+    }
+
+    ///0x1E - LD E d8 : load 8 bit operand d8 into e
+    fn ld_e_d8_0x1e(&mut self) -> u64 {
+        self.registers.e = self.byte();
+        8
+
+    }
+
+    ///0x1F - RRA : rotate register A to the right,
+    /// through the carry flag,
+    fn rra_0x1f(&mut self) -> u64 {
+        let temp = self.is_full_carry();
+        self.unset_zero();
+        self.unset_subtraction();
+        self.unset_half_carry();
+        if self.registers.a & 0x01 != 0 {self.set_full_carry()} else{self.unset_full_carry()}
+        cpu.registers.a = cpu.registers.a | (temp as u8) << 7;
+        4
+    }
     // 0x20 - JR NZ s8
     fn jr_nz_s8_0x20(&mut self) -> u64 {
 
