@@ -104,7 +104,7 @@ impl Opcode {
             0x8E => Opcode::adc_a_hl(),
             0x8F => Opcode::adc_a_a(),
 
-            // 0xA0
+            // 0xAX
             0xA0 => Opcode::and_b(),
             0xA1 => Opcode::and_c(),
             0xA2 => Opcode::and_d(),
@@ -122,6 +122,23 @@ impl Opcode {
             0xAE => Opcode::xor_hl(),
             0xAF => Opcode::xor_a(),
 
+            // 0xCX
+            0xC0 => Opcode::ret_nz(),
+            0xC1 => Opcode::pop_bc(),
+            0xC2 => Opcode::jp_nz_a16(),
+            0xC3 => Opcode::jp_a16(),
+            0xC4 => Opcode::call_nz_a16(),
+            0xC5 => Opcode::push_bc(),
+            0xC6 => Opcode::add_a_d8(),
+            0xC7 => Opcode::add_rst_00h(),
+            0xC8 => Opcode::ret_z(),
+            0xC9 => Opcode::ret(),
+            0xCA => Opcode::jp_z_a16(),
+            0xCB => Opcode::cb(),
+            0xCC => Opcode::call_z_a16(),
+            0xCD => Opcode::call_a16(),
+            0xCE => Opcode::adc_a_d(),
+            0xCF => Opcode::add_rst_08h(),
 
 
             _ => panic!("Unmapped opcode {}", code)
