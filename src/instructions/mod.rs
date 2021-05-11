@@ -637,6 +637,16 @@ impl Z80 {
         12
     }
 
+    //0x37 - SCF
+    fn scf_0x37(&mut self) -> u64 {
+        self.set_full_carry();
+        self.unset_half_carry();
+        self.unset_subtraction();
+        4
+    }
+
+
+
 
     // 0x40 - LD B B
     fn ld_b_b_0x40(&mut self) -> u64 {
