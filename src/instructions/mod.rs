@@ -1292,13 +1292,9 @@ impl Opcode {
             size: 1,
             instruction: |cpu: &mut Z80| {
                 match cpu.is_zero() {
-                    false => 8,
-                    true => {
-                        let lower = cpu.mmu.read(cpu.registers.sp);
-                        cpu.registers.sp += 1;
-                        let upper = cpu.mmu.read(cpu.registers.sp);
-                        cpu.registers.sp += 1;
-                        cpu.registers.pc = Z80::u16_from_u8(upper, lower);
+                    true => 8,
+                    false => {
+                        cpu.registers.pc = cpu.pop_sp();
                         20
                     }
                 }
@@ -1311,11 +1307,8 @@ impl Opcode {
         Opcode {
             size: 1,
             instruction: |cpu: &mut Z80| {
-                let lower = cpu.mmu.read(cpu.registers.sp);
-                cpu.registers.sp += 1;
-                let upper = cpu.mmu.read(cpu.registers.sp);
-                cpu.registers.sp += 1;
-                cpu.set_bc(Z80::u16_from_u8(upper, lower));
+                let value = cpu.pop_sp();
+                cpu.set_bc(value);
                 12
             }
         }
@@ -1520,4 +1513,134 @@ impl Opcode {
         }
     }
 
+
+    // 0xE0 - LDH (a8) A
+    fn ldh_a8_a() -> Opcode {
+        Opcode {
+            size: 2,
+            instruction: |cpu: &mut Z80| {
+                let a8 = cpu.byte();
+                cpu.mmu.write(cpu.registers.a, 0xFF00 | a8 as u16);
+                12
+            }
+        }
+    }
+
+    // 0xE1 - POP HL
+    fn pop_hl() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                let value = cpu.pop_sp();
+                cpu.set_hl(value);
+                12
+            }
+        }
+    }
+
+    // 0xE2 - LD (C) A
+    fn ld_c_a_ram() -> Opcode {
+        Opcode {
+            size: 2,
+            instruction: |cpu: &mut Z80| {
+                cpu.mmu.write(cpu.registers.a, 0xFF00 | cpu.registers.c as u16);
+                8
+            }
+        }
+    }
+
+    // 0xE5 - PUSH HL
+    fn push_hl() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.push_sp(cpu.get_hl());
+                16
+            }
+        }
+    }
+
+    // 0xE6 - AND d8
+    fn and_d8() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                let d8 = cpu.byte();
+                cpu.and(d8);
+                8
+            }
+        }
+    }
+
+    // 0xE7 - RST 20H
+    fn add_rst_20h() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.push_sp(cpu.registers.pc);
+                cpu.registers.pc = 0x20;
+                16
+            }
+        }
+    }
+
+    // 0xE8 - ADD SP, r8
+    fn add_sp_r8() -> Opcode {
+        Opcode {
+            size: 2,
+            instruction: |cpu: &mut Z80| {
+                let r8 = cpu.byte() as i8 as i16 as u16;
+                cpu.registers.sp = cpu.add_16(cpu.registers.sp, r8, true);
+                cpu.unset_zero();
+                16
+            }
+        }
+    }
+
+    // 0xE9 - JP (HL)
+    fn jp_hl() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.registers.pc = cpu.get_hl();
+                4
+            }
+        }
+    }
+
+    // 0xEA - LD (a16) A
+    fn ld_a16_a() -> Opcode {
+        Opcode {
+            size: 3,
+            instruction: |cpu: &mut Z80| {
+                let a16 = cpu.word();
+                cpu.mmu.write(cpu.registers.a, a16);
+                16
+            }
+        }
+    }
+
+    // 0xEE - XOR d8
+    fn xor_d8() -> Opcode {
+        Opcode {
+            size: 2,
+            instruction: |cpu: &mut Z80| {
+                let d8 = cpu.byte();
+                cpu.xor(d8);
+                8
+            }
+        }
+    }
+
+    // 0xEF - RST 28H
+    fn add_rst_28h() -> Opcode {
+        Opcode {
+            size: 1,
+            instruction: |cpu: &mut Z80| {
+                cpu.push_sp(cpu.registers.pc);
+                cpu.registers.pc = 0x28;
+                16
+            }
+        }
+    }
 }
