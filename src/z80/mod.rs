@@ -389,7 +389,7 @@ impl Z80 {
 
     /// Convert two u8s (given in the order of higher order, lower order) into a u16
     pub fn u16_from_u8(x: u8, y: u8) -> u16 {
-        ((x << 8) + y).into()
+        ((x as u16) << 8) + (y as u16)
     }
 
     /// Convert a u16 into two u8s (given in the order of higher order, lower order)
