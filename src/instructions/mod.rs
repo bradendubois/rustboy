@@ -698,7 +698,16 @@ impl Z80 {
         8
     }
 
-    //0x3F
+    // 0x3F - CCF
+    fn ccf_0x3f(&mut self) -> u64 {
+        match self.is_full_carry(){
+            true => self.unset_full_carry(),
+            false => self.set_full_carry()
+        };
+        self.unset_subtraction();
+        self.unset_half_carry();
+        4
+    }
 
 
 
