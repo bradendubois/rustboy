@@ -108,6 +108,8 @@ impl Z80 {
         }
     }
 
+    // Read at (and advance) PC
+
     pub fn byte(&mut self) -> u8 {
         let next_byte = self.mmu.read(self.registers.pc);
         self.registers.pc += 1;
@@ -185,10 +187,6 @@ impl Z80 {
             0 => self.set_zero(),
             _ => self.unset_zero()
         };
-    }
-
-    pub fn half_carry(&mut self, before: u8, after: u8) -> bool {
-        (after >> 4) > (before >> 4)
     }
 
     /*************************/
