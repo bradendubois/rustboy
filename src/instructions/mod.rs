@@ -678,7 +678,7 @@ impl Z80 {
     // 0x39 - ADD HL SP
     fn add_hl_sp_0x39(&mut self) -> u64{
         let sp = self.registers.sp;
-        let hl = self.add_16(hl, sp);
+        let hl = self.add_16(self.get_hl(), sp);
         self.set_hl(hl);
         8
     }
