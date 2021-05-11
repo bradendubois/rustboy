@@ -440,6 +440,25 @@ impl Z80 {
         4
     }
 
+    // 0x30 - JR NC, s8 : Jump s8 if carry flag is 0
+    fn jr_nc_s8_0x30(&mut self) -> u64 {
+        let next = self.byte() as i8;
+
+        match !self.is_full_carry() {
+            true => {
+                self.jr(next);
+                12
+            },
+            false => 8
+        }
+    }
+    // 0x31 - LD SP, d16 : Load the 2 bytes of immediate data into register pair SP
+    fn ld_sp_d16_0x31(&mut self) -> u64 {
+        self.registers.s = self.byte();
+        self.registers.p = self.byte();
+        12
+    }
+
     // 0x40 - LD B B
     fn ld_b_b_0x40(&mut self) -> u64 {
         self.registers.b = self.registers.b;      // ah, yes
