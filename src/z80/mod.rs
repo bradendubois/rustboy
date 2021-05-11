@@ -44,6 +44,9 @@ pub struct Z80 {
     // Enum representing the Z80's current running status
     pub status: Status,
 
+    // CB Flag : Will set whether to use the default table or the CB Prefix table
+    pub cb_interpretation: bool,
+
     // Struct representing the memory unit
     pub mmu: mmu::MMU
 }
@@ -82,6 +85,8 @@ impl Z80 {
             // status enum starts as running.
             status: Status::RUNNING,
 
+            cb_interpretation: false,
+
             // MMU Unit
             mmu
         }
@@ -90,14 +95,17 @@ impl Z80 {
     // Basic execution of the current operation at the program-counter (PC) register
     pub fn step(&mut self) {
 
-        // Get the opcode number to execute
-        let opcode = self.byte();
+        loop {
 
-        // Execute
-        let cycles = self.lookup(opcode);
+            // Get the opcode number to execute
+            let opcode = self.byte();
 
-        // Adjust clock and program counter (PC)
-        self.clock += cycles as u64;
+            // Execute from standard table
+            let cycles = self.call_instruction(opcode);
+
+            // Adjust clock and program counter (PC)
+            self.clock += cycles as u64;
+        }
     }
 
     pub fn byte(&mut self) -> u8 {
@@ -189,135 +197,117 @@ impl Z80 {
 
     // Add
 
-    pub fn add_8(&mut self, s: u8, t: u8, flag: bool) -> u8 {
+    pub fn add_8(&mut self, s: u8, t: u8) -> u8 {
 
         let result = s.wrapping_add(t);
 
-        if flag {
+        match result {
+            0 => self.set_zero(),
+            _ => self.unset_zero()
+        };
 
-            match result {
-                0 => self.set_zero(),
-                _ => self.unset_zero()
-            };
+        self.unset_subtraction();
 
-            self.unset_subtraction();
+        match ((s & 0xF) + (t & 0xF)) > 0xF {
+            true => self.set_half_carry(),
+            false => self.unset_half_carry()
+        };
 
-            match ((s & 0xF) + (t & 0xF)) > 0xF {
-                true => self.set_half_carry(),
-                false => self.unset_half_carry()
-            };
-
-            match s.checked_add(t) {
-                None => self.set_full_carry(),
-                Some(_) => self.unset_full_carry()
-            };
-        }
+        match s.checked_add(t) {
+            None => self.set_full_carry(),
+            Some(_) => self.unset_full_carry()
+        };
 
         result
     }
 
-    pub fn add_16(&mut self, s: u16, t: u16, flag: bool) -> u16 {
+    pub fn add_16(&mut self, s: u16, t: u16) -> u16 {
 
         let result = s.wrapping_add(t);
 
-        if flag {
-            self.unset_subtraction();
+        self.unset_subtraction();
 
-            match (s & 0x07FF) + (t & 0x07FF) > 0x07FF  {
-                true => self.set_half_carry(),
-                false => self.unset_half_carry()
-            };
+        match (s & 0x07FF) + (t & 0x07FF) > 0x07FF  {
+            true => self.set_half_carry(),
+            false => self.unset_half_carry()
+        };
 
-            match s.checked_add(t) {
-                None => self.set_full_carry(),
-                Some(_) => self.unset_full_carry()
-            };
-        }
+        match s.checked_add(t) {
+            None => self.set_full_carry(),
+            Some(_) => self.unset_full_carry()
+        };
 
         result
     }
 
     // Sub
 
-    pub fn sub_8(&mut self, s: u8, t: u8, flag: bool) -> u8 {
+    pub fn sub_8(&mut self, s: u8, t: u8) -> u8 {
 
         let result = s.wrapping_sub(t);
 
-        if flag {
-            self.zero(result as u16);
-        }
+        self.zero(result as u16);
 
         result
     }
 
-    pub fn sub_16(&mut self, s: u16, t: u16, flag: bool) -> u16 {
+    pub fn sub_16(&mut self, s: u16, t: u16) -> u16 {
 
         let result = s.wrapping_sub(t);
 
-        if flag {
-            self.zero(result as u16);
-
-        }
+        self.zero(result as u16);
 
         result
     }
 
     // Inc
 
-    pub fn inc_8(&mut self, s: u8, flag: bool) -> u8 {
+    pub fn inc_8(&mut self, s: u8) -> u8 {
 
         let result = s.wrapping_add(1);
 
-        if flag {
-            self.zero(result as u16);
-            self.unset_subtraction();
+        self.zero(result as u16);
+        self.unset_subtraction();
 
-            match (s & 0xF) + (s+1 & 0xF) > 0xF  {
-                true => self.set_half_carry(),
-                false => self.unset_half_carry()
-            };
-        }
+        match (s & 0xF) + (s+1 & 0xF) > 0xF  {
+            true => self.set_half_carry(),
+            false => self.unset_half_carry()
+        };
 
         result
     }
 
-    pub fn inc_16(&mut self, s: u16, flag: bool) -> u16 {
+    pub fn inc_16(&mut self, s: u16) -> u16 {
 
         let result = s.wrapping_add(1);
 
-        if flag {
-            self.zero(result);
-            self.unset_subtraction();
+        self.zero(result);
+        self.unset_subtraction();
 
-            match (s & 0x07FF) + (s+1 & 0x07FF) > 0x07FF  {
-                true => self.set_half_carry(),
-                false => self.unset_half_carry()
-            };
-        }
+        match (s & 0x07FF) + (s+1 & 0x07FF) > 0x07FF  {
+            true => self.set_half_carry(),
+            false => self.unset_half_carry()
+        };
 
         result
     }
 
     // Dec
 
-    pub fn dec_8(&mut self, s: u8, flag: bool) -> u8 {
+    pub fn dec_8(&mut self, s: u8) -> u8 {
 
         let result = s.wrapping_sub(1);
 
-        if flag {
-
-        }
+        // TODO - FLAGS
 
         result
     }
 
-    pub fn dec_16(&mut self, s: u16, flag: bool) -> u16 {
+    pub fn dec_16(&mut self, s: u16) -> u16 {
 
         let result = s.wrapping_sub(1);
 
-        if flag {
-
-        }
+        // TODO - FLAGS
 
         result
     }
@@ -331,7 +321,7 @@ impl Z80 {
             false => 0
         };
 
-        self.registers.a = self.add_8(self.registers.a, s + carry, true);
+        self.registers.a = self.add_8(self.registers.a, s + carry);
     }
 
     // AND
@@ -382,6 +372,32 @@ impl Z80 {
         let upper = self.mmu.read(self.registers.sp+1);
         self.registers.sp += 2;
         Z80::u16_from_u8(upper, lower)
+    }
+
+    // RST
+
+    pub fn rst(&mut self, rst: u16) {
+        self.push_sp(self.registers.pc);
+        self.registers.pc = rst;
+    }
+
+    // CALL
+
+    pub fn call(&mut self, v: u16) {
+        self.push_sp(self.registers.pc);
+        self.registers.pc = v;
+    }
+
+    // RET
+
+    pub fn ret(&mut self) {
+        self.registers.pc = self.pop_sp();
+    }
+
+    // JR
+
+    pub fn jr(&mut self, s: i8) {
+        self.registers.pc = ((self.registers.pc as u32 as i32) + (s as i32)) as u16;
     }
 
     // Conversions
