@@ -608,7 +608,35 @@ impl Z80 {
         8
     }
 
-    // 0x33
+    // 0x33 - INC SP
+    fn inc_sp_0x33(&mut self) -> u64 {
+        self.registers.sp = self.inc_16(self.registers.sp);
+        8
+    }
+
+    // 0x34 - INC (HL)
+    fn inc_hl_0x34(&mut self) -> u64 {
+        let mut hl = self.mmu.read(self.get_hl());
+        hl = self.inc_8(hl);
+        self.mmu.write(hl, self.get_hl());
+        12
+    }
+
+    //0x35 - DEC (HL)
+    fn dec_hl_0x35(&mut self) -> u64 {
+        let mut hl = self.mmu.read(self.get_hl());
+        hl = self.dec_8(hl);
+        self.mmu.write(hl, self.get_hl());
+        12
+    }
+
+    // 0x36 - LD HL, d8
+    fn ld_hl_d8_0x36(&mut self) -> u64 {
+        let d8 = self.byte();
+        self.mmu.write(d8, self.get_hl());
+        12
+    }
+
 
     // 0x40 - LD B B
     fn ld_b_b_0x40(&mut self) -> u64 {
