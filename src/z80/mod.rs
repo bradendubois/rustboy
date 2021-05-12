@@ -358,7 +358,7 @@ impl Z80 {
         result
     }
 
-    // BIT - Store the complement of bit b of s in the Zero (Z) flag
+    /// BIT - Store the complement of bit b of s in the Zero (Z) flag
     pub fn bit(&mut self, s: u8, b: u8) {
         match (s & (1 << b)) == 0 {
             true => self.set_zero(),
@@ -503,7 +503,7 @@ impl Z80 {
 
     /// Unset the Zero (Z) flag of the F register
     pub fn unset_zero(&mut self) {
-        self.registers.f ^= 0x80;
+        self.registers.f &= !0x80;
     }
 
     /// Check the Zero(Z) flag of the F register
@@ -520,7 +520,7 @@ impl Z80 {
 
     /// Unset the Subtract (N) flag of the F register
     pub fn unset_subtraction(&mut self) {
-        self.registers.f ^= 0x40;
+        self.registers.f &= !0x40;
     }
 
     /// Check the Subtract (N) flag of the F register
@@ -537,7 +537,7 @@ impl Z80 {
 
     /// Unset the Half Carry (H) flag of the F register
     pub fn unset_half_carry(&mut self) {
-        self.registers.f ^= 0x20;
+        self.registers.f &= 0x20;
     }
 
     /// Check the Half Carry (H) flag of the F register
@@ -554,7 +554,7 @@ impl Z80 {
 
     /// Unset the Carry (C) flag of the F register
     pub fn unset_full_carry(&mut self) {
-        self.registers.f ^= 0x10;
+        self.registers.f &= 0x10;
     }
 
     /// Check the Carry (C) flag of the F register
