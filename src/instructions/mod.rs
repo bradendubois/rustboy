@@ -1,5 +1,5 @@
 use super::z80::{Z80};
-
+use super::z80::Status;
 
 impl Z80 {
 
@@ -31,6 +31,24 @@ impl Z80 {
                     0x0E => self.ld_c_0x0e(),
                     0x0F => self.rrca_0x0f(),
 
+                    // 0x1x
+                    0x10 => self.stop_0x10(),
+                    0x11 => self.ld_de_0x11(),
+                    0x12 => self.ld_de_a_0x12(),
+                    0x13 => self.inc_de_0x13(),
+                    0x14 => self.inc_d_0x14(),
+                    0x15 => self.dec_d_0x15(),
+                    0x16 => self.ld_d_0x16(),
+                    0x17 => self.rla_0x17(),
+                    0x18 => self.jr_s8_0x18(),
+                    0x19 => self.add_hl_de_0x19(),
+                    0x1A => self.ld_a_de_0x1a(),
+                    0x1B => self.dec_de_0x1b(),
+                    0x1C => self.inc_e_0x1c(),
+                    0x1D => self.dec_e_0x1d(),
+                    0x1E => self.ld_e_d8_0x1e(),
+                    0x1F => self.rra_0x1f(),
+
                     // 0x2X
                     0x20 => self.jr_nz_s8_0x20(),
                     0x21 => self.ld_hl_d16_0x21(),
@@ -49,6 +67,24 @@ impl Z80 {
                     0x2E => self.ld_l_d8_0x2e(),
                     0x2F => self.cpl_0x2f(),
 
+                    //0x3x
+                    0x30 => self.jr_nc_s8_0x30(),
+                    0x31 => self.ld_sp_d16_0x31(),
+                    0x32 => self.ld_hls_a_0x32(),
+                    0x33 => self.inc_sp_0x33(),
+                    0x34 => self.inc_hl_0x34(),
+                    0x35 => self.dec_hl_0x35(),
+                    0x36 => self.ld_hl_d8_0x36(),
+                    0x37 => self.scf_0x37(),
+                    0x38 => self.jr_c_s8_0x38(),
+                    0x39 => self.add_hl_sp_0x39(),
+                    0x3A => self.ld_a_hls_0x3a(),
+                    0x3B => self.dec_sp_0x3b(),
+                    0x3C => self.inc_a_0x3c(),
+                    0x3D => self.dec_a_0x3d(),
+                    0x3E => self.ld_a_d8_0x3e(),
+                    0x3F => self.ccf_0x3f(),
+
                     // 0x4X
                     0x40 => self.ld_b_b_0x40(),
                     0x41 => self.ld_b_c_0x41(),
@@ -66,6 +102,24 @@ impl Z80 {
                     0x4D => self.ld_c_l_0x4d(),
                     0x4E => self.ld_c_hl_0x4e(),
                     0x4F => self.ld_c_a_0x4f(),
+
+                    // 0x5X
+                    0x50 => self.ld_d_b_0x50(),
+                    0x51 => self.ld_d_c_0x51(),
+                    0x52 => self.ld_d_d_0x52(),
+                    0x53 => self.ld_d_e_0x53(),
+                    0x54 => self.ld_d_h_0x54(),
+                    0x55 => self.ld_d_l_0x55(),
+                    0x56 => self.ld_d_hl_0x56(),
+                    0x57 => self.ld_d_a_0x57(),
+                    0x58 => self.ld_e_b_0x58(),
+                    0x59 => self.ld_e_c_0x59(),
+                    0x5A => self.ld_e_d_0x5a(),
+                    0x5B => self.ld_e_e_0x5b(),
+                    0x5C => self.ld_e_h_0x5c(),
+                    0x5D => self.ld_e_l_0x5d(),
+                    0x5E => self.ld_e_hl_0x5e(),
+                    0x5F => self.ld_e_a_0x5f(),
 
                     // 0x6X
                     0x60 => self.ld_h_b_0x60(),
@@ -299,12 +353,130 @@ impl Z80 {
         4
     }
 
-    /*   0x10 - 0x1F   */
+    /// 0x10 - STOP : Stops the system clock and oscillator circuit.
+    /// LCD controller is also stopped.
+    /// Internal RAM register ports remain unchanged
+    /// Cancelled by RESET signal
+    fn stop_0x10(&mut self) -> u64 {
+            self.status = Status::STOPPED;
+            4
+    }
 
-    // TODO - 0x10 - 0x1F
+    /// 0x11 - LD DE, d16 : Loads 2 bytes of immediate data into registers D,E
+    /// First byte is the lower byte, second byte is higher. Love Little endian -.-
+    fn ld_de_0x11(&mut self) -> u64 {
+        self.registers.d = self.byte();
+        self.registers.e = self.byte();
+        12
+    }
 
-    /*   0x20 - 0x2F   */
+    /// 0x12 - LD (DE), A : store contents of A in memory location specified by registers DE
+    fn ld_de_a_0x12(&mut self) -> u64 {
+        self.mmu.write(self.registers.a, self.get_de());
+        8
+    }
 
+    /// 0x13 - INC DE : Increment the contents of registers DE by 1
+    fn inc_de_0x13(&mut self) -> u64 {
+        let de = self.inc_16(self.get_de());
+        self.set_de(de);
+        8
+    }
+
+    /// 0x14 - INC D : Increment the contents of D
+    fn inc_d_0x14(&mut self) -> u64 {
+        self.registers.d = self.inc_8(self.registers.d);
+        4
+    }
+
+    /// 0x15 - DEC D: Decrement the register D
+    fn dec_d_0x15(&mut self) -> u64 {
+        self.registers.d = self.dec_8(self.registers.d);
+        4
+    }
+
+    /// 0x16 - LD D, d8: Load the 8-bit immediate operand d8 into reg D
+    fn ld_d_0x16(&mut self) -> u64 {
+        self.registers.d = self.byte();
+        8
+    }
+
+    ///0x17 - RLA : Rotate contents of register A to the left,
+    fn rla_0x17(&mut self) -> u64 {
+        self.unset_zero();
+        self.unset_subtraction();
+        self.unset_half_carry();
+        let temp = self.is_full_carry();
+        if self.registers.a & 0x80 == 1 {
+            self.set_full_carry()
+        } else {
+            self.unset_full_carry()
+        }
+        self.registers.a = self.registers.a << 1;
+        self.registers.a |= temp as u8;
+        4
+    }
+
+    ///0x18 - JR s8 : Jump s8 steps from current address in program counter
+    fn jr_s8_0x18(&mut self) -> u64 {
+
+        let next = self.byte() as i8;
+        self.jr(next);
+        12
+    }
+
+    ///0x19 - ADD HL DE : add the contents of de to hl
+    fn add_hl_de_0x19(&mut self) -> u64 {
+        let val = self.add_16(self.get_hl(), self.get_de());
+        self.set_hl(val);
+        8
+    }
+
+    ///0x1A - LD A, (DE) : Load the 8-bit contents of memory specified by de into a
+    fn ld_a_de_0x1a(&mut self) -> u64 {
+        self.registers.a = self.mmu.read(self.get_de());
+        8
+    }
+
+    /// 0x1B - DEC DE : decrement contents of de by 1!
+    ///
+    fn dec_de_0x1b(&mut self) -> u64 {
+        let de = self.get_de();
+        self.set_de(de);
+        8
+
+    }
+
+    /// 0x1C - INC E
+    fn inc_e_0x1c(&mut self) -> u64 {
+        self.registers.e = self.inc_8(self.registers.e);
+        4
+    }
+
+    ///0x1D - DEC E
+    fn dec_e_0x1d(&mut self) -> u64 {
+        self.registers.e = self.dec_8(self.registers.e);
+        4
+    }
+
+    ///0x1E - LD E d8 : load 8 bit operand d8 into e
+    fn ld_e_d8_0x1e(&mut self) -> u64 {
+        self.registers.e = self.byte();
+        8
+
+    }
+
+    ///0x1F - RRA : rotate register A to the right,
+    /// through the carry flag,
+    fn rra_0x1f(&mut self) -> u64 {
+        let temp = self.is_full_carry();
+        self.unset_zero();
+        self.unset_subtraction();
+        self.unset_half_carry();
+        if self.registers.a & 0x01 != 0 {self.set_full_carry()} else{self.unset_full_carry()}
+        self.registers.a = self.registers.a | (temp as u8) << 7;
+        4
+    }
     // 0x20 - JR NZ s8
     fn jr_nz_s8_0x20(&mut self) -> u64 {
 
@@ -452,11 +624,134 @@ impl Z80 {
         4
     }
 
-    /*   0x30 - 0x3F   */
+    // 0x30 - JR NC, s8 : Jump s8 if carry flag is 0
+    fn jr_nc_s8_0x30(&mut self) -> u64 {
+        let next = self.byte() as i8;
 
-    // TODO - 0x30 - 0x3F
+        match !self.is_full_carry() {
+            true => {
+                self.jr(next);
+                12
+            },
+            false => 8
+        }
+    }
+    // 0x31 - LD SP, d16 : Load the 2 bytes of immediate data into register pair SP
+    fn ld_sp_d16_0x31(&mut self) -> u64 {
+        self.registers.sp = self.word();
+        12
+    }
 
-    /*   0x40 - 0x4F   */
+    // 0x32 - LD HL(-), A
+    fn ld_hls_a_0x32(&mut self) -> u64 {
+        self.mmu.write(self.registers.a, self.get_hl());
+        let hl = self.dec_16(self.get_hl());
+        self.set_hl(hl);
+        8
+    }
+
+    // 0x33 - INC SP
+    fn inc_sp_0x33(&mut self) -> u64 {
+        self.registers.sp = self.inc_16(self.registers.sp);
+        8
+    }
+
+    // 0x34 - INC (HL)
+    fn inc_hl_0x34(&mut self) -> u64 {
+        let mut hl = self.mmu.read(self.get_hl());
+        hl = self.inc_8(hl);
+        self.mmu.write(hl, self.get_hl());
+        12
+    }
+
+    //0x35 - DEC (HL)
+    fn dec_hl_0x35(&mut self) -> u64 {
+        let mut hl = self.mmu.read(self.get_hl());
+        hl = self.dec_8(hl);
+        self.mmu.write(hl, self.get_hl());
+        12
+    }
+
+    // 0x36 - LD HL, d8
+    fn ld_hl_d8_0x36(&mut self) -> u64 {
+        let d8 = self.byte();
+        self.mmu.write(d8, self.get_hl());
+        12
+    }
+
+    //0x37 - SCF
+    fn scf_0x37(&mut self) -> u64 {
+        self.set_full_carry();
+        self.unset_half_carry();
+        self.unset_subtraction();
+        4
+    }
+
+    // 0x38 JR C, s8
+    fn jr_c_s8_0x38(&mut self) -> u64 {
+        match self.is_full_carry(){
+            true => {
+                let s8 = self.byte();
+                self.jr(s8 as i8);
+                12
+            },
+            false => 8
+        }
+    }
+
+    // 0x39 - ADD HL SP
+    fn add_hl_sp_0x39(&mut self) -> u64{
+        let sp = self.registers.sp;
+        let hl = self.add_16(self.get_hl(), sp);
+        self.set_hl(hl);
+        8
+    }
+
+    //0x3A - LD A, (HL-)
+    fn ld_a_hls_0x3a(&mut self) -> u64{
+        let mut hl = self.get_hl();
+        self.registers.a = self.mmu.read(hl);
+        hl = self.inc_16(hl);
+        self.set_hl(hl);
+        8
+    }
+
+    // 0x3B - DEC SP
+    fn dec_sp_0x3b(&mut self) -> u64{
+        self.registers.sp = self.dec_16(self.registers.sp);
+        8
+    }
+
+    //0x3C - INC A
+    fn inc_a_0x3c(&mut self) -> u64{
+        self.registers.a = self.inc_8(self.registers.a);
+        4
+    }
+
+    //0x3D - DEC A
+    fn dec_a_0x3d(&mut self) -> u64 {
+        self.registers.a = self.dec_8(self.registers.a);
+        4
+    }
+
+    //0x3E - LD A, d8
+    fn ld_a_d8_0x3e(&mut self) -> u64 {
+        self.registers.a = self.byte();
+        8
+    }
+
+    // 0x3F - CCF
+    fn ccf_0x3f(&mut self) -> u64 {
+        match self.is_full_carry(){
+            true => self.unset_full_carry(),
+            false => self.set_full_carry()
+        };
+        self.unset_subtraction();
+        self.unset_half_carry();
+        4
+    }
+
+
 
     // 0x40 - LD B B
     fn ld_b_b_0x40(&mut self) -> u64 {
@@ -554,11 +849,100 @@ impl Z80 {
         4
     }
 
-    /*   0x50 - 0x5F   */
+    // 0x50 - LD D, B
+    fn ld_d_b_0x50(&mut self) -> u64{
+        self.registers.d = self.registers.b;
+        4
+    }
 
-    // TODO - 0x50 - 0x5F
+    // 0x51 - LD D, C
+    fn ld_d_c_0x51(&mut self) -> u64{
+        self.registers.d = self.registers.c;
+        4
+    }
 
-    /*   0x60 - 0x6F   */
+    // 0x52 - LD D, D
+    fn ld_d_d_0x52(&mut self) -> u64 {
+        self.registers.d = self.registers.d; //...
+        4
+    }
+
+    // 0x53 - LD, D, E
+    fn ld_d_e_0x53(&mut self) -> u64{
+        self.registers.d = self.registers.e;
+        4
+    }
+    // 0x54 - LD, D, H
+    fn ld_d_h_0x54(&mut self) -> u64{
+        self.registers.d = self.registers.h;
+        4
+    }
+
+    // 0x55 - LD, D, L
+    fn ld_d_l_0x55(&mut self) -> u64{
+        self.registers.d = self.registers.l;
+        4
+    }
+
+    // 0x56 - LD D (HL)
+    fn ld_d_hl_0x56(&mut self) -> u64 {
+        self.registers.b = self.mmu.read(self.get_hl());
+        8
+    }
+
+    // 0x57 - LD, D, A
+    fn ld_d_a_0x57(&mut self) -> u64{
+        self.registers.d = self.registers.a;
+        4
+    }
+
+    // 0x58 - LD, E, B
+    fn ld_e_b_0x58(&mut self) -> u64{
+        self.registers.e = self.registers.b;
+        4
+    }
+
+    // 0x59 - LD, E, C
+    fn ld_e_c_0x59(&mut self) -> u64{
+        self.registers.e = self.registers.c;
+        4
+    }
+
+    // 0x5A - LD, E, D
+    fn ld_e_d_0x5a(&mut self) -> u64{
+        self.registers.e = self.registers.d;
+        4
+    }
+
+    // 0x5B - LD, E, E
+    fn ld_e_e_0x5b(&mut self) -> u64{
+        self.registers.e = self.registers.e; //literally nop
+        4
+    }
+
+    // 0x5C - LD, E, H
+    fn ld_e_h_0x5c(&mut self) -> u64{
+        self.registers.e = self.registers.h;
+        4
+    }
+
+    // 0x5D - LD, E, L
+    fn ld_e_l_0x5d(&mut self) -> u64{
+        self.registers.e = self.registers.l;
+        4
+    }
+
+    // 0x5E - LD, E, HL
+    fn ld_e_hl_0x5e(&mut self) -> u64{
+        self.registers.e = self.mmu.read(self.get_hl());
+        8
+    }
+
+    // 0x5F - LD E, A
+    fn ld_e_a_0x5f(&mut self) -> u64{
+        self.registers.e = self.registers.a;
+        4
+    }
 
     // 0x60 - LD H B
     fn ld_h_b_0x60(&mut self) -> u64 {
