@@ -103,6 +103,24 @@ impl Z80 {
                     0x4E => self.ld_c_hl_0x4e(),
                     0x4F => self.ld_c_a_0x4f(),
 
+                    // 0x5X
+                    0x50 => self.ld_d_b_0x50(),
+                    0x51 => self.ld_d_c_0x51(),
+                    0x52 => self.ld_d_d_0x52(),
+                    0x53 => self.ld_d_e_0x53(),
+                    0x54 => self.ld_d_h_0x54(),
+                    0x55 => self.ld_d_l_0x55(),
+                    0x56 => self.ld_d_hl_0x56(),
+                    0x57 => self.ld_d_a_0x57(),
+                    0x58 => self.ld_e_b_0x58(),
+                    0x59 => self.ld_e_c_0x59(),
+                    0x5A => self.ld_e_d_0x5a(),
+                    0x5B => self.ld_e_e_0x5b(),
+                    0x5C => self.ld_e_h_0x5c(),
+                    0x5D => self.ld_e_l_0x5d(),
+                    0x5E => self.ld_e_hl_0x5e(),
+                    0x5F => self.ld_e_a_0x5f(),
+
                     // 0x6X
                     0x60 => self.ld_h_b_0x60(),
                     0x61 => self.ld_h_c_0x61(),
@@ -822,6 +840,101 @@ impl Z80 {
     // 0x4F - LD C A
     fn ld_c_a_0x4f(&mut self) -> u64 {
         self.registers.c = self.registers.a;
+        4
+    }
+
+    // 0x50 - LD D, B
+    fn ld_d_b_0x50(&mut self) -> u64{
+        self.registers.d = self.registers.b;
+        4
+    }
+
+    // 0x51 - LD D, C
+    fn ld_d_c_0x51(&mut self) -> u64{
+        self.registers.d = self.registers.c;
+        4
+    }
+
+    // 0x52 - LD D, D
+    fn ld_d_d_0x52(&mut self) -> u64 {
+        self.registers.d = self.registers.d; //...
+        4
+    }
+
+    // 0x53 - LD, D, E
+    fn ld_d_e_0x53(&mut self) -> u64{
+        self.registers.d = self.registers.e;
+        4
+    }
+    // 0x54 - LD, D, H
+    fn ld_d_h_0x54(&mut self) -> u64{
+        self.registers.d = self.registers.h;
+        4
+    }
+
+    // 0x55 - LD, D, L
+    fn ld_d_l_0x55(&mut self) -> u64{
+        self.registers.d = self.registers.l;
+        4
+    }
+
+    // 0x56 - LD D (HL)
+    fn ld_d_hl_0x56(&mut self) -> u64 {
+        self.registers.b = self.mmu.read(self.get_hl());
+        8
+    }
+
+    // 0x57 - LD, D, A
+    fn ld_d_a_0x57(&mut self) -> u64{
+        self.registers.d = self.registers.a;
+        4
+    }
+
+    // 0x58 - LD, E, B
+    fn ld_e_b_0x58(&mut self) -> u64{
+        self.registers.e = self.registers.b;
+        4
+    }
+
+    // 0x59 - LD, E, C
+    fn ld_e_c_0x59(&mut self) -> u64{
+        self.registers.e = self.registers.c;
+        4
+    }
+
+    // 0x5A - LD, E, D
+    fn ld_e_d_0x5a(&mut self) -> u64{
+        self.registers.e = self.registers.d;
+        4
+    }
+
+    // 0x5B - LD, E, E
+    fn ld_e_e_0x5b(&mut self) -> u64{
+        self.registers.e = self.registers.e; //literally nop
+        4
+    }
+
+    // 0x5C - LD, E, H
+    fn ld_e_h_0x5c(&mut self) -> u64{
+        self.registers.e = self.registers.h;
+        4
+    }
+
+    // 0x5D - LD, E, L
+    fn ld_e_l_0x5d(&mut self) -> u64{
+        self.registers.e = self.registers.l;
+        4
+    }
+
+    // 0x5E - LD, E, HL
+    fn ld_e_hl_0x5e(&mut self) -> u64{
+        self.registers.e = self.mmu.read(self.get_hl());
+        8
+    }
+
+    // 0x5F - LD E, A
+    fn ld_e_a_0x5f(&mut self) -> u64{
+        self.registers.e = self.registers.a;
         4
     }
 
