@@ -855,15 +855,69 @@ impl Z80 {
     }
 
     // 0x55 - LD, D, L
-    fn ld_d_l_0x54(&mut self) -> u64{
+    fn ld_d_l_0x55(&mut self) -> u64{
         self.registers.d = self.registers.l;
         4
     }
 
     // 0x56 - LD D (HL)
-    fn ld_d_hl_0x46(&mut self) -> u64 {
+    fn ld_d_hl_0x56(&mut self) -> u64 {
         self.registers.b = self.mmu.read(self.get_hl);
         8
+    }
+
+    // 0x57 - LD, D, A
+    fn ld_d_a_0x57(&mut self) -> u64{
+        self.registers.d = self.registers.a;
+        4
+    }
+
+    // 0x58 - LD, E, B
+    fn ld_e_b_0x58(&mut self) -> u64{
+        self.registers.e = self.registers.b;
+        4
+    }
+
+    // 0x59 - LD, E, C
+    fn ld_e_c_0x59(&mut self) -> u64{
+        self.registers.e = self.registers.c;
+        4
+    }
+
+    // 0x5A - LD, E, D
+    fn ld_e_d_0x5a(&mut self) -> u64{
+        self.registers.e = self.registers.d;
+        4
+    }
+
+    // 0x5B - LD, E, E
+    fn ld_e_e_0x5b(&mut self) -> u64{
+        self.registers.e = self.registers.e; //literally nop
+        4
+    }
+
+    // 0x5C - LD, E, H
+    fn ld_e_h_0x5c(&mut self) -> u64{
+        self.registers.e = self.registers.h;
+        4
+    }
+
+    // 0x5D - LD, E, L
+    fn ld_e_l_0x5d(&mut self) -> u64{
+        self.registers.e = self.registers.l;
+        4
+    }
+
+    // 0x5E - LD, E, HL
+    fn ld_e_hl_0x5e(&mut self) -> u64{
+        self.registers.e = self.mmu.read(self.get_hl);
+        8
+    }
+
+    // 0x5F - LD E, A
+    fn ld_e_a_0x5f(&mut self) -> u64{
+        self.registers.e = self.registers.a;
+        4
     }
 
     // 0x60 - LD H B
