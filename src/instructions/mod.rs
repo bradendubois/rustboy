@@ -1093,7 +1093,7 @@ impl Z80 {
     /*****************************************/
 
     /* 0xCB00 - 0xCB0F */
-    
+
     // 0xCB00 - RLC B
     fn rlc_b_0xcb00(&mut self) -> u64 {
         self.registers.b = self.rlc(self.registers.b);
