@@ -353,6 +353,8 @@ impl Z80 {
         4
     }
 
+    /*   0x10 - 0x1F   */
+
     /// 0x10 - STOP : Stops the system clock and oscillator circuit.
     /// LCD controller is also stopped.
     /// Internal RAM register ports remain unchanged
@@ -477,6 +479,9 @@ impl Z80 {
         self.registers.a = self.registers.a | (temp as u8) << 7;
         4
     }
+
+    /*   0x20 - 0x2F   */
+
     // 0x20 - JR NZ s8
     fn jr_nz_s8_0x20(&mut self) -> u64 {
 
@@ -624,6 +629,8 @@ impl Z80 {
         4
     }
 
+    /*   0x30 - 0x3F   */
+
     // 0x30 - JR NC, s8 : Jump s8 if carry flag is 0
     fn jr_nc_s8_0x30(&mut self) -> u64 {
         let next = self.byte() as i8;
@@ -751,7 +758,7 @@ impl Z80 {
         4
     }
 
-
+    /*   0x40 - 0x4F   */
 
     // 0x40 - LD B B
     fn ld_b_b_0x40(&mut self) -> u64 {
@@ -849,6 +856,8 @@ impl Z80 {
         4
     }
 
+    /*   0x50 - 0x5F   */
+
     // 0x50 - LD D, B
     fn ld_d_b_0x50(&mut self) -> u64{
         self.registers.d = self.registers.b;
@@ -943,6 +952,8 @@ impl Z80 {
         self.registers.e = self.registers.a;
         4
     }
+
+    /*   0x60 - 0x6F   */
 
     // 0x60 - LD H B
     fn ld_h_b_0x60(&mut self) -> u64 {
