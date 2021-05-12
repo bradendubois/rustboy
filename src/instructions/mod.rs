@@ -175,6 +175,12 @@ impl Z80 {
         }
     }
 
+    /*****************************************/
+    /*      Default 8-bit LR35902 Table      */
+    /*****************************************/
+
+    /*   0x00 - 0x0F   */
+
     // 0x00 - NOP
     pub fn nop_0x00(&mut self) -> u64 {
         4
@@ -292,6 +298,12 @@ impl Z80 {
         };
         4
     }
+
+    /*   0x10 - 0x1F   */
+
+    // TODO - 0x10 - 0x1F
+
+    /*   0x20 - 0x2F   */
 
     // 0x20 - JR NZ s8
     fn jr_nz_s8_0x20(&mut self) -> u64 {
@@ -440,6 +452,12 @@ impl Z80 {
         4
     }
 
+    /*   0x30 - 0x3F   */
+
+    // TODO - 0x30 - 0x3F
+
+    /*   0x40 - 0x4F   */
+
     // 0x40 - LD B B
     fn ld_b_b_0x40(&mut self) -> u64 {
         self.registers.b = self.registers.b;      // ah, yes
@@ -478,7 +496,7 @@ impl Z80 {
 
     // 0x46 - LD B (HL)
     fn ld_b_hl_0x46(&mut self) -> u64 {
-        self.registers.b = self.byte();
+        self.registers.b = self.mmu.read(self.get_hl());
         8
     }
 
@@ -536,6 +554,12 @@ impl Z80 {
         4
     }
 
+    /*   0x50 - 0x5F   */
+
+    // TODO - 0x50 - 0x5F
+
+    /*   0x60 - 0x6F   */
+
     // 0x60 - LD H B
     fn ld_h_b_0x60(&mut self) -> u64 {
         self.registers.h = self.registers.b;
@@ -574,7 +598,7 @@ impl Z80 {
 
     // 0x66 - LD H (HL)
     fn ld_h_hl_0x66(&mut self) -> u64 {
-        self.registers.h = self.byte();
+        self.registers.h = self.mmu.read(self.get_hl());
         8
     }
 
@@ -631,6 +655,12 @@ impl Z80 {
         self.registers.l = self.registers.a;
         4
     }
+
+    /*   0x70 - 0x7F   */
+
+    // TODO - 0x70 - 0x7F
+
+    /*   0x80 - 0x8F   */
 
     // 0x80 - ADD A,B
     fn add_a_b_0x80(&mut self) -> u64 {
@@ -730,6 +760,12 @@ impl Z80 {
         4
     }
 
+    /*   0x90 - 0x9F   */
+
+    // TODO - 0x90 - 0x9F
+
+    /*   0xA0 - 0xAF   */
+
     // 0xA0 - AND B
     fn and_b_0xa0(&mut self) -> u64 {
         self.and(self.registers.b);
@@ -827,6 +863,12 @@ impl Z80 {
         self.xor(self.registers.a);   // why not
         4
     }
+
+    /*   0xB0 - 0xBF   */
+
+    // TODO - 0xB0 - 0xBF
+
+    /*   0xC0 - 0xCF   */
 
     // 0xC0 - RET NZ
     fn ret_nz_0xc0(&mut self) -> u64 {
@@ -963,6 +1005,12 @@ impl Z80 {
         16
     }
 
+    /*   0xD0 - 0xDF   */
+
+    // TODO - 0xD0 - 0xDF
+
+    /*   0xE0 - 0xEF   */
+
     // 0xE0 - LDH (a8) A
     fn ldh_a8_a_0xe0(&mut self) -> u64 {
         let a8 = self.byte();
@@ -1036,10 +1084,16 @@ impl Z80 {
         16
     }
 
+    /*   0xF0 - 0xFF   */
 
+    // TODO - 0xF0 - 0xFF
 
-    /***************** CB Table *****************/
+    /*****************************************/
+    /*         16-bit CB Prefix Table        */
+    /*****************************************/
 
+    /* 0xCB00 - 0xCB0F */
+    
     // 0xCB00 - RLC B
     fn rlc_b_0xcb00(&mut self) -> u64 {
         self.registers.b = self.rlc(self.registers.b);
@@ -1138,6 +1192,11 @@ impl Z80 {
         8
     }
 
+    /* 0xCB10 - 0xCB1F */
+
+    // TODO - 0xCB10 - 0xCB1F
+
+    /* 0xCB20 - 0xCB2F */
 
     // 0xCB20 - SLA B
     fn sla_b_0xcb00(&mut self) -> u64 {
@@ -1237,6 +1296,12 @@ impl Z80 {
         8
     }
 
+    /* 0xCB30 - 0xCB3F */
+
+    // TODO 0xCB30 - 0xCB3F
+
+    /* 0xCB40 - 0xCB4F */
+
     // 0xCB40 - BIT 0, B
     fn bit_0_b_0xcb40(&mut self) -> u64 {
         self.bit(self.registers.b, 0);
@@ -1322,18 +1387,24 @@ impl Z80 {
         8
     }
 
-    // 0xCB4e - BIT 1, (HL)
+    // 0xCB4E - BIT 1, (HL)
     fn bit_1_hl_0xcb4e(&mut self) -> u64 {
         let value = self.mmu.read(self.get_hl());
         self.bit(value, 1);
         16
     }
 
-    // 0xCB4f - BIT 1, A
+    // 0xCB4F - BIT 1, A
     fn bit_1_a_0xcb4f(&mut self) -> u64 {
         self.bit(self.registers.a, 1);
         8
     }
+
+    /* 0xCB50 - 0xCB5F */
+
+    // TODO - 0xCB50 - 0xCB5F
+
+    /* 0xCB60 - 0xCB6F */
 
     // 0xCB60 - BIT 2, B
     fn bit_2_b_0xcb60(&mut self) -> u64 {
@@ -1427,11 +1498,17 @@ impl Z80 {
         16
     }
 
-    // 0xCB6f - BIT 3, A
+    // 0xCB6F - BIT 3, A
     fn bit_3_a_0xcb6f(&mut self) -> u64 {
         self.bit(self.registers.a, 3);
         8
     }
+
+    /* 0xCB70 - 0xCB7F */
+
+    // TODO - 0xCB70 - 0xCB7F
+
+    /* 0xCB80 - 0xCB8F */
 
     // 0xCB80 - RES 0, B
     fn res_0_b_0xcb80(&mut self) -> u64 {
@@ -1531,6 +1608,12 @@ impl Z80 {
         8
     }
 
+    /* 0xCB90 - 0xCB9F */
+
+    // TODO - 0xCB90 - 0xCB9F
+
+    /* 0xCBA0 - 0xCBAF */
+
     // 0xCBA0 - RES 4, B
     fn res_4_b_0xcba0(&mut self) -> u64 {
         self.registers.b &= !8;
@@ -1629,24 +1712,11 @@ impl Z80 {
         8
     }
 
+    /* 0xCBB0 - 0xCBBF */
 
+    // TODO - 0xCBB0 - 0xCBBF
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    /* 0xCBC0 - 0xCBCF */
 
     // 0xCBC0 - SET 0, B
     fn set_0_b_0xcbc0(&mut self) -> u64 {
@@ -1746,8 +1816,11 @@ impl Z80 {
         8
     }
 
+    /* 0xCBD0 - 0xCBDF */
 
-    
+    // TODO - 0xCBD0 - 0xCBDF
+
+    /* 0xCBE0 - 0xCBEF */
 
     // 0xCBE0 - SET 4, B
     fn set_4_b_0xcbe0(&mut self) -> u64 {
@@ -1846,4 +1919,8 @@ impl Z80 {
         self.registers.a |= 16;
         8
     }
+
+    /* 0xCBF0 - 0xCBFF */
+
+    // TODO - 0xCBF0 - 0xCBFF
 }
