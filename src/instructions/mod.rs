@@ -139,6 +139,23 @@ impl Z80 {
                     0x6E => self.ld_l_hl_0x6e(),
                     0x6F => self.ld_l_a_0x6f(),
 
+                    // 0x7X
+                    0x70 => self.ld_hl_b_0x70(),
+                    0x71 => self.ld_hl_c_0x71(),
+                    0x72 => self.ld_hl_d_0x72(),
+                    0x73 => self.ld_hl_e_0x73(),
+                    0x74 => self.ld_hl_h_0x74(),
+                    0x75 => self.ld_hl_l_0x75(),
+                    0x76 => self.halt_0x76(),
+                    0x77 => self.ld_hl_a_0x77(),
+                    0x78 => self.ld_a_b_0x78(),
+                    0x79 => self.ld_a_c_0x79(),
+                    0x7A => self.ld_a_d_0x7a(),
+                    0x7B => self.ld_a_e_0x7b(),
+                    0x7C => self.ld_a_h_0x7c(),
+                    0x7D => self.ld_a_l_0x7d(),
+                    0x7E => self.ld_a_hl_0x7e(),
+                    0x7F => self.ld_a_a_0x7f(),
                     // 0x8X
                     0x80 => self.add_a_b_0x80(),
                     0x81 => self.add_a_c_0x81(),
