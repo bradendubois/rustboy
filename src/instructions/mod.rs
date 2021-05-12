@@ -67,6 +67,24 @@ impl Z80 {
                     0x2E => self.ld_l_d8_0x2e(),
                     0x2F => self.cpl_0x2f(),
 
+                    //0x3x
+                    0x30 => self.jr_nc_s8_0x30(),
+                    0x31 => self.ld_sp_d16_0x31(),
+                    0x32 => self.ld_hls_a_0x32(),
+                    0x33 => self.inc_sp_0x33(),
+                    0x34 => self.inc_hl_0x34(),
+                    0x35 => self.dec_hl_0x35(),
+                    0x36 => self.ld_hl_d8_0x36(),
+                    0x37 => self.scf_0x37(),
+                    0x38 => self.jr_c_s8_0x38(),
+                    0x39 => self.add_hl_sp_0x39(),
+                    0x3A => self.ld_a_hls_0x3a(),
+                    0x3B => self.dec_sp_0x3b(),
+                    0x3C => self.inc_a_0x3c(),
+                    0x3D => self.dec_a_0x3d(),
+                    0x3E => self.ld_a_d8_0x3e(),
+                    0x3F => self.ccf_0x3f(),
+
                     // 0x4X
                     0x40 => self.ld_b_b_0x40(),
                     0x41 => self.ld_b_c_0x41(),
@@ -336,7 +354,7 @@ impl Z80 {
 
     /// 0x13 - INC DE : Increment the contents of registers DE by 1
     fn inc_de_0x13(&mut self) -> u64 {
-        let de = self.inc_16(self.get_de);
+        let de = self.inc_16(self.get_de());
         self.set_de(de);
         8
     }
@@ -432,7 +450,7 @@ impl Z80 {
         self.unset_subtraction();
         self.unset_half_carry();
         if self.registers.a & 0x01 != 0 {self.set_full_carry()} else{self.unset_full_carry()}
-        cpu.registers.a = cpu.registers.a | (temp as u8) << 7;
+        self.registers.a = self.registers.a | (temp as u8) << 7;
         4
     }
     // 0x20 - JR NZ s8
@@ -581,6 +599,135 @@ impl Z80 {
         self.registers.a = !self.registers.a;
         4
     }
+
+    // 0x30 - JR NC, s8 : Jump s8 if carry flag is 0
+    fn jr_nc_s8_0x30(&mut self) -> u64 {
+        let next = self.byte() as i8;
+
+        match !self.is_full_carry() {
+            true => {
+                self.jr(next);
+                12
+            },
+            false => 8
+        }
+    }
+    // 0x31 - LD SP, d16 : Load the 2 bytes of immediate data into register pair SP
+    fn ld_sp_d16_0x31(&mut self) -> u64 {
+        self.registers.sp = self.word();
+        12
+    }
+
+    // 0x32 - LD HL(-), A
+    fn ld_hls_a_0x32(&mut self) -> u64 {
+        self.mmu.write(self.registers.a, self.get_hl());
+        let hl = self.dec_16(self.get_hl());
+        self.set_hl(hl);
+        8
+    }
+
+    // 0x33 - INC SP
+    fn inc_sp_0x33(&mut self) -> u64 {
+        self.registers.sp = self.inc_16(self.registers.sp);
+        8
+    }
+
+    // 0x34 - INC (HL)
+    fn inc_hl_0x34(&mut self) -> u64 {
+        let mut hl = self.mmu.read(self.get_hl());
+        hl = self.inc_8(hl);
+        self.mmu.write(hl, self.get_hl());
+        12
+    }
+
+    //0x35 - DEC (HL)
+    fn dec_hl_0x35(&mut self) -> u64 {
+        let mut hl = self.mmu.read(self.get_hl());
+        hl = self.dec_8(hl);
+        self.mmu.write(hl, self.get_hl());
+        12
+    }
+
+    // 0x36 - LD HL, d8
+    fn ld_hl_d8_0x36(&mut self) -> u64 {
+        let d8 = self.byte();
+        self.mmu.write(d8, self.get_hl());
+        12
+    }
+
+    //0x37 - SCF
+    fn scf_0x37(&mut self) -> u64 {
+        self.set_full_carry();
+        self.unset_half_carry();
+        self.unset_subtraction();
+        4
+    }
+
+    // 0x38 JR C, s8
+    fn jr_c_s8_0x38(&mut self) -> u64 {
+        match self.is_full_carry(){
+            true => {
+                let s8 = self.byte();
+                self.jr(s8 as i8);
+                12
+            },
+            false => 8
+        }
+    }
+
+    // 0x39 - ADD HL SP
+    fn add_hl_sp_0x39(&mut self) -> u64{
+        let sp = self.registers.sp;
+        let hl = self.add_16(self.get_hl(), sp);
+        self.set_hl(hl);
+        8
+    }
+
+    //0x3A - LD A, (HL-)
+    fn ld_a_hls_0x3a(&mut self) -> u64{
+        let mut hl = self.get_hl();
+        self.registers.a = self.mmu.read(hl);
+        hl = self.inc_16(hl);
+        self.set_hl(hl);
+        8
+    }
+
+    // 0x3B - DEC SP
+    fn dec_sp_0x3b(&mut self) -> u64{
+        self.registers.sp = self.dec_16(self.registers.sp);
+        8
+    }
+
+    //0x3C - INC A
+    fn inc_a_0x3c(&mut self) -> u64{
+        self.registers.a = self.inc_8(self.registers.a);
+        4
+    }
+
+    //0x3D - DEC A
+    fn dec_a_0x3d(&mut self) -> u64 {
+        self.registers.a = self.dec_8(self.registers.a);
+        4
+    }
+
+    //0x3E - LD A, d8
+    fn ld_a_d8_0x3e(&mut self) -> u64 {
+        self.registers.a = self.byte();
+        8
+    }
+
+    // 0x3F - CCF
+    fn ccf_0x3f(&mut self) -> u64 {
+        match self.is_full_carry(){
+            true => self.unset_full_carry(),
+            false => self.set_full_carry()
+        };
+        self.unset_subtraction();
+        self.unset_half_carry();
+        4
+    }
+
+
 
     // 0x40 - LD B B
     fn ld_b_b_0x40(&mut self) -> u64 {
