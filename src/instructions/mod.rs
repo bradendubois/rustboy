@@ -139,6 +139,9 @@ impl Z80 {
                     0x6E => self.ld_l_hl_0x6e(),
                     0x6F => self.ld_l_a_0x6f(),
 
+                    // 0x7X
+                    // TODO
+
                     // 0x8X
                     0x80 => self.add_a_b_0x80(),
                     0x81 => self.add_a_c_0x81(),
@@ -156,6 +159,9 @@ impl Z80 {
                     0x8D => self.adc_a_l_0x8d(),
                     0x8E => self.adc_a_hl_0x8e(),
                     0x8F => self.adc_a_a_0x8f(),
+
+                    // 0x9X
+                    // TODO
 
                     // 0xAX
                     0xA0 => self.and_b_0xa0(),
@@ -175,6 +181,9 @@ impl Z80 {
                     0xAE => self.xor_hl_0xae(),
                     0xAF => self.xor_a_0xaf(),
 
+                    // 0xBX
+                    // TODO
+
                     // 0xCX
                     0xC0 => self.ret_nz_0xc0(),
                     0xC1 => self.pop_bc_0xc1(),
@@ -193,6 +202,9 @@ impl Z80 {
                     0xCE => self.call_adc_a_d8_0xce(),
                     0xCF => self.rst_08h_0xcf(),
 
+                    // 0xDX
+                    // TODO
+
                     // 0xEX
                     0xE0 => self.ldh_a8_a_0xe0(),
                     0xE1 => self.pop_hl_0xe1(),
@@ -206,6 +218,8 @@ impl Z80 {
                     0xEE => self.xor_d8_0xee(),
                     0xEF => self.rst_28h_0xef(),
 
+                    // 0xFX
+                    // TODO
 
                     // Unmapped code in default table
                     _ => panic!("Unmapped default table opcode {}", code)
@@ -220,9 +234,176 @@ impl Z80 {
 
                 match code {
 
-                    // Dummy line just to test
-                    0x00 => 3,
+                    // 0xCB0X
+                    0x00 => self.rlc_b_0xcb00(),
+                    0x01 => self.rlc_c_0xcb01(),
+                    0x02 => self.rlc_d_0xcb02(),
+                    0x03 => self.rlc_e_0xcb03(),
+                    0x04 => self.rlc_h_0xcb04(),
+                    0x05 => self.rlc_l_0xcb05(),
+                    0x06 => self.rlc_hl_0xcb06(),
+                    0x07 => self.rlc_a_0xcb07(),
+                    0x08 => self.rrc_b_0xcb08(),
+                    0x09 => self.rrc_c_0xcb09(),
+                    0x0A => self.rrc_d_0xcb0a(),
+                    0x0B => self.rrc_e_0xcb0b(),
+                    0x0C => self.rrc_h_0xcb0c(),
+                    0x0D => self.rrc_l_0xcb0d(),
+                    0x0E => self.rrc_hl_0xcb0e(),
+                    0x0F => self.rrc_a_0xcb0f(),
 
+                    // 0xCB1X
+                    // TODO
+
+                    // 0xCB2X
+                    0x20 => self.sla_b_0xcb20(),
+                    0x21 => self.sla_c_0xcb21(),
+                    0x22 => self.sla_d_0xcb22(),
+                    0x23 => self.sla_e_0xcb23(),
+                    0x24 => self.sla_h_0xcb24(),
+                    0x25 => self.sla_l_0xcb25(),
+                    0x26 => self.sla_hl_0xcb26(),
+                    0x27 => self.sla_a_0xcb27(),
+                    0x28 => self.sra_b_0xcb28(),
+                    0x29 => self.sra_c_0xcb29(),
+                    0x2A => self.sra_d_0xcb2a(),
+                    0x2B => self.sra_e_0xcb2b(),
+                    0x2C => self.sra_h_0xcb2c(),
+                    0x2D => self.sra_l_0xcb2d(),
+                    0x2E => self.sra_hl_0xcb2e(),
+                    0x2F => self.sra_a_0xcb2f(),
+
+                    // 0xCB3X
+                    // TODO
+
+                    // 0xCB4X
+                    0x40 => self.bit_0_b_0xcb40(),
+                    0x41 => self.bit_0_c_0xcb41(),
+                    0x42 => self.bit_0_d_0xcb42(),
+                    0x43 => self.bit_0_e_0xcb43(),
+                    0x44 => self.bit_0_h_0xcb44(),
+                    0x45 => self.bit_0_l_0xcb45(),
+                    0x46 => self.bit_0_hl_0xcb46(),
+                    0x47 => self.bit_0_a_0xcb47(),
+                    0x48 => self.bit_1_b_0xcb48(),
+                    0x49 => self.bit_1_c_0xcb49(),
+                    0x4A => self.bit_1_d_0xcb4a(),
+                    0x4B => self.bit_1_e_0xcb4b(),
+                    0x4C => self.bit_1_h_0xcb4c(),
+                    0x4D => self.bit_1_l_0xcb4d(),
+                    0x4E => self.bit_1_hl_0xcb4e(),
+                    0x4F => self.bit_1_a_0xcb4f(),
+
+                    // 0xCB5X
+                    // TODO
+
+                    // 0xCB6X
+                    0x60 => self.bit_2_b_0xcb60(),
+                    0x61 => self.bit_2_c_0xcb61(),
+                    0x62 => self.bit_2_d_0xcb62(),
+                    0x63 => self.bit_2_e_0xcb63(),
+                    0x64 => self.bit_2_h_0xcb64(),
+                    0x65 => self.bit_2_l_0xcb65(),
+                    0x66 => self.bit_2_hl_0xcb66(),
+                    0x67 => self.bit_2_a_0xcb67(),
+                    0x68 => self.bit_3_b_0xcb68(),
+                    0x69 => self.bit_3_c_0xcb69(),
+                    0x6A => self.bit_3_d_0xcb6a(),
+                    0x6B => self.bit_3_e_0xcb6b(),
+                    0x6C => self.bit_3_h_0xcb6c(),
+                    0x6D => self.bit_3_l_0xcb6d(),
+                    0x6E => self.bit_3_hl_0xcb6e(),
+                    0x6F => self.bit_3_a_0xcb6f(),
+
+                    // 0xCB7X
+                    // TODO
+
+                    // 0xCB8X
+                    0x80 => self.res_0_b_0xcb80(),
+                    0x81 => self.res_0_c_0xcb81(),
+                    0x82 => self.res_0_d_0xcb82(),
+                    0x83 => self.res_0_e_0xcb83(),
+                    0x84 => self.res_0_h_0xcb84(),
+                    0x85 => self.res_0_l_0xcb85(),
+                    0x86 => self.res_0_hl_0xcb86(),
+                    0x87 => self.res_0_a_0xcb87(),
+                    0x88 => self.res_1_b_0xcb88(),
+                    0x89 => self.res_1_c_0xcb89(),
+                    0x8A => self.res_1_d_0xcb8a(),
+                    0x8B => self.res_1_e_0xcb8b(),
+                    0x8C => self.res_1_h_0xcb8c(),
+                    0x8D => self.res_1_l_0xcb8d(),
+                    0x8E => self.res_1_hl_0xcb8e(),
+                    0x8F => self.res_1_a_0xcb8f(),
+
+                    // 0xCB9X
+                    // TODO
+
+                    // 0xCBAX
+                    0xA0 => self.res_4_b_0xcba0(),
+                    0xA1 => self.res_4_c_0xcba1(),
+                    0xA2 => self.res_4_d_0xcba2(),
+                    0xA3 => self.res_4_e_0xcba3(),
+                    0xA4 => self.res_4_h_0xcba4(),
+                    0xA5 => self.res_4_l_0xcba5(),
+                    0xA6 => self.res_4_hl_0xcba6(),
+                    0xA7 => self.res_4_a_0xcba7(),
+                    0xA8 => self.res_5_b_0xcba8(),
+                    0xA9 => self.res_5_c_0xcba9(),
+                    0xAA => self.res_5_d_0xcbaa(),
+                    0xAB => self.res_5_e_0xcbab(),
+                    0xAC => self.res_5_h_0xcbac(),
+                    0xAD => self.res_5_l_0xcbad(),
+                    0xAE => self.res_5_hl_0xcbae(),
+                    0xAF => self.res_5_a_0xcbaf(),
+
+                    // 0xCBBX
+                    // TODO
+
+                    // 0xCBCX
+                    0xC0 => self.set_0_b_0xcbc0(),
+                    0xC1 => self.set_0_c_0xcbc1(),
+                    0xC2 => self.set_0_d_0xcbc2(),
+                    0xC3 => self.set_0_e_0xcbc3(),
+                    0xC4 => self.set_0_h_0xcbc4(),
+                    0xC5 => self.set_0_l_0xcbc5(),
+                    0xC6 => self.set_0_hl_0xcbc6(),
+                    0xC7 => self.set_0_a_0xcbc7(),
+                    0xC8 => self.set_1_b_0xcbc8(),
+                    0xC9 => self.set_1_c_0xcbc9(),
+                    0xCA => self.set_1_d_0xcbca(),
+                    0xCB => self.set_1_e_0xcbcb(),
+                    0xCC => self.set_1_h_0xcbcc(),
+                    0xCD => self.set_1_l_0xcbcd(),
+                    0xCE => self.set_1_hl_0xcbce(),
+                    0xCF => self.set_1_a_0xcbcf(),
+
+                    // 0xCBDX
+                    // TODO
+
+                    // 0xCBEX
+                    0xE0 => self.set_4_b_0xcbe0(),
+                    0xE1 => self.set_4_c_0xcbe1(),
+                    0xE2 => self.set_4_d_0xcbe2(),
+                    0xE3 => self.set_4_e_0xcbe3(),
+                    0xE4 => self.set_4_h_0xcbe4(),
+                    0xE5 => self.set_4_l_0xcbe5(),
+                    0xE6 => self.set_4_hl_0xcbe6(),
+                    0xE7 => self.set_4_a_0xcbe7(),
+                    0xE8 => self.set_5_b_0xcbe8(),
+                    0xE9 => self.set_5_c_0xcbe9(),
+                    0xEA => self.set_5_d_0xcbea(),
+                    0xEB => self.set_5_e_0xcbeb(),
+                    0xEC => self.set_5_h_0xcbec(),
+                    0xED => self.set_5_l_0xcbed(),
+                    0xEE => self.set_5_hl_0xcbee(),
+                    0xEF => self.set_5_a_0xcbef(),
+
+                    // 0xCBFX
+                    // TODO
+
+
+                    // Unmapped code in default table; should be impossible as the table is complete
                     _ => panic!("Unmapped CB prefix opcode {}", code)
                 }
             }
@@ -1594,7 +1775,7 @@ impl Z80 {
     /* 0xCB20 - 0xCB2F */
 
     // 0xCB20 - SLA B
-    fn sla_b_0xcb00(&mut self) -> u64 {
+    fn sla_b_0xcb20(&mut self) -> u64 {
         self.registers.b = self.sla(self.registers.b);
         8
     }
@@ -2318,4 +2499,5 @@ impl Z80 {
     /* 0xCBF0 - 0xCBFF */
 
     // TODO - 0xCBF0 - 0xCBFF
+    
 }
