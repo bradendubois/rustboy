@@ -537,7 +537,7 @@ impl Z80 {
 
     /// Unset the Half Carry (H) flag of the F register
     pub fn unset_half_carry(&mut self) {
-        self.registers.f &= 0x20;
+        self.registers.f &= !0x20;
     }
 
     /// Check the Half Carry (H) flag of the F register
@@ -554,7 +554,7 @@ impl Z80 {
 
     /// Unset the Carry (C) flag of the F register
     pub fn unset_full_carry(&mut self) {
-        self.registers.f &= 0x10;
+        self.registers.f &= !0x10;
     }
 
     /// Check the Carry (C) flag of the F register
