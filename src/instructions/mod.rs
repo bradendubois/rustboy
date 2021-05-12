@@ -678,6 +678,14 @@ impl Z80 {
         4
     }
 
+    // 0x50 - LD D, B
+    fn ld_d_b_0x50(&mut self) -> u64{
+        self.registers.d = self.registers.b;
+        4
+    }
+
+    //
+
     // 0x60 - LD H B
     fn ld_h_b_0x60(&mut self) -> u64 {
         self.registers.h = self.registers.b;
