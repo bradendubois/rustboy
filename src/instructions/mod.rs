@@ -1034,6 +1034,104 @@ impl Z80 {
         4
     }
 
+    // 0x70 - LD (HL), B
+    fn ld_hl_b_0x70(&mut self) -> u64{
+        self.mmu.write(self.registers.b, self.get_hl());
+        8
+    }
+
+    // 0x71 - LD (HL), C
+    fn ld_hl_c_0x71(&mut self) -> u64{
+        self.mmu.write(self.registers.c, self.get_hl());
+        8
+    }
+
+    // 0x72 - LD (HL), D
+    fn ld_hl_d_0x72(&mut self) -> u64{
+        self.mmu.write(self.registers.d, self.get_hl());
+        8
+    }
+
+    // 0x73 - LD (HL), E
+    fn ld_hl_e_0x73(&mut self) -> u64{
+        self.mmu.write(self.registers.e, self.get_hl());
+        8
+    }
+
+    // 0x74 - LD (HL), H
+    fn ld_hl_h_0x74(&mut self) -> u64{
+        self.mmu.write(self.registers.h, self.get_hl());
+        8
+    }
+
+    // 0x75 - LD (HL), L
+    fn ld_hl_l_0x75(&mut self) -> u64{
+        self.mmu.write(self.registers.l, self.get_hl());
+        8
+    }
+
+    /// 0x76 - HALT : Stops the system clock\.
+    /// Oscillator clock and LCD controller continue to operate.
+    /// Internal RAM register ports remain unchanged
+    /// Cancelled by interrupt or RESET signal
+    ///
+    fn halt_0x76(&mut self) -> u64 {
+        self.status = Status::HALTED;
+        4
+    }
+
+    // 0x77 - LD (HL), A
+    fn ld_hl_a_0x77(&mut self) -> u64{
+        self.mmu.write(self.registers.a, self.get_hl());
+        8
+    }
+    // 0x78 - LD, A, B
+    fn ld_a_b_0x78(&mut self) -> u64{
+        self.registers.a = self.registers.b;
+        4
+    }
+
+    //0x79 - LD A, C
+    fn ld_a_c_0x79(&mut self) -> u64 {
+        self.registers.a = self.registers.c;
+        4
+    }
+    //0x7A - LD A, D
+    fn ld_a_d_0x7a(&mut self) -> u64 {
+        self.registers.a = self.registers.d;
+        4
+    }
+
+    //0x7B - LD A, e
+    fn ld_a_e_0x7b(&mut self) -> u64 {
+        self.registers.a = self.registers.e;
+        4
+    }
+
+    //0x7C - LD A, H
+    fn ld_a_h_0x7c(&mut self) -> u64 {
+        self.registers.a = self.registers.h;
+        4
+    }
+
+    //0x7D - LD A, L
+    fn ld_a_l_0x7d(&mut self) -> u64 {
+        self.registers.a = self.registers.l;
+        4
+    }
+
+    //0x7E - LD A, (HL)
+    fn ld_a_hl_0x7e(&mut self) -> u64 {
+        self.registers.a = self.mmu.read(self.get_hl());
+        8
+    }
+
+    //0x7F - LD A, A
+    fn ld_a_a_0x7f(&mut self) -> u64 {
+        self.registers.a = self.registers.a; // I'll never get tired of these lol
+        4
+    }
+
     // 0x80 - ADD A,B
     fn add_a_b_0x80(&mut self) -> u64 {
         self.registers.a = self.add_8(self.registers.a, self.registers.b);
