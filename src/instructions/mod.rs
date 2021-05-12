@@ -1,5 +1,5 @@
 use super::z80::{Z80};
-
+use super::z80::Status;
 
 impl Z80 {
 
@@ -316,7 +316,7 @@ impl Z80 {
     /// Internal RAM register ports remain unchanged
     /// Cancelled by RESET signal
     fn stop_0x10(&mut self) -> u64 {
-            self.status = self::Status::STOPPED;
+            self.status = Status::STOPPED;
             4
     }
 
@@ -361,17 +361,17 @@ impl Z80 {
 
     ///0x17 - RLA : Rotate contents of register A to the left,
     fn rla_0x17(&mut self) -> u64 {
-        cpu.unset_zero();
-        cpu.unset_subtraction();
-        cpu.unset_half_carry();
-        let temp = cpu.is_full_carry();
-        if cpu.registers.a & 0x80 == 1 {
-            cpu.set_full_carry()
+        self.unset_zero();
+        self.unset_subtraction();
+        self.unset_half_carry();
+        let temp = self.is_full_carry();
+        if self.registers.a & 0x80 == 1 {
+            self.set_full_carry()
         } else {
-            cpu.unset_full_carry()
+            self.unset_full_carry()
         }
-        cpu.registers.a = cpu.registers.a << 1;
-        cpu.registers.a |= temp as u8;
+        self.registers.a = self.registers.a << 1;
+        self.registers.a |= temp as u8;
         4
     }
 
@@ -385,8 +385,8 @@ impl Z80 {
 
     ///0x19 - ADD HL DE : add the contents of de to hl
     fn add_hl_de_0x19(&mut self) -> u64 {
-        let val = cpu.add_16(cpu.get_hl(), cpu.get_de(), true);
-        cpu.set_hl(val);
+        let val = self.add_16(self.get_hl(), self.get_de());
+        self.set_hl(val);
         8
     }
 
@@ -684,7 +684,40 @@ impl Z80 {
         4
     }
 
-    //
+    // 0x51 - LD D, C
+    fn ld_d_c_0x51(&mut self) -> u64{
+        self.registers.d = self.registers.c;
+        4
+    }
+
+    // 0x52 - LD D, D
+    fn ld_d_d_0x52(&mut self) -> u64 {
+        self.registers.d = self.registers.d; //...
+        4
+    }
+
+    // 0x53 - LD, D, E
+    fn ld_d_e_0x53(&mut self) -> u64{
+        self.registers.d = self.registers.e;
+        4
+    }
+    // 0x54 - LD, D, H
+    fn ld_d_h_0x54(&mut self) -> u64{
+        self.registers.d = self.registers.h;
+        4
+    }
+
+    // 0x55 - LD, D, L
+    fn ld_d_l_0x54(&mut self) -> u64{
+        self.registers.d = self.registers.l;
+        4
+    }
+
+    // 0x56 - LD D (HL)
+    fn ld_d_hl_0x46(&mut self) -> u64 {
+        self.registers.b = self.mmu.read(self.get_hl);
+        8
+    }
 
     // 0x60 - LD H B
     fn ld_h_b_0x60(&mut self) -> u64 {
