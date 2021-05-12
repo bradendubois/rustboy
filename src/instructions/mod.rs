@@ -862,7 +862,7 @@ impl Z80 {
 
     // 0x56 - LD D (HL)
     fn ld_d_hl_0x56(&mut self) -> u64 {
-        self.registers.b = self.mmu.read(self.get_hl);
+        self.registers.b = self.mmu.read(self.get_hl());
         8
     }
 
@@ -910,7 +910,7 @@ impl Z80 {
 
     // 0x5E - LD, E, HL
     fn ld_e_hl_0x5e(&mut self) -> u64{
-        self.registers.e = self.mmu.read(self.get_hl);
+        self.registers.e = self.mmu.read(self.get_hl());
         8
     }
 
