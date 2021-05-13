@@ -1,18 +1,15 @@
 use super::mmu;
 
-
 #[allow(dead_code)]
 #[derive(Debug)]
-pub enum Status{
+pub enum Status {
     STOPPED,
     HALTED,
-    RUNNING
+    RUNNING,
 }
-
 
 #[derive(Debug)]
 pub struct Registers {
-
     pub a: u8,
     pub b: u8,
     pub c: u8,
@@ -28,7 +25,6 @@ pub struct Registers {
 // Struct representing the Z80 CPU
 #[derive(Debug)]
 pub struct Z80 {
-
     // Struct of all registers in the Z80
     pub registers: Registers,
 
@@ -42,19 +38,14 @@ pub struct Z80 {
     pub use_cb_table: bool,
 
     // Struct representing the memory unit
-    pub mmu: mmu::MMU
+    pub mmu: mmu::MMU,
 }
-
-
 
 #[allow(dead_code)]
 impl Z80 {
-
     /// Initializer for a Z80 CPU
     pub fn new(mmu: mmu::MMU) -> Z80 {
-
         Z80 {
-
             // All registers begin empty
             registers: Registers {
                 a: 0x01,
@@ -82,15 +73,13 @@ impl Z80 {
             use_cb_table: false,
 
             // MMU Unit
-            mmu
+            mmu,
         }
     }
 
     /// Run the CPU, fetching/decoding/executing at the PC until otherwise halted / interrupted
     pub fn step(&mut self) {
-
         loop {
-
             // Get the opcode number to execute
             let opcode = self.byte();
 
@@ -110,24 +99,23 @@ impl Z80 {
 
     /// Add two u8s together, handling overflow and the Z/N/H/C flags of the F register
     pub fn add_8(&mut self, s: u8, t: u8) -> u8 {
-
         let result = s.wrapping_add(t);
 
         match result {
             0 => self.set_zero(),
-            _ => self.unset_zero()
+            _ => self.unset_zero(),
         };
 
         self.unset_subtraction();
 
         match ((s & 0xF) + (t & 0xF)) > 0xF {
             true => self.set_half_carry(),
-            false => self.unset_half_carry()
+            false => self.unset_half_carry(),
         };
 
         match s.checked_add(t) {
             None => self.set_full_carry(),
-            Some(_) => self.unset_full_carry()
+            Some(_) => self.unset_full_carry(),
         };
 
         result
@@ -135,19 +123,18 @@ impl Z80 {
 
     /// Add two u16s together, handling overflow and the Z/N/H/C flags of the F register
     pub fn add_16(&mut self, s: u16, t: u16) -> u16 {
-
         let result = s.wrapping_add(t);
 
         self.unset_subtraction();
 
-        match (s & 0x07FF) + (t & 0x07FF) > 0x07FF  {
+        match (s & 0x07FF) + (t & 0x07FF) > 0x07FF {
             true => self.set_half_carry(),
-            false => self.unset_half_carry()
+            false => self.unset_half_carry(),
         };
 
         match s.checked_add(t) {
             None => self.set_full_carry(),
-            Some(_) => self.unset_full_carry()
+            Some(_) => self.unset_full_carry(),
         };
 
         result
@@ -155,18 +142,20 @@ impl Z80 {
 
     /// ADC - Add the given value and the carry (C) flag to the accumulator (A) register
     pub fn adc_8(&mut self, s: u8) {
-
         let carry = match self.is_full_carry() {
             true => 1,
-            false => 0
+            false => 0,
         };
 
         self.registers.a = self.add_8(self.registers.a, s + carry);
     }
 
     /// SBC - Subtract given value and carry flag from the A register
-    pub fn sbc_8(&mut self, s: u8){
-        let carry = match self.is_full_carry(){true=>1,false=>0};
+    pub fn sbc_8(&mut self, s: u8) {
+        let carry = match self.is_full_carry() {
+            true => 1,
+            false => 0,
+        };
         self.registers.a = self.sub_8(self.registers.a, s + carry);
     }
 
@@ -174,18 +163,17 @@ impl Z80 {
 
     /// Subtract t (u8) from s (u8), handling underflow and the Z/N/H/C flags of the F register
     pub fn sub_8(&mut self, s: u8, t: u8) -> u8 {
-
         let result = s.wrapping_sub(t);
 
         match result == 0 {
             true => self.set_zero(),
-            false => self.unset_zero()
+            false => self.unset_zero(),
         };
 
         self.set_subtraction();
         match ((s & 0xf) - (t & 0xf)) & 0x10 != 0 {
             true => self.set_half_carry(),
-            false => self.unset_half_carry()
+            false => self.unset_half_carry(),
         };
 
         result
@@ -195,7 +183,6 @@ impl Z80 {
 
     /// Increment a given u8, handling overflow and the Z/N/H/C flags of the F register
     pub fn inc_8(&mut self, s: u8) -> u8 {
-
         // Save the carry flag as it is changed by sub
         let carry = self.is_full_carry();
         let result = self.add_8(s, 1);
@@ -203,7 +190,7 @@ impl Z80 {
         // Restore the carry flag state after sub operation
         match carry {
             true => self.set_full_carry(),
-            false => self.unset_full_carry()
+            false => self.unset_full_carry(),
         };
 
         result
@@ -211,7 +198,6 @@ impl Z80 {
 
     /// Increment a given u16, handling overflow and the Z/N/H/C flags of the F register
     pub fn inc_16(&mut self, s: u16) -> u16 {
-
         // Save the carry flag as it is changed by sub
         let carry = self.is_full_carry();
         let result = self.add_16(s, 1);
@@ -219,7 +205,7 @@ impl Z80 {
         // Restore the carry flag state after sub operation
         match carry {
             true => self.set_full_carry(),
-            false => self.unset_full_carry()
+            false => self.unset_full_carry(),
         };
 
         result
@@ -229,7 +215,6 @@ impl Z80 {
 
     /// Decrement a given u8, handling overflow and the Z/N/H/C flags of the F register
     pub fn dec_8(&mut self, s: u8) -> u8 {
-
         // Save the carry flag as it is changed by sub
         let carry = self.is_full_carry();
         let result = self.sub_8(s, 1);
@@ -237,7 +222,7 @@ impl Z80 {
         // Restore the carry flag state after sub operation
         match carry {
             true => self.set_full_carry(),
-            false => self.unset_full_carry()
+            false => self.unset_full_carry(),
         };
 
         result
@@ -245,7 +230,6 @@ impl Z80 {
 
     /// Decrement a given u16, handling overflow and the Z/N/H/C flags of the F register
     pub fn dec_16(&mut self, s: u16) -> u16 {
-
         // Save the carry flag as it is changed by sub
         let carry = self.is_full_carry();
         let result = s.wrapping_sub(1);
@@ -253,7 +237,7 @@ impl Z80 {
         // Restore the carry flag state after sub operation
         match carry {
             true => self.set_full_carry(),
-            false => self.unset_full_carry()
+            false => self.unset_full_carry(),
         };
 
         result
@@ -263,12 +247,11 @@ impl Z80 {
 
     /// AND - AND the given value with the accumulator register (A) and store the result in A
     pub fn and(&mut self, t: u8) {
-
         self.registers.a &= t;
 
         match self.registers.a == 0 {
             true => self.set_zero(),
-            false => self.unset_zero()
+            false => self.unset_zero(),
         };
 
         self.unset_subtraction();
@@ -278,12 +261,11 @@ impl Z80 {
 
     /// XOR - XOR the given value with the accumulator register (A) and store the result in A
     pub fn xor(&mut self, v: u8) {
-
         self.registers.a ^= v;
 
         match self.registers.a == 0 {
             true => self.set_zero(),
-            false => self.unset_zero()
+            false => self.unset_zero(),
         };
 
         self.unset_subtraction();
@@ -312,13 +294,13 @@ impl Z80 {
         let value = Z80::u8_pair(v);
         self.registers.sp -= 2;
         self.mmu.write(value.1, self.registers.sp);
-        self.mmu.write(value.0, self.registers.sp+1);
+        self.mmu.write(value.0, self.registers.sp + 1);
     }
 
     /// Pop and return 16 bits from the stack (SP)
     pub fn pop_sp(&mut self) -> u16 {
         let lower = self.mmu.read(self.registers.sp);
-        let upper = self.mmu.read(self.registers.sp+1);
+        let upper = self.mmu.read(self.registers.sp + 1);
         self.registers.sp += 2;
         Z80::u16_from_u8(upper, lower)
     }
