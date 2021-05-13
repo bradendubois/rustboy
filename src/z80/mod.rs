@@ -272,6 +272,13 @@ impl Z80 {
         self.unset_full_carry();
     }
 
+    /// CP - Compare the given value with register A, setting the zero flag if they're equal
+    pub fn cp(&mut self, t: u8){
+        if self.sub_8(self.registers.a,t) == 0{
+            self.set_zero()
+        }
+    }
+
     /// XOR - XOR the given value with the accumulator register (A) and store the result in A
     pub fn xor(&mut self, v: u8) {
         self.registers.a ^= v;
