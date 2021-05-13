@@ -164,6 +164,12 @@ impl Z80 {
         self.registers.a = self.add_8(self.registers.a, s + carry);
     }
 
+    /// SBC - Subtract given value and carry flag from the A register
+    pub fn sbc_8(&mut self, s: u8){
+        let carry = match self.is_full_carry(){true=>1,false=>0};
+        self.registers.a = self.sub_8(self.registers.a, s + carry);
+    }
+
     /*      Subtraction      */
 
     /// Subtract t (u8) from s (u8), handling underflow and the Z/N/H/C flags of the F register
