@@ -205,6 +205,24 @@ impl Z80 {
                     0xAE => self.xor_hl_0xae(),
                     0xAF => self.xor_a_0xaf(),
 
+                    // 0xBX
+                    0xB0 => self.or_b_0xb0(),
+                    0xB1 => self.or_c_0xb1(),
+                    0xB2 => self.or_d_0xb2(),
+                    0xB3 => self.or_e_0xb3(),
+                    0xB4 => self.or_h_0xb4(),
+                    0xB5 => self.or_l_0xb5(),
+                    0xB6 => self.or_hl_0xb6(),
+                    0xB7 => self.or_a_0xb7(),
+                    0xB8 => self.cp_b_0xb8(),
+                    0xB9 => self.cp_c_0xb9(),
+                    0xBA => self.cp_d_0xba(),
+                    0xBB => self.cp_e_0xbb(),
+                    0xBC => self.cp_h_0xbc(),
+                    0xBD => self.cp_l_0xbd(),
+                    0xBE => self.cp_hl_0xbe(),
+                    0xBF => self.cp_a_0xbf(),
+
                     // 0xCX
                     0xC0 => self.ret_nz_0xc0(),
                     0xC1 => self.pop_bc_0xc1(),
@@ -1453,6 +1471,101 @@ impl Z80 {
     // 0xAF - XOR A
     fn xor_a_0xaf(&mut self) -> u64 {
         self.xor(self.registers.a); // why not
+        4
+    }
+
+    // 0xB0 - OR B
+    fn or_b_0xb0(&mut self) -> u64 {
+        self.or(self.registers.b);
+        4
+    }
+
+    // 0xB1 - OR C
+    fn or_c_0xb1(&mut self) -> u64 {
+        self.or(self.registers.c);
+        4
+    }
+
+    // 0xB2 - OR D
+    fn or_d_0xb2(&mut self) -> u64 {
+        self.or(self.registers.d);
+        4
+    }
+
+    // 0xB3 - OR E
+    fn or_e_0xb3(&mut self) -> u64 {
+        self.or(self.registers.e);
+        4
+    }
+    // 0xB4 - OR H
+    fn or_h_0xb4(&mut self) -> u64 {
+        self.or(self.registers.h);
+        4
+    }
+
+    // 0xB5 - OR L
+    fn or_l_0xb5(&mut self) -> u64 {
+        self.or(self.registers.l);
+        4
+    }
+
+    // 0xB6 - OR (HL)
+    fn or_hl_0xb6(&mut self) -> u64 {
+        let val = self.mmu.read(self.get_hl());
+        self.or(val);
+        8
+    }
+    // 0xB7 - OR A
+    fn or_a_0xb7(&mut self) -> u64 {
+        self.or(self.registers.a);
+        4
+    }
+
+    // 0xB8 - CP B
+    fn cp_b_0xb8(&mut self) -> u64 {
+        self.cp(self.registers.b);
+        4
+    }
+
+    // 0xB9 - CP C
+    fn cp_c_0xb9(&mut self) -> u64 {
+        self.cp(self.registers.c);
+        4
+    }
+
+    // 0xBA - CP D
+    fn cp_d_0xba(&mut self) -> u64 {
+        self.cp(self.registers.d);
+        4
+    }
+
+    // 0xBB - CP E
+    fn cp_e_0xbb(&mut self) -> u64 { // bay bay
+        self.cp(self.registers.e);
+        4
+    }
+
+    // 0xBC - CP H
+    fn cp_h_0xbc(&mut self) -> u64 {
+        self.cp(self.registers.h);
+        4
+    }
+
+    // 0xBD - CP L
+    fn cp_l_0xbd(&mut self) -> u64 {
+        self.cp(self.registers.l);
+        4
+    }
+    // 0xBE - CP (HL)
+    fn cp_hl_0xbe(&mut self) -> u64 {
+        let val = self.mmu.read(self.get_hl());
+        self.cp(val);
+        4
+    }
+
+    // 0xBF - CP A
+    fn cp_a_0xbf(&mut self) -> u64 {
+        self.cp(self.registers.a);
         4
     }
 
