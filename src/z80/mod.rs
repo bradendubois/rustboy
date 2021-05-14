@@ -203,8 +203,6 @@ impl Z80 {
     /// Increment a given u16, handling overflow
     pub fn inc_16(&mut self, s: u16) -> u16 {
 
-        s.wrapping_add(1);
-
         // Save the carry flag as it is changed by sub
         let carry = self.is_full_carry();
         let result = self.add_16(s, 1);
