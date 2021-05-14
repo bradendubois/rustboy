@@ -2329,7 +2329,54 @@ impl Z80 {
     /* 0xCB10 - 0xCB1F */
 
     // TODO - 0xCB10 - 0xCB1F
+    // 0xCB10 - RL B
+    fn rl_b_0xcb10(&mut self) -> u64 {
+        self.rl(self.registers.b);
+        8
+    }
 
+    // 0xCB11 - RL C
+    fn rl_c_0xcb11(&mut self) -> u64 {
+        self.rl(self.registers.c);
+        8
+    }
+
+    // 0xCB12 - RL D
+    fn rl_d_0xcb12(&mut self) -> u64 {
+        self.rl(self.registers.d);
+        8
+    }
+
+    // 0xCB13 - RL E
+    fn rl_e_0xcb13(&mut self) -> u64 {
+        self.rl(self.registers.e);
+        8
+    }
+
+    // 0xCB14 - RL H
+    fn rl_h_0xcb14(&mut self) -> u64 {
+        self.rl(self.registers.h);
+        8
+    }
+
+    // 0xCB15 - RL L
+    fn rl_l0xcb15(&mut self) -> u64 {
+        self.rl(self.registers.l);
+        8
+    }
+
+    // 0xCB16 - RL HL
+    fn rl_hl_0xcb16(&mut self) -> u64 {
+        let val = self.rl(self.mmu.read(self.get_hl()));
+        self.mmu.write(val,self.get_hl());
+        16
+    }
+
+    // 0xCB17 - RL A
+    fn rl_a_0xcb17(&mut self) -> u64 {
+        self.rl(self.registers.a);
+        8
+    }
     /* 0xCB20 - 0xCB2F */
 
     // 0xCB20 - SLA B
