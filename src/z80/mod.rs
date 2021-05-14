@@ -320,6 +320,27 @@ impl Z80 {
         result
     }
 
+    /// RL - Rotate a number left, copy the contents of carry into the result
+    pub fn rl(&mut self, v: u8) -> u8{
+        let carry_bit = if self.is_full_carry() {1} else {0};
+        let mut result = (v<<1) | (v>> 7);
+
+        match result == 0 {
+            true => self.set_zero(),
+            false => self.unset_zero()
+        };
+        match result & 0x01 == 0 {
+            true => self.unset_full_carry(),
+            false => self.set_full_carry()
+        };
+        self.unset_subtraction();
+        self.unset_half_carry();
+
+        result = result | carry_bit;
+
+        result
+    }
+
     /// RRC - Rotate a number right, and copy the right-most bit shifted into the C register
     pub fn rrc(&mut self, v: u8) -> u8 {
 
