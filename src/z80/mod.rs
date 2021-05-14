@@ -203,7 +203,7 @@ impl Z80 {
     /// Increment a given u16, handling overflow
     pub fn inc_16(&mut self, s: u16) -> u16 {
 
-        s.wrapping_add(1)
+        s.wrapping_add(1);
 
         // Save the carry flag as it is changed by sub
         let carry = self.is_full_carry();
@@ -590,11 +590,11 @@ impl Z80 {
     }
 
     /// Get the Interrupt Master Enable flag
-    pub fn is_ime(&self) -> bool {self.ime}
+    pub fn is_ime(&self) -> bool {self.registers.ime}
 
     /// Set the Interrupt Master Enable flag
-    pub fn set_ime(&mut self) {self.ime = true;}
+    pub fn set_ime(&mut self) {self.registers.ime = true;}
 
     /// Unset the IME flag
-    pub fn unset_ime(&mut self) {self.ime = false;}
+    pub fn unset_ime(&mut self) {self.registers.ime = false;}
 }
