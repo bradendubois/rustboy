@@ -319,7 +319,14 @@ impl Z80 {
                     0x0F => self.rrc_a_0xcb0f(),
 
                     // 0xCB1X
-                    // TODO
+                    0x10 => self.rl_b_0xcb10(),
+                    0x11 => self.rl_c_0xcb11(),
+                    0x12 => self.rl_d_0xcb12(),
+                    0x13 => self.rl_e_0xcb13(),
+                    0x14 => self.rl_h_0xcb14(),
+                    0x15 => self.rl_l0xcb15(),
+                    0x16 => self.rl_hl_0xcb16(),
+                    0x17 => self.rl_a_0xcb17(),
 
                     // 0xCB2X
                     0x20 => self.sla_b_0xcb20(),
