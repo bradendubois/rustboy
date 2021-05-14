@@ -20,6 +20,8 @@ pub struct Registers {
     pub f: u8,
     pub pc: u16,
     pub sp: u16,
+
+    pub ime: bool,
 }
 
 // Struct representing the Z80 CPU
@@ -62,6 +64,8 @@ impl Z80 {
 
                 pc: 0x0100,
                 sp: 0xFFFE,
+
+                ime: false,
             },
 
             // Clock begins at 0
@@ -486,4 +490,13 @@ impl Z80 {
     pub fn is_full_carry(&self) -> bool {
         self.registers.f & 0x10 != 0
     }
+
+    /// Get the Interrupt Master Enable flag
+    pub fn is_ime(&self) -> bool {self.ime}
+
+    /// Set the Interrupt Master Enable flag
+    pub fn set_ime(&mut self) {self.ime = true;}
+
+    /// Unset the IME flag
+    pub fn unset_ime(&mut self) {self.ime = false;}
 }
