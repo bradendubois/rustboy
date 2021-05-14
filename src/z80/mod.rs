@@ -200,8 +200,11 @@ impl Z80 {
         result
     }
 
-    /// Increment a given u16, handling overflow and the Z/N/H/C flags of the F register
+    /// Increment a given u16, handling overflow
     pub fn inc_16(&mut self, s: u16) -> u16 {
+
+        s.wrapping_add(1)
+
         // Save the carry flag as it is changed by sub
         let carry = self.is_full_carry();
         let result = self.add_16(s, 1);
@@ -213,6 +216,7 @@ impl Z80 {
         };
 
         result
+
     }
 
     /*      Decrementing     */
@@ -297,6 +301,100 @@ impl Z80 {
         self.unset_full_carry();
     }
 
+    /// RLC - Rotate a number left, and copy the left-most bit shifted into the C register
+    pub fn rlc(&mut self, v: u8) -> u8 {
+
+        let result = (v << 1) | (v >> 7);
+
+        match result == 0 {
+            true => self.set_zero(),
+            false => self.unset_zero()
+        };
+
+        self.unset_subtraction();
+        self.unset_half_carry();
+
+        match result & 0x01 == 0 {
+            true => self.unset_full_carry(),
+            false => self.set_full_carry()
+        };
+
+        result
+    }
+
+    /// RRC - Rotate a number right, and copy the right-most bit shifted into the C register
+    pub fn rrc(&mut self, v: u8) -> u8 {
+
+        let result = (v >> 1) | (v << 7);
+
+        match result == 0 {
+            true => self.set_zero(),
+            false => self.unset_zero()
+        };
+
+        self.unset_subtraction();
+        self.unset_half_carry();
+
+        match result & 0xF0 == 0 {
+            true => self.unset_full_carry(),
+            false => self.set_full_carry()
+        };
+
+        result
+    }
+
+    /// SLA - Shift a number left, and copy the left-most bit shifted into the C register
+    pub fn sla(&mut self, v: u8) -> u8 {
+
+        let result = v << 1;
+
+        match result == 0 {
+            true => self.set_zero(),
+            false => self.unset_zero()
+        };
+
+        self.unset_subtraction();
+        self.unset_half_carry();
+
+        match v & 0xF0 == 0 {
+            true => self.unset_full_carry(),
+            false => self.set_full_carry()
+        };
+
+        result
+    }
+
+    /// SRA - Shift a number right, and copy the right-most bit shifted into the C register
+    pub fn sra(&mut self, v: u8) -> u8 {
+
+        let result = v >> 1;
+
+        match result == 0 {
+            true => self.set_zero(),
+            false => self.unset_zero()
+        };
+
+        self.unset_subtraction();
+        self.unset_half_carry();
+
+        match v & 0x01 == 0 {
+            true => self.unset_full_carry(),
+            false => self.set_full_carry()
+        };
+
+        result
+    }
+
+    /// BIT - Store the complement of bit b of s in the Zero (Z) flag
+    pub fn bit(&mut self, s: u8, b: u8) {
+        match (s & (1 << b)) == 0 {
+            true => self.set_zero(),
+            false => self.unset_zero()
+        };
+        self.unset_subtraction();
+        self.set_half_carry();
+    }
+
     /*  Program Counter (PC) */
 
     pub fn byte(&mut self) -> u8 {
@@ -359,7 +457,7 @@ impl Z80 {
 
     /// Convert two u8s (given in the order of higher order, lower order) into a u16
     pub fn u16_from_u8(x: u8, y: u8) -> u16 {
-        ((x << 8) + y).into()
+        ((x as u16) << 8) + (y as u16)
     }
 
     /// Convert a u16 into two u8s (given in the order of higher order, lower order)
@@ -432,7 +530,7 @@ impl Z80 {
 
     /// Unset the Zero (Z) flag of the F register
     pub fn unset_zero(&mut self) {
-        self.registers.f ^= 0x80;
+        self.registers.f &= !0x80;
     }
 
     /// Check the Zero(Z) flag of the F register
@@ -449,7 +547,7 @@ impl Z80 {
 
     /// Unset the Subtract (N) flag of the F register
     pub fn unset_subtraction(&mut self) {
-        self.registers.f ^= 0x40;
+        self.registers.f &= !0x40;
     }
 
     /// Check the Subtract (N) flag of the F register
@@ -466,7 +564,7 @@ impl Z80 {
 
     /// Unset the Half Carry (H) flag of the F register
     pub fn unset_half_carry(&mut self) {
-        self.registers.f ^= 0x20;
+        self.registers.f &= !0x20;
     }
 
     /// Check the Half Carry (H) flag of the F register
@@ -483,7 +581,7 @@ impl Z80 {
 
     /// Unset the Carry (C) flag of the F register
     pub fn unset_full_carry(&mut self) {
-        self.registers.f ^= 0x10;
+        self.registers.f &= !0x10;
     }
 
     /// Check the Carry (C) flag of the F register
