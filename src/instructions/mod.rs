@@ -1865,10 +1865,7 @@ impl Z80 {
             false => 8
 
             }
-            false => 8,
-
         }
-    }
 
     // 0xC9 - RET
     fn ret_0xc9(&mut self) -> u64 {
@@ -1931,6 +1928,95 @@ impl Z80 {
     // TODO - 0xD0 - 0xDF
 
     /*   0xE0 - 0xEF   */
+
+    // 0xD0 - RET NC
+    fn ret_nc_0xd0(&mut self) -> u64 {
+        match self.is_full_carry() {
+            true => 8,
+            false => {
+                self.ret();
+                20
+            }
+        }
+    }
+
+    // 0xD1 - POP DE
+    fn pop_de_0xd1(&mut self) -> u64 {
+         let value = self.pop_sp();
+        self.set_de(value);
+         12
+    }
+
+    // 0xD2 - JP NZ, a16
+    fn jp_nz_a6_0xd2(&mut self) -> u64{
+        let value = self.word();
+        match self.is_full_carry(){
+            false => {self.registers.pc=value; 16},
+            true => 12,
+        }
+    }
+
+    // 0xD4 - Call NC, a16
+    fn call_nc_a16_0xd4(&mut self) -> u64 {
+        let val = self.word();
+        match self.is_full_carry(){
+            true => {
+                self.call(val);
+                24
+            },
+            false => 12
+        }
+    }
+
+    // 0xD5 - PUSH DE
+    fn push_de_0xd5(&mut self) -> u64 {
+        self.push_sp(self.get_de());
+        16
+    }
+
+    // 0xD6 - SUB d8
+    fn sub_d8_0xd6(&mut self) -> u64 {
+        let val = self.byte();
+        self.registers.a = self.sub_8(self.registers.a, val);
+        8
+    }
+
+    // 0xD7 - RST 10H
+    fn rst_10h_0xd7(&mut self) -> u64 {
+        self.rst(0x10);
+        16
+    }
+
+    // 0xD8 - RET C
+    fn ret_c_0xd8(&mut self) -> u64 {
+        match self.is_full_carry() {
+            true => {
+                self.ret();
+                20
+            }
+            false => 8,
+        }
+    }
+
+    // 0xD9 - RETI
+    fn ret_0xd9(&mut self) -> u64 {
+        self.ret();
+        self.set_ime();
+        16
+    }
+
+    // 0xDA - JP C, a16
+    fn jp_c_a16_0xda(&mut self) ->u64 {
+        let a16 = self.word();
+        match self.is_full_carry() {
+            true => {
+                self.registers.pc = a16;
+                16
+            }
+            false => 12,
+        }
+    }
+
 
     // 0xE0 - LDH (a8) A
     fn ldh_a8_a_0xe0(&mut self) -> u64 {
@@ -2195,7 +2281,7 @@ impl Z80 {
 
     // 0xCB2C - SRA H
     fn sra_h_0xcb2c(&mut self) -> u64 {
-        self.registers.h =>>>>>>> main self.sra(self.registers.h);
+        self.registers.h = self.sra(self.registers.h);
         8
     }
 
