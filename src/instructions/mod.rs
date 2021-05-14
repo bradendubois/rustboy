@@ -247,7 +247,19 @@ impl Z80 {
                     0xCF => self.rst_08h_0xcf(),
 
                     // 0xDX
-                    // TODO
+                    0xD0 => self.ret_nc_0xd0(),
+                    0xD1 => self.pop_de_0xd1(),
+                    0xD2 => self.jp_nz_a6_0xd2(),
+                    0xD4 => self.call_nc_a16_0xd4(),
+                    0xD5 => self.push_de_0xd5(),
+                    0xD6 => self.sub_d8_0xd6(),
+                    0xD7 => self.rst_10h_0xd7(),
+                    0xD8 => self.ret_c_0xd8(),
+                    0xD9 => self.ret_0xd9(),
+                    0xDA => self.jp_c_a16_0xda(),
+                    0xDC => self.call_c_a16_0xdc(),
+                    0xDE => self.sbc_a_d8_0xde(),
+                    0xDF => self.rst_18h_0xdf(),
 
                     // 0xEX
                     0xE0 => self.ldh_a8_a_0xe0(),
@@ -263,7 +275,19 @@ impl Z80 {
                     0xEF => self.rst_28h_0xef(),
 
                     // 0xFX
-                    // TODO
+                    0xF0 => self.ldh_a_a8_0xf0(),
+                    0xF1 => self.pop_af_0xf1(),
+                    0xF2 => self.ld_a_c_0xf2(),
+                    0xF3 => self.di_0xf3(),
+                    0xF5 => self.push_af_0xf5(),
+                    0xF6 => self.or_d8_0xf6(),
+                    0xF7 => self.rst_30h_0xf7(),
+                    0xF8 => self.ld_hl_sp_s8_0xf8(),
+                    0xF9 => self.ld_sp_hl_0xf9(),
+                    0xFA => self.ld_a_a16_0xfa(),
+                    0xFB => self.ei_0xfb(),
+                    0xFE => self.cp_d8_0xfe(),
+                    0xFF => self.rst_30h_0xff(),
 
                     // Unmapped code in default table
                     _ => panic!("Unmapped default table opcode {}", code),
@@ -1925,10 +1949,6 @@ impl Z80 {
 
     /*   0xD0 - 0xDF   */
 
-    // TODO - 0xD0 - 0xDF
-
-    /*   0xE0 - 0xEF   */
-
     // 0xD0 - RET NC
     fn ret_nc_0xd0(&mut self) -> u64 {
         match self.is_full_carry() {
@@ -2017,7 +2037,30 @@ impl Z80 {
         }
     }
 
+    // 0xDC - CALL C, a16
+    fn call_c_a16_0xdc(&mut self) -> u64{
+        let a16 = self.word();
+        match self.is_full_carry(){
+            true => {
+                self.call(a16); 24
+            }
+            false => 12,
+        }
+    }
 
+    // 0xDE - SBC A, d8
+    fn sbc_a_d8_0xde(&mut self) -> u64 {
+        let d8 = self.byte();
+        self.sbc_8(d8);
+        8
+    }
+
+    // 0xDF - RST 18H
+    fn rst_18h_0xdf(&mut self) -> u64 {
+        self.rst(0x18);
+        16
+    }
+    /*   0xE0 - 0xEF   */
     // 0xE0 - LDH (a8) A
     fn ldh_a8_a_0xe0(&mut self) -> u64 {
         let a8 = self.byte();
@@ -2093,9 +2136,92 @@ impl Z80 {
     }
 
     /*   0xF0 - 0xFF   */
+    // 0xF0 - LDH A, (a8)
+    fn ldh_a_a8_0xf0(&mut self) -> u64{
+        let a8 = self.byte();
+        self.registers.a = self.mmu.read( 0xFF00 | a8 as u16);
+        12
+    }
 
-    // TODO - 0xF0 - 0xFF
+    // 0xF1 - POP AF
+    fn pop_af_0xf1(&mut self) -> u64 {
+        let val = self.pop_sp();
+        self.set_af(val);
+        12
+    }
 
+    // 0xF2 - LD A, (C)
+    fn ld_a_c_0xf2(&mut self) -> u64 {
+        self.registers.a = self.mmu.read(0xFF00 | self.registers.c as u16);
+        8
+    }
+
+    // 0xF3 - DI
+    fn di_0xf3(&mut self) -> u64{
+        self.unset_ime();
+        4
+    }
+
+    // 0xF5 - PUSH AF
+    fn push_af_0xf5(&mut self) -> u64 {
+        self.push_sp(self.get_af());
+        16
+    }
+
+    // 0xF6 - OR d8
+    fn or_d8_0xf6(&mut self) -> u64 {
+        let d8 = self.byte();
+        self.or(d8);
+        8
+    }
+
+    // 0xF7 - RST 30H
+    fn rst_30h_0xf7(&mut self) -> u64 {
+        self.rst(0x30);
+        16
+    }
+
+    // 0xF8 - LD HL, SP + s8
+    fn ld_hl_sp_s8_0xf8(&mut self)-> u64{
+        let s8 = self.byte();
+        let hl = self.add_16(self.registers.sp, s8 as i16 as u16);
+        self.set_hl(hl);
+        self.unset_zero();
+        12
+    }
+
+    // 0xF9 - LD SP, HL
+    fn ld_sp_hl_0xf9(&mut self)-> u64{
+        let contents = self.mmu.read(self.get_hl());
+        self.registers.sp = contents as u16;
+        8
+    }
+
+    // 0xFA - LD A, a16
+    fn ld_a_a16_0xfa(&mut self) -> u64 {
+        let a16 = self.word();
+        self.registers.a = self.mmu.read(a16);
+        16
+    }
+
+    // 0xFB - EI
+    fn ei_0xfb(&mut self) -> u64 {
+        self.set_ime();
+        4
+    }
+
+    // 0xFE - CP d8
+    fn cp_d8_0xfe(&mut self) -> u64{
+        let d8 = self.byte();
+        self.cp(d8);
+        8
+    }
+
+    // 0xFF - RST 30H
+    fn rst_30h_0xff(&mut self) -> u64 {
+        self.rst(0x30);
+        16
+    }
     /*****************************************/
     /*         16-bit CB Prefix Table        */
     /*****************************************/
