@@ -1,9 +1,9 @@
-mod z80;
-mod gpu;
 mod gameboy;
+mod gpu;
 mod input;
-mod mmu;
 mod instructions;
+mod mmu;
+mod z80;
 
 fn main() {
     println!("Hello, world!");
