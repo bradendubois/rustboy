@@ -327,6 +327,14 @@ impl Z80 {
                     0x15 => self.rl_l0xcb15(),
                     0x16 => self.rl_hl_0xcb16(),
                     0x17 => self.rl_a_0xcb17(),
+                    0x18 => self.rr_b_0xcb18(),
+                    0x19 => self.rr_c_0xcb19(),
+                    0x1A => self.rr_d_0xcb1a(),
+                    0x1B => self.rr_e_0xcb1b(),
+                    0x1C => self.rr_h_0xcb1c(),
+                    0x1D => self.rr_l_0xcb1d(),
+                    0x1E => self.rr_hl_0xcb1e(),
+                    0x1F => self.rra_0x1f(),
 
                     // 0xCB2X
                     0x20 => self.sla_b_0xcb20(),
@@ -2384,6 +2392,55 @@ impl Z80 {
         self.rl(self.registers.a);
         8
     }
+
+    // 0xCB18 - RR B
+    fn rr_b_0xcb18(&mut self) -> u64{
+        self.rr(self.registers.b);
+        8
+    }
+
+    // 0xCB19 - RR C
+    fn rr_c_0xcb19(&mut self) -> u64 {
+        self.rr(self.registers.c);
+        8
+    }
+
+    // 0xCB1A - RR D
+    fn rr_d_0xcb1a(&mut self) -> u64 {
+        self.rr(self.registers.d);
+        8
+    }
+
+    // 0xCB1B - RR E
+    fn rr_e_0xcb1b(&mut self) -> u64 {
+        self.rr(self.registers.e);
+        8
+    }
+
+    // 0xCB1C - RR H
+    fn rr_h_0xcb1c(&mut self) -> u64 {
+        self.rr(self.registers.h);
+        8
+    }
+    // 0xCB1D - RR L
+    fn rr_l_0xcb1d(&mut self) -> u64 {
+        self.rr(self.registers.l);
+        8
+    }
+
+    // 0xCB1E - RL HL
+    fn rr_hl_0xcb1e(&mut self) -> u64 {
+        let val = self.rr(self.mmu.read(self.get_hl()));
+        self.mmu.write(val,self.get_hl());
+        16
+    }
+
+    // 0xCB1F - RR A
+    fn rr_a_0xcb1f(&mut self) -> u64 {
+        self.rr(self.registers.a);
+        8
+    }
+
     /* 0xCB20 - 0xCB2F */
 
     // 0xCB20 - SLA B
