@@ -355,7 +355,22 @@ impl Z80 {
                     0x2F => self.sra_a_0xcb2f(),
 
                     // 0xCB3X
-                    // TODO
+                    0x30 => self.swap_b_0xcb30(),
+                    0x31 => self.swap_c_0xcb31(),
+                    0x32 => self.swap_d_0xcb32(),
+                    0x33 => self.swap_e_0xcb33(),
+                    0x34 => self.swap_h_0xcb34(),
+                    0x35 => self.swap_l_0xcb35(),
+                    0x36 => self.swap_hl_0xcb36(),
+                    0x37 => self.swap_a_0xcb37(),
+                    0x38 => self.srl_b_0xcb38(),
+                    0x39 => self.srl_c_0xcb39(),
+                    0x3A => self.srl_d_0xcb3a(),
+                    0x3B => self.srl_e_0xcb3b(),
+                    0x3C => self.srl_h_0xcb3c(),
+                    0x3D => self.srl_l_0xcb3d(),
+                    0x3E => self.srl_hl_0xcb3e(),
+                    0x3F => self.srl_a_0xcb3f(),
 
                     // 0xCB4X
                     0x40 => self.bit_0_b_0xcb40(),
