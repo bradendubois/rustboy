@@ -427,7 +427,38 @@ impl Z80 {
 
     /// SWAP - return the value with
     /// its 4 higher order bits swapped with the four lower order bits
-    pub fn swap(&mut self, s:u8) -> u8 {(s<< 4)|(s>>4)}
+    pub fn swap(&mut self, s:u8) -> u8 {
+        let result = (s<< 4)|(s>>4);
+        match result == 0 {
+            true => self.set_zero(),
+            false => self.unset_zero()
+        };
+
+        self.unset_subtraction();
+        self.unset_half_carry();
+        self.unset_full_carry();
+        result
+    }
+
+    /// SRL - shift number right, copy bit 0 to CY and set bit 7 of number to 0
+    pub fn srl(&mut self, r: u8) -> u8 {
+        let mut result = (r<<1) | (r>> 7);
+
+        match result == 0 {
+            true => self.set_zero(),
+            false => self.unset_zero()
+        };
+        match result & 0x01 == 0 {
+            true => self.unset_full_carry(),
+            false => self.set_full_carry()
+        };
+        self.unset_subtraction();
+        self.unset_half_carry();
+
+        result = (result & (!(1 << 7))) | (0 << 7) ;
+
+        result
+    }
 
     /// BIT - Store the complement of bit b of s in the Zero (Z) flag
     pub fn bit(&mut self, s: u8, b: u8) {
