@@ -425,6 +425,10 @@ impl Z80 {
         result
     }
 
+    /// SWAP - return the value with
+    /// its 4 higher order bits swapped with the four lower order bits
+    pub fn swap(&mut self, s:u8) -> u8 {(s<< 4)|(s>>4)}
+
     /// BIT - Store the complement of bit b of s in the Zero (Z) flag
     pub fn bit(&mut self, s: u8, b: u8) {
         match (s & (1 << b)) == 0 {
