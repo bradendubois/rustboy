@@ -391,7 +391,22 @@ impl Z80 {
                     0x4F => self.bit_1_a_0xcb4f(),
 
                     // 0xCB5X
-                    // TODO
+                    0x50 => self.bit_2_b_0xcb50(),
+                    0x51 => self.bit_2_c_0xcb51(),
+                    0x52 => self.bit_2_d_0xcb52(),
+                    0x53 => self.bit_2_e_0xcb53(),
+                    0x54 => self.bit_2_h_0xcb54(),
+                    0x55 => self.bit_2_l_0xcb55(),
+                    0x56 => self.bit_2_hl_0xcb56(),
+                    0x57 => self.bit_2_a_0xcb57(),
+                    0x58 => self.bit_3_b_0xcb58(),
+                    0x59 => self.bit_3_c_0xcb59(),
+                    0x5A => self.bit_3_d_0xcb5a(),
+                    0x5B => self.bit_3_e_0xcb5b(),
+                    0x5C => self.bit_3_h_0xcb5c(),
+                    0x5D => self.bit_3_l_0xcb5d(),
+                    0x5E => self.bit_3_hl_0xcb5e(),
+                    0x5F => self.bit_3_a_0xcb5f(),
 
                     // 0xCB6X
                     0x60 => self.bit_2_b_0xcb60(),
