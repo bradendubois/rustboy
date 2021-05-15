@@ -336,7 +336,7 @@ impl Z80 {
         self.unset_subtraction();
         self.unset_half_carry();
 
-        result = result | carry_bit;
+        result = (result & (!(1 << 7))) | (carry_bit << 7) ;
 
         result
     }
@@ -358,6 +358,27 @@ impl Z80 {
             true => self.unset_full_carry(),
             false => self.set_full_carry()
         };
+
+        result
+    }
+
+    /// RR - Rotate a number right, copy carry flag into right-most bit
+    pub fn rr(&mut self, v: u8) -> u8 {
+        let carry_bit = if self.is_full_carry() {1} else {0};
+        let mut result = (v<<1) | (v>> 7);
+
+        match result == 0 {
+            true => self.set_zero(),
+            false => self.unset_zero()
+        };
+        match result & 0x01 == 0 {
+            true => self.unset_full_carry(),
+            false => self.set_full_carry()
+        };
+        self.unset_subtraction();
+        self.unset_half_carry();
+
+        result = (result & (!(1 << 7))) | (carry_bit << 7) ;
 
         result
     }
