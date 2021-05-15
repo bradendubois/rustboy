@@ -334,7 +334,7 @@ impl Z80 {
                     0x1C => self.rr_h_0xcb1c(),
                     0x1D => self.rr_l_0xcb1d(),
                     0x1E => self.rr_hl_0xcb1e(),
-                    0x1F => self.rra_0x1f(),
+                    0x1F => self.rr_a_0xcb1f(),
 
                     // 0xCB2X
                     0x20 => self.sla_b_0xcb20(),
@@ -2343,7 +2343,6 @@ impl Z80 {
 
     /* 0xCB10 - 0xCB1F */
 
-    // TODO - 0xCB10 - 0xCB1F
     // 0xCB10 - RL B
     fn rl_b_0xcb10(&mut self) -> u64 {
         self.rl(self.registers.b);
@@ -2543,7 +2542,58 @@ impl Z80 {
 
     /* 0xCB30 - 0xCB3F */
 
-    // TODO 0xCB30 - 0xCB3F
+    // 0xCB30 - SWAP B
+    fn swap_b_0xcb30(&mut self) -> u64 {
+        self.registers.b = self.swap(self.registers.b);
+        8
+    }
+    // 0xCB31 - SWAP C
+    fn swap_c_0xcb31(&mut self) -> u64 {
+        self.registers.c = self.swap(self.registers.c);
+
+        8
+    }
+
+    // 0xCB32 - SWAP D
+    fn swap_d_0xcb32(&mut self) -> u64 {
+        self.registers.d = self.swap(self.registers.d);
+
+        8
+    }
+
+    // 0xCB33 - SWAP E
+    fn swap_e_0xcb33(&mut self) -> u64 {
+        self.registers.e = self.swap(self.registers.e);
+
+        8
+    }
+
+    // 0xCB34 - SWAP H
+    fn swap_h_0xcb34(&mut self) -> u64 {
+        self.registers.h = self.swap(self.registers.h);
+
+        8
+    }
+
+    // 0xCB35 - SWAP L
+    fn swap_l_0xcb35(&mut self) -> u64 {
+        self.registers.l = self.swap(self.registers.l);
+
+        8
+    }
+
+    // 0xCB36 - SWAP HL
+    fn swap_hl_0xcb36(&mut self) -> u64 {
+        let val = self.swap(self.mmu.read(self.get_hl()));
+        self.mmu.write(val,self.get_hl());
+        8
+    }
+
+    // 0xCB37 - SWAP A
+    fn swap_a_0xcb37(&mut self) -> u64 {
+        self.registers.a = self.swap(self.registers.a);
+        8
+    }
 
     /* 0xCB40 - 0xCB4F */
 
