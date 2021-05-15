@@ -2586,12 +2586,60 @@ impl Z80 {
     fn swap_hl_0xcb36(&mut self) -> u64 {
         let val = self.swap(self.mmu.read(self.get_hl()));
         self.mmu.write(val,self.get_hl());
-        8
+        16
     }
 
     // 0xCB37 - SWAP A
     fn swap_a_0xcb37(&mut self) -> u64 {
         self.registers.a = self.swap(self.registers.a);
+        8
+    }
+
+    // 0xCB38 - SRL B
+    fn srl_b_0xcb38(&mut self) -> u64 {
+        self.registers.b = self.srl(self.registers.b);
+        8
+    }
+
+    // 0xCB39 - SRL C
+    fn srl_c_0xcb39(&mut self) -> u64 {
+        self.registers.c = self.srl(self.registers.c);
+        8
+    }
+
+    // 0xCB3A - SRL D
+    fn srl_d_0xcb3a(&mut self) -> u64 {
+        self.registers.d = self.srl(self.registers.d);
+        8
+    }
+
+    // 0xCB3B - SRL E
+    fn srl_e_0xcb3b(&mut self) -> u64 {
+        self.registers.e = self.srl(self.registers.e);
+        8
+    }
+
+    // 0xCB3C - SRL H
+    fn srl_h_0xcb3c(&mut self) -> u64 {
+        self.registers.h = self.srl(self.registers.h);
+        8
+    }
+
+    // 0xCB3D - SRL L
+    fn srl_l_0xcb3d(&mut self) -> u64 {
+        self.registers.l = self.srl(self.registers.l);
+        8
+    }
+    // 0xCB3E - SRL HL
+    fn srl_hl_0xcb3e(&mut self) -> u64 {
+        let val =self.srl(self.mmu.read(self.get_hl()));
+        self.mmu.write(val,self.get_hl());
+        16
+    }
+
+    // 0xCB3F - SRL A
+    fn srl_a_0xcb3f(&mut self) -> u64 {
+        self.registers.a = self.srl(self.registers.a);
         8
     }
 
