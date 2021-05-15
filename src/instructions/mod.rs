@@ -1336,9 +1336,6 @@ impl Z80 {
 
     /*   0x70 - 0x7F   */
 
-    // TODO - 0x70 - 0x7F
-
-    /*   0x80 - 0x8F   */
 
     // 0x70 - LD (HL), B
     fn ld_hl_b_0x70(&mut self) -> u64 {
@@ -1437,6 +1434,8 @@ impl Z80 {
         self.registers.a = self.registers.a; // I'll never get tired of these lol
         4
     }
+
+    /*   0x80 - 0x8F   */
 
 
     // 0x80 - ADD A,B
@@ -1540,9 +1539,7 @@ impl Z80 {
 
     /*   0x90 - 0x9F   */
 
-    // TODO - 0x90 - 0x9F
 
-    /*   0xA0 - 0xAF   */
 
     // 0x90 - SUB B
     fn sub_b_0x90(&mut self) -> u64 {
@@ -1640,7 +1637,7 @@ impl Z80 {
         self.sbc_8(self.registers.a);
         4
     }
-
+    /*   0xA0 - 0xAF   */
     // 0xA0 - AND B
     fn and_b_0xa0(&mut self) -> u64 {
         self.and(self.registers.b);
@@ -1833,10 +1830,6 @@ impl Z80 {
         self.cp(self.registers.a);
         4
     }
-
-    /*   0xB0 - 0xBF   */
-
-    // TODO - 0xB0 - 0xBF
 
     /*   0xC0 - 0xCF   */
 
@@ -2760,7 +2753,104 @@ impl Z80 {
 
     /* 0xCB50 - 0xCB5F */
 
-    // TODO - 0xCB50 - 0xCB5F
+    // 0xCB50 - BIT 2, b
+    fn bit_2_b_0xcb50(&mut self) -> u64 {
+        self.bit(self.registers.b,2);
+        8
+    }
+
+    // 0xCB51 - BIT 2, c
+    fn bit_2_c_0xcb51(&mut self) -> u64 {
+        self.bit(self.registers.c,2);
+        8
+    }
+    // 0xCB52 - BIT 2, d
+    fn bit_2_d_0xcb52(&mut self) -> u64 {
+        self.bit(self.registers.d,2);
+        8
+    }
+
+    // 0xCB53 - BIT 2, e
+    fn bit_2_e_0xcb53(&mut self) -> u64 {
+        self.bit(self.registers.e,2);
+        8
+    }
+
+    // 0xCB54 - BIT 2, h
+    fn bit_2_h_0xcb54(&mut self) -> u64 {
+        self.bit(self.registers.h,2);
+        8
+    }
+
+    // 0xCB55 - BIT 2, l
+    fn bit_2_l_0xcb55(&mut self) -> u64 {
+        self.bit(self.registers.l,2);
+        8
+    }
+
+    // 0xCB56 - BIT 2, hl
+    fn bit_2_hl_0xcb56(&mut self) -> u64 {
+        let value = self.mmu.read(self.get_hl());
+
+        self.bit(value, 2);
+        8
+    }
+
+    // 0xCB57 - BIT 0, A
+    fn bit_2_a_0xcb57(&mut self) -> u64 {
+        self.bit(self.registers.a, 2);
+        8
+    }
+
+    // 0xCB58 - BIT 3, B
+    fn bit_3_b_0xcb58(&mut self) -> u64 {
+        self.bit(self.registers.b, 3);
+        8
+    }
+
+    // 0xCB59 - BIT 3, C
+    fn bit_3_c_0xcb59(&mut self) -> u64 {
+        self.bit(self.registers.c, 3);
+        8
+    }
+
+    // 0xCB5A - BIT 3, D
+    fn bit_3_d_0xcb5a(&mut self) -> u64 {
+        self.bit(self.registers.d, 3);
+        8
+    }
+
+    // 0xCB5B - BIT 3, E
+    fn bit_3_e_0xcb5b(&mut self) -> u64 {
+        self.bit(self.registers.e, 3);
+        8
+    }
+
+    // 0xCB5C - BIT 3, H
+    fn bit_3_h_0xcb5c(&mut self) -> u64 {
+        self.bit(self.registers.h, 3);
+        8
+    }
+
+    // 0xCB5D - BIT 3, L
+    fn bit_3_l_0xcb5d(&mut self) -> u64 {
+        self.bit(self.registers.l, 3);
+        8
+    }
+
+    // 0xCB5E - BIT 3, (HL)
+    fn bit_3_hl_0xcb5e(&mut self) -> u64 {
+        let value = self.mmu.read(self.get_hl());
+        self.bit(value, 3);
+        16
+    }
+
+    // 0xCB5F - BIT 3, A
+    fn bit_3_a_0xcb5f(&mut self) -> u64 {
+        self.bit(self.registers.a, 3);
+        8
+    }
+
 
     /* 0xCB60 - 0xCB6F */
 
@@ -3071,8 +3161,6 @@ impl Z80 {
     }
 
     /* 0xCBB0 - 0xCBBF */
-
-    // TODO - 0xCBB0 - 0xCBBF
 
     /* 0xCBC0 - 0xCBCF */
 
