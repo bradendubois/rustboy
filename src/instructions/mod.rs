@@ -443,7 +443,7 @@ impl Z80 {
                     0x7D => self.bit_7_l_0xcb7d(),
                     0x7E => self.bit_7_hl_0xcb7e(),
                     0x7F => self.bit_7_a_0xcb7f(),
-
+                    
 
                     // 0xCB8X
                     0x80 => self.res_0_b_0xcb80(),
@@ -536,7 +536,22 @@ impl Z80 {
                     0xCF => self.set_1_a_0xcbcf(),
 
                     // 0xCBDX
-                    // TODO
+                    0xD0 => self.set_2_b_0xcbd0(),
+                    0xD1 => self.set_2_b_0xcbd1(),
+                    0xD2 => self.set_2_d_0xcbd2(),
+                    0xD3 => self.set_2_e_0xcbd3(),
+                    0xD4 => self.set_2_h_0xcbd4(),
+                    0xD5 => self.set_2_l_0xcbd5(),
+                    0xD6 => self.set_2_hl_0xcbd6(),
+                    0xD7 => self.set_2_a_0xcbd7(),
+                    0xD8 => self.set_3_b_0xcbd8(),
+                    0xD9 => self.set_3_c_0xcbd9(),
+                    0xDA => self.set_3_a_0xcbda(),
+                    0xDB => self.set_3_e_0xcbdb(),
+                    0xDC => self.set_3_h_0xcbdc(),
+                    0xDD => self.set_3_l_0xcbdd(),
+                    0xDE => self.set_3_hl_0xcbde(),
+                    0xDF => self.set_3_a_0xcbdf(),
 
                     // 0xCBEX
                     0xE0 => self.set_4_b_0xcbe0(),
@@ -3015,7 +3030,104 @@ impl Z80 {
 
     /* 0xCB70 - 0xCB7F */
 
-    // TODO - 0xCB70 - 0xCB7F
+    // 0xCB70 BIT 6, B
+    fn bit_6_b_0xcb70(&mut self) -> u64 {
+        self.bit(self.registers.b, 6);
+        8
+    }
+
+    // 0xCB71 BIT 6, C
+    fn bit_6_c_0xcb71(&mut self) -> u64 {
+        self.bit(self.registers.c, 6);
+        8
+    }
+
+    // 0xCB72 BIT 6, D
+    fn bit_6_d_0xcb72(&mut self) -> u64 {
+        self.bit(self.registers.d, 6);
+        8
+    }
+
+
+    // 0xCB73 BIT 6, E
+    fn bit_6_e_0xcb73(&mut self) -> u64 {
+        self.bit(self.registers.e, 6);
+        8
+    }
+
+    // 0xCB74 BIT 6, H
+    fn bit_6_h_0xcb74(&mut self) -> u64 {
+        self.bit(self.registers.h, 6);
+        8
+    }
+
+    // 0xCB75 BIT 6, L
+    fn bit_6_l_0xcb75(&mut self) -> u64 {
+        self.bit(self.registers.l, 6);
+        8
+    }
+    // 0xCB76 - BIT 2, (HL)
+    fn bit_6_hl_0xcb76(&mut self) -> u64 {
+        let value = self.mmu.read(self.get_hl());
+        self.bit(value, 6);
+        16
+    }
+
+    // 0xCB77 BIT 6, A
+    fn bit_6_a_0xcb77(&mut self) -> u64 {
+        self.bit(self.registers.a, 6);
+        8
+    }
+
+
+    // 0xCB78 BIT 7, B
+    fn bit_7_b_0xcb78(&mut self) -> u64 {
+        self.bit(self.registers.b, 7);
+        8
+    }
+
+    // 0xCB79 BIT 7, C
+    fn bit_7_c_0xcb79(&mut self) -> u64 {
+        self.bit(self.registers.c, 7);
+        8
+    }
+
+    // 0xCB7A BIT 7, D
+    fn bit_7_d_0xcb7a(&mut self) -> u64 {
+        self.bit(self.registers.d, 7);
+        8
+    }
+
+    // 0xCB7B BIT 7, E
+    fn bit_7_e_0xcb7b(&mut self) -> u64 {
+        self.bit(self.registers.e, 7);
+        8
+    }
+
+    // 0xCB7C BIT 7, H
+    fn bit_7_h_0xcb7c(&mut self) -> u64 {
+        self.bit(self.registers.h, 7);
+        8
+    }
+
+    // 0xCB7D BIT 7, L
+    fn bit_7_l_0xcb7d(&mut self) -> u64 {
+        self.bit(self.registers.l, 7);
+        8
+    }
+
+    // 0xCB7E - BIT 7, (HL)
+    fn bit_7_hl_0xcb7e(&mut self) -> u64 {
+        let value = self.mmu.read(self.get_hl());
+        self.bit(value, 7);
+        16
+    }
+
+    // 0xCB7F BIT 7, A
+    fn bit_7_a_0xcb7f(&mut self) -> u64 {
+        self.bit(self.registers.a, 7);
+        8
+    }
 
     /* 0xCB80 - 0xCB8F */
 
@@ -3527,104 +3639,202 @@ impl Z80 {
     /* 0xCBD0 - 0xCBDF */
 
 
+    // 0xCBD0 - SET 2, B
+    fn set_2_b_0xcbd0(&mut self) -> u64 {
+        self.registers.b |= 4;
+        8
+    }
+
+    // 0xCBD1 - SET 2, C
+    fn set_2_b_0xcbd1(&mut self) -> u64 {
+        self.registers.c |= 4;
+        8
+    }
+
+    // 0xCBD2 - SET 2, D
+    fn set_2_d_0xcbd2(&mut self) -> u64 {
+        self.registers.d |= 4;
+        8
+    }
+
+    // 0xCBD3 - SET 2, E
+    fn set_2_e_0xcbd3(&mut self) -> u64 {
+        self.registers.e |= 4;
+        8
+    }
+
+    // 0xCBD4 - SET 2, H
+    fn set_2_h_0xcbd4(&mut self) -> u64 {
+        self.registers.h |= 4;
+        8
+    }
+
+    // 0xCBD5 - SET 2, L
+    fn set_2_l_0xcbd5(&mut self) -> u64 {
+        self.registers.l |= 4;
+        8
+    }
+
+    // 0xCBD6 - SET 2, (HL)
+    fn set_2_hl_0xcbd6(&mut self) -> u64 {
+        let value = self.mmu.read(self.get_hl()) | 4;
+        self.mmu.write(value, self.get_hl());
+        16
+    }
+
+
+    // 0xCBD7 - SET 2, A
+    fn set_2_a_0xcbd7(&mut self) -> u64 {
+        self.registers.a |= 8;
+        8
+    }
+
+    // 0xCBD8 - SET 3, B
+    fn set_3_b_0xcbd8(&mut self) -> u64 {
+        self.registers.b |= 8;
+        8
+    }
+
+
+    // 0xCBD9 - SET 3, C
+    fn set_3_c_0xcbd9(&mut self) -> u64 {
+        self.registers.c |= 8;
+        8
+    }
+
+
+    // 0xCBDA - SET 3, D
+    fn set_3_a_0xcbda(&mut self) -> u64 {
+        self.registers.a |= 8;
+        8
+    }
+
+    // 0xCBDB - SET 3, E
+    fn set_3_e_0xcbdb(&mut self) -> u64 {
+        self.registers.e |= 8;
+        8
+    }
+
+    // 0xCBDC - SET 3, H
+    fn set_3_h_0xcbdc(&mut self) -> u64 {
+        self.registers.h |= 8;
+        8
+    }
+
+    // 0xCBDD - SET 3, L
+    fn set_3_l_0xcbdd(&mut self) -> u64 {
+        self.registers.l |= 8;
+        8
+    }
+    // 0xE - SET 3, (HL)
+    fn set_3_hl_0xcbde(&mut self) -> u64 {
+        let value = self.mmu.read(self.get_hl()) | 8;
+        self.mmu.write(value, self.get_hl());
+        16
+    }
+    // 0xCBDF - SET 3, A
+    fn set_3_a_0xcbdf(&mut self) -> u64 {
+        self.registers.a |= 8;
+        8
+    }
 
     /* 0xCBE0 - 0xCBEF */
 
     // 0xCBE0 - SET 4, B
     fn set_4_b_0xcbe0(&mut self) -> u64 {
-        self.registers.b |= 8;
+        self.registers.b |= 16;
         8
     }
 
     // 0xCBE1 - SET 4, C
     fn set_4_c_0xcbe1(&mut self) -> u64 {
-        self.registers.c |= 8;
+        self.registers.c |= 16;
         8
     }
 
     // 0xCBE2 - SET 4, D
     fn set_4_d_0xcbe2(&mut self) -> u64 {
-        self.registers.d |= 8;
+        self.registers.d |= 16;
         8
     }
 
     // 0xCBE3 - SET 4, E
     fn set_4_e_0xcbe3(&mut self) -> u64 {
-        self.registers.e |= 8;
+        self.registers.e |= 16;
         8
     }
 
     // 0xCBE4 - SET 4, H
     fn set_4_h_0xcbe4(&mut self) -> u64 {
-        self.registers.h |= 8;
+        self.registers.h |= 16;
         8
     }
 
     // 0xCBE5 - SET 4, L
     fn set_4_l_0xcbe5(&mut self) -> u64 {
-        self.registers.l |= 8;
+        self.registers.l |= 16;
         8
     }
 
     // 0xCBE6 - SET 4, (HL)
     fn set_4_hl_0xcbe6(&mut self) -> u64 {
-        let value = self.mmu.read(self.get_hl()) | 8;
+        let value = self.mmu.read(self.get_hl()) | 16;
         self.mmu.write(value, self.get_hl());
         16
     }
 
     // 0xCBE7 - SET 4, A
     fn set_4_a_0xcbe7(&mut self) -> u64 {
-        self.registers.a |= 8;
+        self.registers.a |= 16;
         8
     }
 
     // 0xCBE8 - SET 5, B
     fn set_5_b_0xcbe8(&mut self) -> u64 {
-        self.registers.b |= 16;
+        self.registers.b |= 32;
         8
     }
 
     // 0xCBE9 - SET 5, C
     fn set_5_c_0xcbe9(&mut self) -> u64 {
-        self.registers.c |= 16;
+        self.registers.c |= 32;
         8
     }
 
     // 0xCBEA - SET 5, D
     fn set_5_d_0xcbea(&mut self) -> u64 {
-        self.registers.d |= 16;
+        self.registers.d |= 32;
         8
     }
 
     // 0xCBEB - SET 5, E
     fn set_5_e_0xcbeb(&mut self) -> u64 {
-        self.registers.e |= 16;
+        self.registers.e |= 32;
         8
     }
 
     // 0xCBEC - SET 5, H
     fn set_5_h_0xcbec(&mut self) -> u64 {
-        self.registers.h |= 16;
+        self.registers.h |= 32;
         8
     }
 
     // 0xCBED - SET 5, L
     fn set_5_l_0xcbed(&mut self) -> u64 {
-        self.registers.l |= 16;
+        self.registers.l |= 32;
         8
     }
 
     // 0xCBEE - SET 5, (HL)
     fn set_5_hl_0xcbee(&mut self) -> u64 {
-        let value = self.mmu.read(self.get_hl()) | 16;
+        let value = self.mmu.read(self.get_hl()) | 32;
         self.mmu.write(value, self.get_hl());
         16
     }
 
     // 0xCBEF - SET 5, A
     fn set_5_a_0xcbef(&mut self) -> u64 {
-        self.registers.a |= 16;
+        self.registers.a |= 32;
         8
     }
 
