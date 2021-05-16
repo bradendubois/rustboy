@@ -588,10 +588,6 @@ impl Z80 {
                     0xFD => self.set_7_l_0xcbfd(),
                     0xFE => self.set_7_hl_0xcbfe(),
                     0xFF => self.set_7_a_0xcbff(),
-
-
-                    // Unmapped code in default table; should be impossible as the table is complete
-                    _ => panic!("Unmapped CB prefix opcode {}", code)
                 }
             }
         }
