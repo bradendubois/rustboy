@@ -135,8 +135,6 @@ impl Z80 {
                     0x6F => self.ld_l_a_0x6f(),
 
                     // 0x7X
-
-
                     0x70 => self.ld_hl_b_0x70(),
                     0x71 => self.ld_hl_c_0x71(),
                     0x72 => self.ld_hl_d_0x72(),
@@ -172,7 +170,6 @@ impl Z80 {
                     0x8F => self.adc_a_a_0x8f(),
 
                     // 0x9X
-
                     0x90 => self.sub_b_0x90(),
                     0x91 => self.sub_c_0x91(),
                     0x92 => self.sub_d_0x92(),
@@ -189,7 +186,6 @@ impl Z80 {
                     0x9D => self.sbc_a_l_0x9d(),
                     0x9E => self.sbc_a_hl_0x9e(),
                     0x9F => self.sbc_a_a_0x9f(),
-
 
                     // 0xAX
                     0xA0 => self.and_b_0xa0(),
@@ -210,7 +206,6 @@ impl Z80 {
                     0xAF => self.xor_a_0xaf(),
 
                     // 0xBX
-
                     0xB0 => self.or_b_0xb0(),
                     0xB1 => self.or_c_0xb1(),
                     0xB2 => self.or_d_0xb2(),
@@ -443,7 +438,6 @@ impl Z80 {
                     0x7D => self.bit_7_l_0xcb7d(),
                     0x7E => self.bit_7_hl_0xcb7e(),
                     0x7F => self.bit_7_a_0xcb7f(),
-                    
 
                     // 0xCB8X
                     0x80 => self.res_0_b_0xcb80(),
@@ -1420,9 +1414,7 @@ impl Z80 {
         4
     }
 
-
     /*   0x70 - 0x7F   */
-
 
     // 0x70 - LD (HL), B
     fn ld_hl_b_0x70(&mut self) -> u64 {
@@ -1524,7 +1516,6 @@ impl Z80 {
 
     /*   0x80 - 0x8F   */
 
-
     // 0x80 - ADD A,B
     fn add_a_b_0x80(&mut self) -> u64 {
         self.registers.a = self.add_8(self.registers.a, self.registers.b);
@@ -1623,10 +1614,7 @@ impl Z80 {
         4
     }
 
-
     /*   0x90 - 0x9F   */
-
-
 
     // 0x90 - SUB B
     fn sub_b_0x90(&mut self) -> u64 {
@@ -1889,7 +1877,8 @@ impl Z80 {
     }
 
     // 0xBB - CP E
-    fn cp_e_0xbb(&mut self) -> u64 { // bay bay
+    fn cp_e_0xbb(&mut self) -> u64 {
+        // bay bay
         self.cp(self.registers.e);
         4
     }
@@ -1994,12 +1983,10 @@ impl Z80 {
             true => {
                 self.ret();
                 20
-
-            },
-            false => 8
-
             }
+            false => 8,
         }
+    }
 
     // 0xC9 - RET
     fn ret_0xc9(&mut self) -> u64 {
@@ -2072,16 +2059,19 @@ impl Z80 {
 
     // 0xD1 - POP DE
     fn pop_de_0xd1(&mut self) -> u64 {
-         let value = self.pop_sp();
+        let value = self.pop_sp();
         self.set_de(value);
-         12
+        12
     }
 
     // 0xD2 - JP NZ, a16
-    fn jp_nz_a6_0xd2(&mut self) -> u64{
+    fn jp_nz_a6_0xd2(&mut self) -> u64 {
         let value = self.word();
-        match self.is_full_carry(){
-            false => {self.registers.pc=value; 16},
+        match self.is_full_carry() {
+            false => {
+                self.registers.pc = value;
+                16
+            }
             true => 12,
         }
     }
@@ -2089,12 +2079,12 @@ impl Z80 {
     // 0xD4 - Call NC, a16
     fn call_nc_a16_0xd4(&mut self) -> u64 {
         let val = self.word();
-        match self.is_full_carry(){
+        match self.is_full_carry() {
             true => {
                 self.call(val);
                 24
-            },
-            false => 12
+            }
+            false => 12,
         }
     }
 
@@ -2136,7 +2126,7 @@ impl Z80 {
     }
 
     // 0xDA - JP C, a16
-    fn jp_c_a16_0xda(&mut self) ->u64 {
+    fn jp_c_a16_0xda(&mut self) -> u64 {
         let a16 = self.word();
         match self.is_full_carry() {
             true => {
@@ -2148,11 +2138,12 @@ impl Z80 {
     }
 
     // 0xDC - CALL C, a16
-    fn call_c_a16_0xdc(&mut self) -> u64{
+    fn call_c_a16_0xdc(&mut self) -> u64 {
         let a16 = self.word();
-        match self.is_full_carry(){
+        match self.is_full_carry() {
             true => {
-                self.call(a16); 24
+                self.call(a16);
+                24
             }
             false => 12,
         }
@@ -2247,9 +2238,9 @@ impl Z80 {
 
     /*   0xF0 - 0xFF   */
     // 0xF0 - LDH A, (a8)
-    fn ldh_a_a8_0xf0(&mut self) -> u64{
+    fn ldh_a_a8_0xf0(&mut self) -> u64 {
         let a8 = self.byte();
-        self.registers.a = self.mmu.read( 0xFF00 | a8 as u16);
+        self.registers.a = self.mmu.read(0xFF00 | a8 as u16);
         12
     }
 
@@ -2267,7 +2258,7 @@ impl Z80 {
     }
 
     // 0xF3 - DI
-    fn di_0xf3(&mut self) -> u64{
+    fn di_0xf3(&mut self) -> u64 {
         self.unset_ime();
         4
     }
@@ -2292,7 +2283,7 @@ impl Z80 {
     }
 
     // 0xF8 - LD HL, SP + s8
-    fn ld_hl_sp_s8_0xf8(&mut self)-> u64{
+    fn ld_hl_sp_s8_0xf8(&mut self) -> u64 {
         let s8 = self.byte();
         let hl = self.add_16(self.registers.sp, s8 as i16 as u16);
         self.set_hl(hl);
@@ -2301,7 +2292,7 @@ impl Z80 {
     }
 
     // 0xF9 - LD SP, HL
-    fn ld_sp_hl_0xf9(&mut self)-> u64{
+    fn ld_sp_hl_0xf9(&mut self) -> u64 {
         let contents = self.mmu.read(self.get_hl());
         self.registers.sp = contents as u16;
         8
@@ -2321,7 +2312,7 @@ impl Z80 {
     }
 
     // 0xFE - CP d8
-    fn cp_d8_0xfe(&mut self) -> u64{
+    fn cp_d8_0xfe(&mut self) -> u64 {
         let d8 = self.byte();
         self.cp(d8);
         8
@@ -2477,7 +2468,7 @@ impl Z80 {
     // 0xCB16 - RL HL
     fn rl_hl_0xcb16(&mut self) -> u64 {
         let val = self.rl(self.mmu.read(self.get_hl()));
-        self.mmu.write(val,self.get_hl());
+        self.mmu.write(val, self.get_hl());
         16
     }
 
@@ -2488,7 +2479,7 @@ impl Z80 {
     }
 
     // 0xCB18 - RR B
-    fn rr_b_0xcb18(&mut self) -> u64{
+    fn rr_b_0xcb18(&mut self) -> u64 {
         self.rr(self.registers.b);
         8
     }
@@ -2525,7 +2516,7 @@ impl Z80 {
     // 0xCB1E - RL HL
     fn rr_hl_0xcb1e(&mut self) -> u64 {
         let val = self.rr(self.mmu.read(self.get_hl()));
-        self.mmu.write(val,self.get_hl());
+        self.mmu.write(val, self.get_hl());
         16
     }
 
@@ -2680,7 +2671,7 @@ impl Z80 {
     // 0xCB36 - SWAP HL
     fn swap_hl_0xcb36(&mut self) -> u64 {
         let val = self.swap(self.mmu.read(self.get_hl()));
-        self.mmu.write(val,self.get_hl());
+        self.mmu.write(val, self.get_hl());
         16
     }
 
@@ -2727,8 +2718,8 @@ impl Z80 {
     }
     // 0xCB3E - SRL HL
     fn srl_hl_0xcb3e(&mut self) -> u64 {
-        let val =self.srl(self.mmu.read(self.get_hl()));
-        self.mmu.write(val,self.get_hl());
+        let val = self.srl(self.mmu.read(self.get_hl()));
+        self.mmu.write(val, self.get_hl());
         16
     }
 
@@ -2842,36 +2833,36 @@ impl Z80 {
 
     // 0xCB50 - BIT 2, b
     fn bit_2_b_0xcb50(&mut self) -> u64 {
-        self.bit(self.registers.b,2);
+        self.bit(self.registers.b, 2);
         8
     }
 
     // 0xCB51 - BIT 2, c
     fn bit_2_c_0xcb51(&mut self) -> u64 {
-        self.bit(self.registers.c,2);
+        self.bit(self.registers.c, 2);
         8
     }
     // 0xCB52 - BIT 2, d
     fn bit_2_d_0xcb52(&mut self) -> u64 {
-        self.bit(self.registers.d,2);
+        self.bit(self.registers.d, 2);
         8
     }
 
     // 0xCB53 - BIT 2, e
     fn bit_2_e_0xcb53(&mut self) -> u64 {
-        self.bit(self.registers.e,2);
+        self.bit(self.registers.e, 2);
         8
     }
 
     // 0xCB54 - BIT 2, h
     fn bit_2_h_0xcb54(&mut self) -> u64 {
-        self.bit(self.registers.h,2);
+        self.bit(self.registers.h, 2);
         8
     }
 
     // 0xCB55 - BIT 2, l
     fn bit_2_l_0xcb55(&mut self) -> u64 {
-        self.bit(self.registers.l,2);
+        self.bit(self.registers.l, 2);
         8
     }
 
@@ -2937,7 +2928,6 @@ impl Z80 {
         self.bit(self.registers.a, 3);
         8
     }
-
 
     /* 0xCB60 - 0xCB6F */
 
@@ -3059,7 +3049,6 @@ impl Z80 {
         8
     }
 
-
     // 0xCB73 BIT 6, E
     fn bit_6_e_0xcb73(&mut self) -> u64 {
         self.bit(self.registers.e, 6);
@@ -3089,7 +3078,6 @@ impl Z80 {
         self.bit(self.registers.a, 6);
         8
     }
-
 
     // 0xCB78 BIT 7, B
     fn bit_7_b_0xcb78(&mut self) -> u64 {
@@ -3242,7 +3230,6 @@ impl Z80 {
 
     /* 0xCB90 - 0xCB9F */
 
-
     // 0xCB90 - RES 2, B
     fn res_2_b_0xcb90(&mut self) -> u64 {
         self.registers.b &= !4;
@@ -3286,7 +3273,6 @@ impl Z80 {
         16
     }
 
-
     // 0xCB97 - RES 2, A
     fn res_2_a_0xcb97(&mut self) -> u64 {
         self.registers.a &= !4;
@@ -3310,7 +3296,6 @@ impl Z80 {
         self.registers.d &= !4;
         8
     }
-
 
     // 0xCB9B - RES 3, E
     fn res_3_e_0xcb9b(&mut self) -> u64 {
@@ -3336,7 +3321,6 @@ impl Z80 {
         self.mmu.write(value, self.get_hl());
         16
     }
-
 
     // 0xCB9F - RES 3, A
     fn res_3_a_0xcb9f(&mut self) -> u64 {
@@ -3438,7 +3422,6 @@ impl Z80 {
         16
     }
 
-
     // 0xCBAF - RES 5, A
     fn res_5_a_0xcbaf(&mut self) -> u64 {
         self.registers.a &= !16;
@@ -3446,8 +3429,6 @@ impl Z80 {
     }
 
     /* 0xCBB0 - 0xCBBF */
-
-
 
     // 0xCBB0 - RES 6, B
     fn res_6_b_0xcbb0(&mut self) -> u64 {
@@ -3496,7 +3477,6 @@ impl Z80 {
         self.registers.a &= !32;
         8
     }
-
 
     // 0xCBB8 - RES 7, B
     fn res_7_b_0xcbb8(&mut self) -> u64 {
@@ -3649,7 +3629,6 @@ impl Z80 {
 
     /* 0xCBD0 - 0xCBDF */
 
-
     // 0xCBD0 - SET 2, B
     fn set_2_b_0xcbd0(&mut self) -> u64 {
         self.registers.b |= 4;
@@ -3693,7 +3672,6 @@ impl Z80 {
         16
     }
 
-
     // 0xCBD7 - SET 2, A
     fn set_2_a_0xcbd7(&mut self) -> u64 {
         self.registers.a |= 8;
@@ -3706,13 +3684,11 @@ impl Z80 {
         8
     }
 
-
     // 0xCBD9 - SET 3, C
     fn set_3_c_0xcbd9(&mut self) -> u64 {
         self.registers.c |= 8;
         8
     }
-
 
     // 0xCBDA - SET 3, D
     fn set_3_a_0xcbda(&mut self) -> u64 {
@@ -3851,13 +3827,11 @@ impl Z80 {
 
     /* 0xCBF0 - 0xCBFF */
 
-
     // 0xCBF0 - SET 6, B
     fn set_6_b_0xcbf0(&mut self) -> u64 {
         self.registers.b |= 64;
         8
     }
-
 
     // 0xCBF1 - SET 6, C
     fn set_6_c_0xcbf1(&mut self) -> u64 {
@@ -3901,7 +3875,6 @@ impl Z80 {
         self.registers.a |= 64;
         8
     }
-
 
     // 0xCBF8 - SET 7, B
     fn set_7_b_0xcbf8(&mut self) -> u64 {

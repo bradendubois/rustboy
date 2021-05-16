@@ -202,7 +202,6 @@ impl Z80 {
 
     /// Increment a given u16, handling overflow
     pub fn inc_16(&mut self, s: u16) -> u16 {
-
         // Save the carry flag as it is changed by sub
         let carry = self.is_full_carry();
         let result = self.add_16(s, 1);
@@ -214,7 +213,6 @@ impl Z80 {
         };
 
         result
-
     }
 
     /*      Decrementing     */
@@ -266,10 +264,10 @@ impl Z80 {
     }
 
     /// OR - OR the given value with register A. Store result in A.
-    pub fn or(&mut self, t: u8){
+    pub fn or(&mut self, t: u8) {
         self.registers.a |= t;
 
-        match self.registers.a == 0{
+        match self.registers.a == 0 {
             true => self.set_zero(),
             false => self.unset_zero(),
         };
@@ -279,8 +277,8 @@ impl Z80 {
     }
 
     /// CP - Compare the given value with register A, setting the zero flag if they're equal
-    pub fn cp(&mut self, t: u8){
-        if self.sub_8(self.registers.a,t) == 0{
+    pub fn cp(&mut self, t: u8) {
+        if self.sub_8(self.registers.a, t) == 0 {
             self.set_zero()
         }
     }
@@ -301,12 +299,11 @@ impl Z80 {
 
     /// RLC - Rotate a number left, and copy the left-most bit shifted into the C register
     pub fn rlc(&mut self, v: u8) -> u8 {
-
         let result = (v << 1) | (v >> 7);
 
         match result == 0 {
             true => self.set_zero(),
-            false => self.unset_zero()
+            false => self.unset_zero(),
         };
 
         self.unset_subtraction();
@@ -314,41 +311,40 @@ impl Z80 {
 
         match result & 0x01 == 0 {
             true => self.unset_full_carry(),
-            false => self.set_full_carry()
+            false => self.set_full_carry(),
         };
 
         result
     }
 
     /// RL - Rotate a number left, copy the contents of carry into the result
-    pub fn rl(&mut self, v: u8) -> u8{
-        let carry_bit = if self.is_full_carry() {1} else {0};
-        let mut result = (v<<1) | (v>> 7);
+    pub fn rl(&mut self, v: u8) -> u8 {
+        let carry_bit = if self.is_full_carry() { 1 } else { 0 };
+        let mut result = (v << 1) | (v >> 7);
 
         match result == 0 {
             true => self.set_zero(),
-            false => self.unset_zero()
+            false => self.unset_zero(),
         };
         match result & 0x01 == 0 {
             true => self.unset_full_carry(),
-            false => self.set_full_carry()
+            false => self.set_full_carry(),
         };
         self.unset_subtraction();
         self.unset_half_carry();
 
-        result = (result & (!(1 << 7))) | (carry_bit << 7) ;
+        result = (result & (!(1 << 7))) | (carry_bit << 7);
 
         result
     }
 
     /// RRC - Rotate a number right, and copy the right-most bit shifted into the C register
     pub fn rrc(&mut self, v: u8) -> u8 {
-
         let result = (v >> 1) | (v << 7);
 
         match result == 0 {
             true => self.set_zero(),
-            false => self.unset_zero()
+            false => self.unset_zero(),
         };
 
         self.unset_subtraction();
@@ -356,7 +352,7 @@ impl Z80 {
 
         match result & 0xF0 == 0 {
             true => self.unset_full_carry(),
-            false => self.set_full_carry()
+            false => self.set_full_carry(),
         };
 
         result
@@ -364,33 +360,32 @@ impl Z80 {
 
     /// RR - Rotate a number right, copy carry flag into right-most bit
     pub fn rr(&mut self, v: u8) -> u8 {
-        let carry_bit = if self.is_full_carry() {1} else {0};
-        let mut result = (v<<1) | (v>> 7);
+        let carry_bit = if self.is_full_carry() { 1 } else { 0 };
+        let mut result = (v << 1) | (v >> 7);
 
         match result == 0 {
             true => self.set_zero(),
-            false => self.unset_zero()
+            false => self.unset_zero(),
         };
         match result & 0x01 == 0 {
             true => self.unset_full_carry(),
-            false => self.set_full_carry()
+            false => self.set_full_carry(),
         };
         self.unset_subtraction();
         self.unset_half_carry();
 
-        result = (result & (!(1 << 7))) | (carry_bit << 7) ;
+        result = (result & (!(1 << 7))) | (carry_bit << 7);
 
         result
     }
 
     /// SLA - Shift a number left, and copy the left-most bit shifted into the C register
     pub fn sla(&mut self, v: u8) -> u8 {
-
         let result = v << 1;
 
         match result == 0 {
             true => self.set_zero(),
-            false => self.unset_zero()
+            false => self.unset_zero(),
         };
 
         self.unset_subtraction();
@@ -398,7 +393,7 @@ impl Z80 {
 
         match v & 0xF0 == 0 {
             true => self.unset_full_carry(),
-            false => self.set_full_carry()
+            false => self.set_full_carry(),
         };
 
         result
@@ -406,12 +401,11 @@ impl Z80 {
 
     /// SRA - Shift a number right, and copy the right-most bit shifted into the C register
     pub fn sra(&mut self, v: u8) -> u8 {
-
         let result = v >> 1;
 
         match result == 0 {
             true => self.set_zero(),
-            false => self.unset_zero()
+            false => self.unset_zero(),
         };
 
         self.unset_subtraction();
@@ -419,7 +413,7 @@ impl Z80 {
 
         match v & 0x01 == 0 {
             true => self.unset_full_carry(),
-            false => self.set_full_carry()
+            false => self.set_full_carry(),
         };
 
         result
@@ -427,11 +421,11 @@ impl Z80 {
 
     /// SWAP - return the value with
     /// its 4 higher order bits swapped with the four lower order bits
-    pub fn swap(&mut self, s:u8) -> u8 {
-        let result = (s<< 4)|(s>>4);
+    pub fn swap(&mut self, s: u8) -> u8 {
+        let result = (s << 4) | (s >> 4);
         match result == 0 {
             true => self.set_zero(),
-            false => self.unset_zero()
+            false => self.unset_zero(),
         };
 
         self.unset_subtraction();
@@ -442,20 +436,20 @@ impl Z80 {
 
     /// SRL - shift number right, copy bit 0 to CY and set bit 7 of number to 0
     pub fn srl(&mut self, r: u8) -> u8 {
-        let mut result = (r<<1) | (r>> 7);
+        let mut result = (r << 1) | (r >> 7);
 
         match result == 0 {
             true => self.set_zero(),
-            false => self.unset_zero()
+            false => self.unset_zero(),
         };
         match result & 0x01 == 0 {
             true => self.unset_full_carry(),
-            false => self.set_full_carry()
+            false => self.set_full_carry(),
         };
         self.unset_subtraction();
         self.unset_half_carry();
 
-        result = (result & (!(1 << 7))) | (0 << 7) ;
+        result = (result & (!(1 << 7))) | (0 << 7);
 
         result
     }
@@ -464,7 +458,7 @@ impl Z80 {
     pub fn bit(&mut self, s: u8, b: u8) {
         match (s & (1 << b)) == 0 {
             true => self.set_zero(),
-            false => self.unset_zero()
+            false => self.unset_zero(),
         };
         self.unset_subtraction();
         self.set_half_carry();
@@ -665,11 +659,17 @@ impl Z80 {
     }
 
     /// Get the Interrupt Master Enable flag
-    pub fn is_ime(&self) -> bool {self.registers.ime}
+    pub fn is_ime(&self) -> bool {
+        self.registers.ime
+    }
 
     /// Set the Interrupt Master Enable flag
-    pub fn set_ime(&mut self) {self.registers.ime = true;}
+    pub fn set_ime(&mut self) {
+        self.registers.ime = true;
+    }
 
     /// Unset the IME flag
-    pub fn unset_ime(&mut self) {self.registers.ime = false;}
+    pub fn unset_ime(&mut self) {
+        self.registers.ime = false;
+    }
 }
