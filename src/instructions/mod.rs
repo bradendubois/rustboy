@@ -464,7 +464,22 @@ impl Z80 {
                     0x8F => self.res_1_a_0xcb8f(),
 
                     // 0xCB9X
-                    // TODO
+                    0x90 => self.res_2_b_0xcb90(),
+                    0x91 => self.res_2_c_0xcb91(),
+                    0x92 => self.res_2_d_0xcb92(),
+                    0x93 => self.res_2_e_0xcb93(),
+                    0x94 => self.res_2_h_0xcb94(),
+                    0x95 => self.res_2_l_0xcb95(),
+                    0x96 => self.res_2_hl_0xcb96(),
+                    0x97 => self.res_2_a_0xcb97(),
+                    0x98 => self.res_3_b_0xcb98(),
+                    0x99 => self.res_3_c_0xcb99(),
+                    0x9A => self.res_3_d_0xcb9a(),
+                    0x9B => self.res_3_e_0xcb9b(),
+                    0x9C => self.res_3_h_0xcb9c(),
+                    0x9D => self.res_3_l_0xcb9d(),
+                    0x9E => self.res_3_hl_0xcb9e(),
+                    0x9F => self.res_3_a_0xcb9f(),
 
                     // 0xCBAX
                     0xA0 => self.res_4_b_0xcba0(),
@@ -485,7 +500,22 @@ impl Z80 {
                     0xAF => self.res_5_a_0xcbaf(),
 
                     // 0xCBBX
-                    // TODO
+                    0xB0 => self.res_6_b_0xcbb0(),
+                    0xB1 => self.res_6_c_0xcbb1(),
+                    0xB2 => self.res_6_d_0xcbb2(),
+                    0xB3 => self.res_6_e_0xcbb3(),
+                    0xB4 => self.res_6_h_0xcbb4(),
+                    0xB5 => self.res_6_l_0xcbb5(),
+                    0xB6 => self.res_6_hl_0xcbb6(),
+                    0xB7 => self.res_6_a_0xcbb7(),
+                    0xB8 => self.res_7_b_0xcbb8(),
+                    0xB9 => self.res_7_c_0xcbb9(),
+                    0xBA => self.res_7_d_0xcbba(),
+                    0xBB => self.res_7_e_0xcbbb(),
+                    0xBC => self.res_7_h_0xcbbc(),
+                    0xBD => self.res_7_l_0xcbbd(),
+                    0xBE => self.res_71_hl_0xcbbe(),
+                    0xBF => self.res_7_a_0xcbbf(),
 
                     // 0xCBCX
                     0xC0 => self.set_0_b_0xcbc0(),
@@ -3089,7 +3119,107 @@ impl Z80 {
 
     /* 0xCB90 - 0xCB9F */
 
-    // TODO - 0xCB90 - 0xCB9F
+
+    // 0xCB90 - RES 2, B
+    fn res_2_b_0xcb90(&mut self) -> u64 {
+        self.registers.b &= !4;
+        8
+    }
+
+    // 0xCB91 - RES 2, C
+    fn res_2_c_0xcb91(&mut self) -> u64 {
+        self.registers.c &= !4;
+        8
+    }
+
+    // 0xCB92 - RES 2, D
+    fn res_2_d_0xcb92(&mut self) -> u64 {
+        self.registers.d &= !4;
+        8
+    }
+
+    // 0xCB93 - RES 2, E
+    fn res_2_e_0xcb93(&mut self) -> u64 {
+        self.registers.b &= !4;
+        8
+    }
+
+    // 0xCB94 - RES 2, H
+    fn res_2_h_0xcb94(&mut self) -> u64 {
+        self.registers.h &= !4;
+        8
+    }
+
+    // 0xCB95 - RES 2, L
+    fn res_2_l_0xcb95(&mut self) -> u64 {
+        self.registers.l &= !4;
+        8
+    }
+
+    // 0xCB96 - RES 2, (HL)
+    fn res_2_hl_0xcb96(&mut self) -> u64 {
+        let value = self.mmu.read(self.get_hl()) & !4;
+        self.mmu.write(value, self.get_hl());
+        16
+    }
+
+
+    // 0xCB97 - RES 2, A
+    fn res_2_a_0xcb97(&mut self) -> u64 {
+        self.registers.a &= !4;
+        8
+    }
+
+    // 0xCB98 - RES 3, B
+    fn res_3_b_0xcb98(&mut self) -> u64 {
+        self.registers.b &= !4;
+        8
+    }
+
+    // 0xCB99 - RES 3, C
+    fn res_3_c_0xcb99(&mut self) -> u64 {
+        self.registers.c &= !4;
+        8
+    }
+
+    // 0xCB9A - RES 3, D
+    fn res_3_d_0xcb9a(&mut self) -> u64 {
+        self.registers.d &= !4;
+        8
+    }
+
+
+    // 0xCB9B - RES 3, E
+    fn res_3_e_0xcb9b(&mut self) -> u64 {
+        self.registers.e &= !4;
+        8
+    }
+
+    // 0xCB9C - RES 3, H
+    fn res_3_h_0xcb9c(&mut self) -> u64 {
+        self.registers.h &= !4;
+        8
+    }
+
+    // 0xCB9D - RES 3, L
+    fn res_3_l_0xcb9d(&mut self) -> u64 {
+        self.registers.l &= !4;
+        8
+    }
+
+    // 0xCB9E - RES 3, (HL)
+    fn res_3_hl_0xcb9e(&mut self) -> u64 {
+        let value = self.mmu.read(self.get_hl()) & !4;
+        self.mmu.write(value, self.get_hl());
+        16
+    }
+
+
+    // 0xCB9F - RES 3, A
+    fn res_3_a_0xcb9f(&mut self) -> u64 {
+        self.registers.a &= !4;
+        8
+    }
 
     /* 0xCBA0 - 0xCBAF */
 
@@ -3185,6 +3315,7 @@ impl Z80 {
         16
     }
 
+
     // 0xCBAF - RES 5, A
     fn res_5_a_0xcbaf(&mut self) -> u64 {
         self.registers.a &= !16;
@@ -3192,6 +3323,106 @@ impl Z80 {
     }
 
     /* 0xCBB0 - 0xCBBF */
+
+
+
+    // 0xCBB0 - RES 6, B
+    fn res_6_b_0xcbb0(&mut self) -> u64 {
+        self.registers.b &= !32;
+        8
+    }
+
+    // 0xCBB1 - RES 6, C
+    fn res_6_c_0xcbb1(&mut self) -> u64 {
+        self.registers.c &= !32;
+        8
+    }
+
+    // 0xCBB2 - RES 6, D
+    fn res_6_d_0xcbb2(&mut self) -> u64 {
+        self.registers.d &= !32;
+        8
+    }
+
+    // 0xCBB3 - RES 6, E
+    fn res_6_e_0xcbb3(&mut self) -> u64 {
+        self.registers.e &= !32;
+        8
+    }
+
+    // 0xCBB4 - RES 6, H
+    fn res_6_h_0xcbb4(&mut self) -> u64 {
+        self.registers.h &= !32;
+        8
+    }
+
+    // 0xCBB5 - RES 6, L
+    fn res_6_l_0xcbb5(&mut self) -> u64 {
+        self.registers.l &= !32;
+        8
+    }
+    // 0xCBB6 - RES 6, (HL)
+    fn res_6_hl_0xcbb6(&mut self) -> u64 {
+        let value = self.mmu.read(self.get_hl()) & !32;
+        self.mmu.write(value, self.get_hl());
+        16
+    }
+
+    // 0xCBB7 - RES 6, A
+    fn res_6_a_0xcbb7(&mut self) -> u64 {
+        self.registers.a &= !32;
+        8
+    }
+
+
+    // 0xCBB8 - RES 7, B
+    fn res_7_b_0xcbb8(&mut self) -> u64 {
+        self.registers.b &= !32;
+        8
+    }
+
+    // 0xCBB9 - RES 7, C
+    fn res_7_c_0xcbb9(&mut self) -> u64 {
+        self.registers.c &= !32;
+        8
+    }
+
+    // 0xCBBA - RES 7, D
+    fn res_7_d_0xcbba(&mut self) -> u64 {
+        self.registers.d &= !32;
+        8
+    }
+
+    // 0xCBBB - RES 7, E
+    fn res_7_e_0xcbbb(&mut self) -> u64 {
+        self.registers.e &= !32;
+        8
+    }
+
+    // 0xCBBC - RES 7, H
+    fn res_7_h_0xcbbc(&mut self) -> u64 {
+        self.registers.h &= !32;
+        8
+    }
+
+    // 0xCBBD - RES 7, L
+    fn res_7_l_0xcbbd(&mut self) -> u64 {
+        self.registers.l &= !32;
+        8
+    }
+
+    // 0xCBBE - RES 7, (HL)
+    fn res_71_hl_0xcbbe(&mut self) -> u64 {
+        let value = self.mmu.read(self.get_hl()) & !32;
+        self.mmu.write(value, self.get_hl());
+        16
+    }
+
+    // 0xCBBF - RES 7, A
+    fn res_7_a_0xcbbf(&mut self) -> u64 {
+        self.registers.a &= !32;
+        8
+    }
 
     /* 0xCBC0 - 0xCBCF */
 
@@ -3295,7 +3526,7 @@ impl Z80 {
 
     /* 0xCBD0 - 0xCBDF */
 
-    // TODO - 0xCBD0 - 0xCBDF
+
 
     /* 0xCBE0 - 0xCBEF */
 
