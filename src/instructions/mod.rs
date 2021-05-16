@@ -427,7 +427,23 @@ impl Z80 {
                     0x6F => self.bit_3_a_0xcb6f(),
 
                     // 0xCB7X
-                    // TODO
+                    0x70 => self.bit_6_b_0xcb70(),
+                    0x71 => self.bit_6_c_0xcb71(),
+                    0x72 => self.bit_6_d_0xcb72(),
+                    0x73 => self.bit_6_e_0xcb73(),
+                    0x74 => self.bit_6_h_0xcb74(),
+                    0x75 => self.bit_6_l_0xcb75(),
+                    0x76 => self.bit_6_hl_0xcb76(),
+                    0x77 => self.bit_7_a_0xcb7f(),
+                    0x78 => self.bit_7_b_0xcb78(),
+                    0x79 => self.bit_7_c_0xcb79(),
+                    0x7A => self.bit_7_d_0xcb7a(),
+                    0x7B => self.bit_7_e_0xcb7b(),
+                    0x7C => self.bit_7_h_0xcb7c(),
+                    0x7D => self.bit_7_l_0xcb7d(),
+                    0x7E => self.bit_7_hl_0xcb7e(),
+                    0x7F => self.bit_7_a_0xcb7f(),
+                    
 
                     // 0xCB8X
                     0x80 => self.res_0_b_0xcb80(),
@@ -2969,7 +2985,104 @@ impl Z80 {
 
     /* 0xCB70 - 0xCB7F */
 
-    // TODO - 0xCB70 - 0xCB7F
+    // 0xCB70 BIT 6, B
+    fn bit_6_b_0xcb70(&mut self) -> u64 {
+        self.bit(self.registers.b, 6);
+        8
+    }
+
+    // 0xCB71 BIT 6, C
+    fn bit_6_c_0xcb71(&mut self) -> u64 {
+        self.bit(self.registers.c, 6);
+        8
+    }
+
+    // 0xCB72 BIT 6, D
+    fn bit_6_d_0xcb72(&mut self) -> u64 {
+        self.bit(self.registers.d, 6);
+        8
+    }
+
+
+    // 0xCB73 BIT 6, E
+    fn bit_6_e_0xcb73(&mut self) -> u64 {
+        self.bit(self.registers.e, 6);
+        8
+    }
+
+    // 0xCB74 BIT 6, H
+    fn bit_6_h_0xcb74(&mut self) -> u64 {
+        self.bit(self.registers.h, 6);
+        8
+    }
+
+    // 0xCB75 BIT 6, L
+    fn bit_6_l_0xcb75(&mut self) -> u64 {
+        self.bit(self.registers.l, 6);
+        8
+    }
+    // 0xCB76 - BIT 2, (HL)
+    fn bit_6_hl_0xcb76(&mut self) -> u64 {
+        let value = self.mmu.read(self.get_hl());
+        self.bit(value, 6);
+        16
+    }
+
+    // 0xCB77 BIT 6, A
+    fn bit_6_a_0xcb77(&mut self) -> u64 {
+        self.bit(self.registers.a, 6);
+        8
+    }
+
+
+    // 0xCB78 BIT 7, B
+    fn bit_7_b_0xcb78(&mut self) -> u64 {
+        self.bit(self.registers.b, 7);
+        8
+    }
+
+    // 0xCB79 BIT 7, C
+    fn bit_7_c_0xcb79(&mut self) -> u64 {
+        self.bit(self.registers.c, 7);
+        8
+    }
+
+    // 0xCB7A BIT 7, D
+    fn bit_7_d_0xcb7a(&mut self) -> u64 {
+        self.bit(self.registers.d, 7);
+        8
+    }
+
+    // 0xCB7B BIT 7, E
+    fn bit_7_e_0xcb7b(&mut self) -> u64 {
+        self.bit(self.registers.e, 7);
+        8
+    }
+
+    // 0xCB7C BIT 7, H
+    fn bit_7_h_0xcb7c(&mut self) -> u64 {
+        self.bit(self.registers.h, 7);
+        8
+    }
+
+    // 0xCB7D BIT 7, L
+    fn bit_7_l_0xcb7d(&mut self) -> u64 {
+        self.bit(self.registers.l, 7);
+        8
+    }
+
+    // 0xCB7E - BIT 7, (HL)
+    fn bit_7_hl_0xcb7e(&mut self) -> u64 {
+        let value = self.mmu.read(self.get_hl());
+        self.bit(value, 7);
+        16
+    }
+
+    // 0xCB7F BIT 7, A
+    fn bit_7_a_0xcb7f(&mut self) -> u64 {
+        self.bit(self.registers.a, 7);
+        8
+    }
 
     /* 0xCB80 - 0xCB8F */
 
