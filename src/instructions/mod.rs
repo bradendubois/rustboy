@@ -2871,7 +2871,7 @@ impl Z80 {
         let value = self.mmu.read(self.get_hl());
 
         self.bit(value, 2);
-        8
+        16
     }
 
     // 0xCB57 - BIT 0, A
