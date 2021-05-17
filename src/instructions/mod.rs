@@ -2064,8 +2064,8 @@ impl Z80 {
         12
     }
 
-    // 0xD2 - JP NZ, a16
-    fn jp_nz_a6_0xd2(&mut self) -> u64 {
+    // 0xD2 - JP NC, a16
+    fn jp_nc_a6_0xd2(&mut self) -> u64 {
         let value = self.word();
         match self.is_full_carry() {
             false => {
