@@ -449,7 +449,7 @@ impl Z80 {
         self.unset_subtraction();
         self.unset_half_carry();
 
-        result = (result & (!(1 << 7))) | (0 << 7);
+        result &= !(result << 7);
 
         result
     }
