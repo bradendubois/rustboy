@@ -374,7 +374,7 @@ impl Z80 {
         self.unset_subtraction();
         self.unset_half_carry();
 
-        result = (result & (!(1 << 7))) | (carry_bit << 7);
+        result = (result & (!(1 << 7))) | carry_bit;
 
         result
     }
