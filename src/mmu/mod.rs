@@ -26,10 +26,42 @@ impl MMU {
     }
 
     pub fn read(&self, address: u16) -> u8 {
-        self.memory[address as usize]
+
+        match address {
+            0x0000 ..= 0x3FFF => 0,     // ROM
+            0x4000 ..= 0x7FFF => 0,     // Switchable ROM Bank
+            0x8000 ..= 0x9FFF => 0,     // Video RAM
+            0xA000 ..= 0xBFFF => 0,     // Switchable RAM Bank
+            0xC000 ..= 0xDFFF => 0,     // Internal RAM
+            0xE000 ..= 0xFDFF => 0,     // Unusable
+            0xFE00 ..= 0xFE9F => 0,     // Sprite Attributes
+            0xFEA0 ..= 0xFEFF => 0,     // Unusable
+            0xFF00 ..= 0xFF4B => 0,     // I/O
+            0xFF4C ..= 0xFF7F => 0,     // Unusable
+            0xFF80 ..= 0xFFFE => 0,     // High RAM
+            0xFFFF => 0,                // Interrupt Register
+
+            _ => panic!("Unmapped address {}", address)
+        }
     }
 
     pub fn write(&mut self, value: u8, address: u16) {
-        self.memory[address as usize] = value;
+
+        match address {
+            0x0000 ..= 0x3FFF => 0,     // ROM
+            0x4000 ..= 0x7FFF => 0,     // Switchable ROM Bank
+            0x8000 ..= 0x9FFF => 0,     // Video RAM
+            0xA000 ..= 0xBFFF => 0,     // Switchable RAM Bank
+            0xC000 ..= 0xDFFF => 0,     // Internal RAM
+            0xE000 ..= 0xFDFF => 0,     // Unusable
+            0xFE00 ..= 0xFE9F => 0,     // Sprite Attributes
+            0xFEA0 ..= 0xFEFF => 0,     // Unusable
+            0xFF00 ..= 0xFF4B => 0,     // I/O
+            0xFF4C ..= 0xFF7F => 0,     // Unusable
+            0xFF80 ..= 0xFFFE => 0,     // High RAM
+            0xFFFF => 0,                // Interrupt Register
+
+            _ => panic!("Unmapped address {}", address)
+        };
     }
 }
