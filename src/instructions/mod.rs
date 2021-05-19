@@ -582,6 +582,7 @@ impl Z80 {
                     0xFD => self.set_7_l_0xcbfd(),
                     0xFE => self.set_7_hl_0xcbfe(),
                     0xFF => self.set_7_a_0xcbff(),
+                    _ => {}
                 }
             }
         }
