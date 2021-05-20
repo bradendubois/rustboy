@@ -1,8 +1,7 @@
-use super::lr35902::Status;
-use super::lr35902::Z80;
+use crate::lr35902::{LR35902, Status};
 
 
-impl Z80 {
+impl LR35902 {
 
     #[allow(unreachable_patterns)]
     /// Call the instruction corresponding the given opcode, and return the number of cycles taken

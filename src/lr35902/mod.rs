@@ -26,16 +26,16 @@ pub struct Registers {
     pub ime: bool,
 }
 
-// Struct representing the Z80 CPU
+// Struct representing the LR35902 CPU
 #[derive(Debug)]
 pub struct LR35902 {
-    // Struct of all registers in the Z80
+    // Struct of all registers in the LR35902
     pub registers: Registers,
 
-    // Struct representing the clock of the Z80 for purposes of timing
+    // Struct representing the clock of the LR35902 for purposes of timing
     pub clock: u64,
 
-    // Enum representing the Z80's current running status
+    // Enum representing the LR35902's current running status
     pub status: Status,
 
     // CB Flag : Will set whether to use the default table or the CB Prefix table
@@ -47,9 +47,10 @@ pub struct LR35902 {
 
 #[allow(dead_code)]
 impl LR35902 {
-    /// Initializer for a Z80 CPU
+    /// Initializer for a LR35902 CPU
     pub fn new(mmu: mmu::MMU) -> LR35902 {
         LR35902 {
+            
             // All registers begin empty
             registers: Registers {
                 a: 0x01,
