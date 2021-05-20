@@ -1,14 +1,9 @@
 mod instructions;
+mod status;
+use status::Status;
 
 use super::mmu;
 
-#[allow(dead_code)]
-#[derive(Debug)]
-pub enum Status {
-    STOPPED,
-    HALTED,
-    RUNNING,
-}
 
 #[derive(Debug)]
 pub struct Registers {
