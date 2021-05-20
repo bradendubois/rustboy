@@ -1,9 +1,8 @@
 mod gameboy;
 mod gpu;
 mod input;
-mod instructions;
 mod mmu;
-mod z80;
+mod lr35902;
 
 use std::fs::{read, File};
 use std::path::{Path, PathBuf};

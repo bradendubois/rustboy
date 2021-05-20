@@ -1,3 +1,5 @@
+mod instructions;
+
 use super::mmu;
 
 #[allow(dead_code)]
@@ -26,7 +28,7 @@ pub struct Registers {
 
 // Struct representing the Z80 CPU
 #[derive(Debug)]
-pub struct Z80 {
+pub struct LR35902 {
     // Struct of all registers in the Z80
     pub registers: Registers,
 
@@ -44,10 +46,10 @@ pub struct Z80 {
 }
 
 #[allow(dead_code)]
-impl Z80 {
+impl LR35902 {
     /// Initializer for a Z80 CPU
-    pub fn new(mmu: mmu::MMU) -> Z80 {
-        Z80 {
+    pub fn new(mmu: mmu::MMU) -> LR35902 {
+        LR35902 {
             // All registers begin empty
             registers: Registers {
                 a: 0x01,
@@ -475,14 +477,14 @@ impl Z80 {
     pub fn word(&mut self) -> u16 {
         let lower = self.byte();
         let upper = self.byte();
-        Z80::u16_from_u8(upper, lower)
+        LR35902::u16_from_u8(upper, lower)
     }
 
     /*   Stack Pointer (SP)  */
 
     /// Push 16 bits to the stack (SP)
     pub fn push_sp(&mut self, v: u16) {
-        let value = Z80::u8_pair(v);
+        let value = LR35902::u8_pair(v);
         self.registers.sp -= 2;
         self.mmu.write(value.1, self.registers.sp);
         self.mmu.write(value.0, self.registers.sp + 1);
@@ -493,7 +495,7 @@ impl Z80 {
         let lower = self.mmu.read(self.registers.sp);
         let upper = self.mmu.read(self.registers.sp + 1);
         self.registers.sp += 2;
-        Z80::u16_from_u8(upper, lower)
+        LR35902::u16_from_u8(upper, lower)
     }
 
     /*        Control       */
@@ -540,48 +542,48 @@ impl Z80 {
 
     /// Get the register pair AF as a u16
     pub fn get_af(&self) -> u16 {
-        Z80::u16_from_u8(self.registers.a, self.registers.f)
+        LR35902::u16_from_u8(self.registers.a, self.registers.f)
     }
 
     /// Set the register pair AF to the given u16
     pub fn set_af(&mut self, x: u16) {
-        let u8_pair = Z80::u8_pair(x);
+        let u8_pair = LR35902::u8_pair(x);
         self.registers.a = u8_pair.0;
         self.registers.f = u8_pair.1;
     }
 
     /// Get the register pair BC as a u16
     pub fn get_bc(&self) -> u16 {
-        Z80::u16_from_u8(self.registers.b, self.registers.c)
+        LR35902::u16_from_u8(self.registers.b, self.registers.c)
     }
 
     /// Set the register pair BC to the given u16
     pub fn set_bc(&mut self, x: u16) {
-        let u8_pair = Z80::u8_pair(x);
+        let u8_pair = LR35902::u8_pair(x);
         self.registers.b = u8_pair.0;
         self.registers.c = u8_pair.1;
     }
 
     /// Get the register pair DE as a u16
     pub fn get_de(&self) -> u16 {
-        Z80::u16_from_u8(self.registers.d, self.registers.e)
+        LR35902::u16_from_u8(self.registers.d, self.registers.e)
     }
 
     /// Set the register pair DE to the given u16
     pub fn set_de(&mut self, x: u16) {
-        let u8_pair = Z80::u8_pair(x);
+        let u8_pair = LR35902::u8_pair(x);
         self.registers.d = u8_pair.0;
         self.registers.e = u8_pair.1;
     }
 
     /// Get the register pair HL as a u16
     pub fn get_hl(&self) -> u16 {
-        Z80::u16_from_u8(self.registers.h, self.registers.l)
+        LR35902::u16_from_u8(self.registers.h, self.registers.l)
     }
 
     /// Set the register pair HL to the given u16
     pub fn set_hl(&mut self, x: u16) {
-        let u8_pair = Z80::u8_pair(x);
+        let u8_pair = LR35902::u8_pair(x);
         self.registers.h = u8_pair.0;
         self.registers.l = u8_pair.1;
     }
