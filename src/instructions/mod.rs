@@ -1,7 +1,10 @@
 use super::z80::Status;
 use super::z80::Z80;
 
+
 impl Z80 {
+
+    #[allow(unreachable_patterns)]
     /// Call the instruction corresponding the given opcode, and return the number of cycles taken
     pub fn call_instruction(&mut self, code: u8) -> u64 {
         match self.use_cb_table {
@@ -244,7 +247,7 @@ impl Z80 {
                     // 0xDX
                     0xD0 => self.ret_nc_0xd0(),
                     0xD1 => self.pop_de_0xd1(),
-                    0xD2 => self.jp_nz_a6_0xd2(),
+                    0xD2 => self.jp_nc_a16_0xd2(),
                     0xD4 => self.call_nc_a16_0xd4(),
                     0xD5 => self.push_de_0xd5(),
                     0xD6 => self.sub_d8_0xd6(),
@@ -582,7 +585,9 @@ impl Z80 {
                     0xFD => self.set_7_l_0xcbfd(),
                     0xFE => self.set_7_hl_0xcbfe(),
                     0xFF => self.set_7_a_0xcbff(),
-                    _ => {}
+
+                    // Unmapped code in CB table
+                    _ => panic!("Unmapped default table opcode {}", code)
                 }
             }
         }
@@ -2066,7 +2071,7 @@ impl Z80 {
     }
 
     // 0xD2 - JP NC, a16
-    fn jp_nc_a6_0xd2(&mut self) -> u64 {
+    fn jp_nc_a16_0xd2(&mut self) -> u64 {
         let value = self.word();
         match self.is_full_carry() {
             false => {

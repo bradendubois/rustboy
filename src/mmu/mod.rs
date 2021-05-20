@@ -1,4 +1,11 @@
-#[derive(Debug)]
+mod mbc;
+use mbc::MBC;
+
+use crate::mmu::mbc::MBC0;
+
+use std::fmt;
+
+#[allow(unreachable_patterns)]
 pub struct MMU {
     in_bios: bool,
     bios: Vec<u8>,
@@ -8,8 +15,17 @@ pub struct MMU {
     z_ram: Vec<u8>,
 
     memory: Vec<u8>,
+
+    mbc: Box<dyn MBC>
 }
 
+impl fmt::Debug for MMU {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "MMU Debug")
+    }
+}
+
+#[allow(unreachable_patterns)]
 #[allow(dead_code)]
 impl MMU {
     pub fn init() -> MMU {
@@ -22,6 +38,8 @@ impl MMU {
             z_ram: vec![],
 
             memory: vec![0; 1 << 16],
+
+            mbc: Box::new(MBC0::new(vec![]))
         }
     }
 
