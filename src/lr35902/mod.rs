@@ -1,25 +1,12 @@
 mod instructions;
 mod status;
+mod registers;
+
 use status::Status;
+use registers::Registers;
 
 use super::mmu;
 
-
-#[derive(Debug)]
-pub struct Registers {
-    pub a: u8,
-    pub b: u8,
-    pub c: u8,
-    pub d: u8,
-    pub e: u8,
-    pub h: u8,
-    pub l: u8,
-    pub f: u8,
-    pub pc: u16,
-    pub sp: u16,
-
-    pub ime: bool,
-}
 
 // Struct representing the LR35902 CPU
 #[derive(Debug)]
@@ -42,29 +29,12 @@ pub struct LR35902 {
 
 #[allow(dead_code)]
 impl LR35902 {
+
     /// Initializer for a LR35902 CPU
     pub fn new(mmu: mmu::MMU) -> LR35902 {
         LR35902 {
             
-            // All registers begin empty
-            registers: Registers {
-                a: 0x01,
-                f: 0xB0,
-
-                b: 0x00,
-                c: 0x13,
-
-                d: 0x00,
-                e: 0xD8,
-
-                h: 0x01,
-                l: 0x4D,
-
-                pc: 0x0100,
-                sp: 0xFFFE,
-
-                ime: false,
-            },
+            registers: Registers::new(),
 
             // Clock begins at 0
             clock: 0,
