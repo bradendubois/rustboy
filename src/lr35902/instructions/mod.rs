@@ -1,5 +1,5 @@
-use super::z80::Status;
-use super::z80::Z80;
+use super::lr35902::Status;
+use super::lr35902::Z80;
 
 
 impl Z80 {
