@@ -3,24 +3,20 @@ mod mbc;
 use mbc::{MBC, mbc0::{MBC0}};
 use std::fmt;
 
+const W_RAM_SIZE: usize = 0x8000;
+
 #[allow(unreachable_patterns)]
 pub struct MMU {
     in_bios: bool,
     bios: Vec<u8>,
     rom: Vec<u16>,
-    w_ram: Vec<u16>,
+
+    w_ram: [u8; W_RAM_SIZE],
     e_ram: Vec<u16>,
     z_ram: Vec<u8>,
 
-    memory: Vec<u8>,
 
     mbc: Box<dyn MBC>
-}
-
-impl fmt::Debug for MMU {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "MMU Debug")
-    }
 }
 
 #[allow(unreachable_patterns)]
@@ -31,11 +27,11 @@ impl MMU {
             in_bios: false,
             bios: vec![],
             rom: vec![],
-            w_ram: vec![],
+
+            w_ram: [0; W_RAM_SIZE],
             e_ram: vec![],
             z_ram: vec![],
 
-            memory: vec![0; 1 << 16],
 
             mbc: Box::new(MBC0::new(vec![]))
         }
@@ -79,5 +75,12 @@ impl MMU {
 
             _ => panic!("Unmapped address {}", address)
         };
+    }
+}
+
+
+impl fmt::Debug for MMU {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "MMU Debug")
     }
 }

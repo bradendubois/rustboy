@@ -1,5 +1,5 @@
+use std::fmt;
 
-#[derive(Debug)]
 pub struct Registers {
     pub a: u8,
     pub b: u8,
@@ -17,24 +17,60 @@ pub struct Registers {
 
 impl Registers {
 
-    pub fn new() -> Registers {
-        Registers {
-            a: 0x01,
-            f: 0xB0,
+    pub fn new(skip_bios: bool) -> Registers {
 
-            b: 0x00,
-            c: 0x13,
+        match skip_bios {
+            true => Registers {
+                a: 0x01,
+                f: 0xB0,
 
-            d: 0x00,
-            e: 0xD8,
+                b: 0x00,
+                c: 0x13,
 
-            h: 0x01,
-            l: 0x4D,
+                d: 0x00,
+                e: 0xD8,
 
-            pc: 0x0100,
-            sp: 0xFFFE,
+                h: 0x01,
+                l: 0x4D,
 
-            ime: false,
+                pc: 0x0100,
+                sp: 0xFFFE,
+
+                ime: false,
+            },
+
+            false => Registers {
+                a: 0x00,
+                f: 0x00,
+
+                b: 0x00,
+                c: 0x00,
+
+                d: 0x00,
+                e: 0x00,
+
+                h: 0x00,
+                l: 0x00,
+
+                pc: 0x0000,
+                sp: 0xFFFE,
+
+                ime: false,
+            },
         }
+    }
+}
+
+
+impl fmt::Debug for Registers {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "\
+            a: {:#08b} f: {:#08b}\n\
+            b: {:#08b} c: {:#08b}\n\
+            d: {:#08b} e: {:#08b}\n\
+            h: {:#08b} l: {:#08b}\n\
+            pc: {:#016b}\n\
+            sp: {:#016b}",
+               self.a, self.f, self.b, self.c, self.d, self.e, self.h, self.l, self.pc, self.sp)
     }
 }

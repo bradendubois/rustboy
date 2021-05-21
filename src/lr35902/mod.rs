@@ -2,6 +2,8 @@ mod instructions;
 mod status;
 mod registers;
 
+use std::fmt;
+
 use status::Status;
 use registers::Registers;
 
@@ -9,32 +11,32 @@ use super::mmu;
 
 
 // Struct representing the LR35902 CPU
-#[derive(Debug)]
 pub struct LR35902 {
+
+    // Struct representing the memory unit
+    pub mmu: mmu::MMU,
+
     // Struct of all registers in the LR35902
     pub registers: Registers,
-
-    // Struct representing the clock of the LR35902 for purposes of timing
-    pub clock: u64,
 
     // Enum representing the LR35902's current running status
     pub status: Status,
 
+    // Struct representing the clock of the LR35902 for purposes of timing
+    pub clock: u64,
+
     // CB Flag : Will set whether to use the default table or the CB Prefix table
     pub use_cb_table: bool,
-
-    // Struct representing the memory unit
-    pub mmu: mmu::MMU,
 }
 
 #[allow(dead_code)]
 impl LR35902 {
 
     /// Initializer for a LR35902 CPU
-    pub fn new(mmu: mmu::MMU) -> LR35902 {
+    pub fn new(mmu: mmu::MMU, skip_bios: bool) -> LR35902 {
         LR35902 {
             
-            registers: Registers::new(),
+            registers: Registers::new(skip_bios),
 
             // Clock begins at 0
             clock: 0,
@@ -45,7 +47,7 @@ impl LR35902 {
             use_cb_table: false,
 
             // MMU Unit
-            mmu,
+            mmu: ,
         }
     }
 
@@ -639,5 +641,19 @@ impl LR35902 {
     /// Unset the IME flag
     pub fn unset_ime(&mut self) {
         self.registers.ime = false;
+    }
+}
+
+impl fmt::Debug for LR35902 {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "\
+            Registers\n\
+            ========\
+            {:?}\n
+            ========\n\
+            Clock: {}\n\
+            Status: {:?}\n\
+            CB Prefix Set: {}",
+               self.registers, self.clock, self.status, self.use_cb_table)
     }
 }
