@@ -33,22 +33,24 @@ pub struct LR35902 {
 impl LR35902 {
 
     /// Initializer for a LR35902 CPU
-    pub fn new(mmu: mmu::MMU, skip_bios: bool) -> LR35902 {
+    pub fn new(rom: Vec<u8>, skip_bios: bool) -> LR35902 {
         LR35902 {
-            
-            registers: Registers::new(skip_bios),
 
-            // Clock begins at 0
-            clock: 0,
+            // MMU Unit
+            mmu: mmu::MMU::new(rom),
+
+            registers: Registers::new(skip_bios),
 
             // status enum starts as running.
             status: Status::RUNNING,
 
+            // Clock begins at 0
+            clock: 0,
+
             use_cb_table: false,
 
-            // MMU Unit
-            mmu: ,
         }
+
     }
 
     /// Run the CPU, fetching/decoding/executing at the PC until otherwise halted / interrupted
