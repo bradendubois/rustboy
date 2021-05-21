@@ -1,3 +1,6 @@
+
+
+#[derive(Debug)]
 pub struct Cartridge {
 
     rom: Vec<u8>,
@@ -5,8 +8,8 @@ pub struct Cartridge {
     // Meta-data extracted from above ROM
     entry_point: usize,             // 0x0100 - 0x0103
     nintendo_logo: Vec<u8>,         // 0x0104 - 0x0133
-    title: String,                  // 0x0134 - 0x0143
-    manufacturer_code: String,      // 0x013F - 0x0142
+    title: Box<str>,                // 0x0134 - 0x0143
+    manufacturer_code: Box<str>,    // 0x013F - 0x0142
     cgb_flag: u8,                   // 0x0143
     new_licensee_code: u16,         // 0x0144 - 0x0145
     sgb_flag: u8,                   // 0x0146
@@ -22,15 +25,15 @@ pub struct Cartridge {
 
 impl Cartridge {
 
-    pub fn new(&mut data: Vec<u8>) -> Cartridge {
+    pub fn new(data: Vec<u8>) -> Cartridge {
         Cartridge {
-            rom: data,
+            rom: data.clone(),
             entry_point: 0x0100,
-            nintendo_logo: data[0x0104..0x0134],
-            title: data[0x0134..0x0143],
-            manufacturer_code: data[0x013F..0x0143],
+            nintendo_logo: Vec::from(&data[0x0104..=0x0133]),
+            title: std::str::from_utf8(&data[0x0134 ..= 0x0142]).unwrap()?,
+            manufacturer_code: std::str::from_utf8(&data[0x13F ..= 0142]).unwrap()?,
             cgb_flag: data[0x0143],
-            new_licensee_code: data[0x0144..0x0146],
+            new_licensee_code: ((data[0x0144] as u16) << 8) | data[0145],
             sgb_flag: data[0x0146],
             cartidge_type: data[0x0147],
             rom_size: data[0x0148],
@@ -39,7 +42,7 @@ impl Cartridge {
             old_licensee_code: data[0x014B],
             mask_rom_version_number: data[0x014C],
             header_checksum: data[0x014D],
-            global_checksum: data[0x014E..0x0150]
+            global_checksum: ((data[0x014E] as u16) << 8) | data[0x0150] as u16
         }
     }
 }
