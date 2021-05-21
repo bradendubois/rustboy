@@ -1,6 +1,5 @@
+use std::fmt;
 
-
-#[derive(Debug)]
 pub struct Cartridge {
 
     rom: Vec<u8>,
@@ -24,7 +23,6 @@ pub struct Cartridge {
 }
 
 impl Cartridge {
-
     pub fn new(data: Vec<u8>) -> Cartridge {
         Cartridge {
             rom: data.clone(),
@@ -44,5 +42,32 @@ impl Cartridge {
             header_checksum: data[0x014D],
             global_checksum: ((data[0x014E] as u16) << 8) | data[0x0150] as u16
         }
+    }
+}
+
+impl fmt::Debug for Cartridge {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "\
+            Cartridge Data\n
+            =========================\n\
+            Entry Point: {:#04x}\n\
+            Nintendo Logo: {:?}\n\
+            Title: {}\n\
+            Manufacturer Code: {}\n\
+            CGB Flag: {}\n\
+            New Licensee Code: {}\n\
+            SGB Flag: {}\n\
+            Cartridge Type: {}\n\
+            ROM Size: {}\n\
+            RAM Size: {}\n\
+            Destination Code: {}\n\
+            Old Licensee Code: {}\n\
+            Mask ROM V. Number: {}\n\
+            Header Checksum: {}\n\
+            Global Checksum: {}
+        ", self.entry_point, self.nintendo_logo, self.title, self.manufacturer_code, self.cgb_flag,
+               self.new_licensee_code, self.sgb_flag, self.cartridge_type, self.rom_size,
+               self.ram_size, self.destination_code, self.old_licensee_code,
+               self.mask_rom_version_number, self.header_checksum, self.global_checksum)
     }
 }
