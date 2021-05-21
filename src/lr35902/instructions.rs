@@ -2372,8 +2372,9 @@ impl LR35902 {
 
     // 0xCB06 - RLC (HL)
     fn rlc_hl_0xcb06(&mut self) -> u64 {
-        let value = self.rlc(self.mmu.read(self.get_hl()));
-        self.mmu.write(value, self.get_hl());
+        let val = self.mmu.read(self.get_hl());
+        let val = self.rlc(val);
+        self.mmu.write(val, self.get_hl());
         16
     }
 
@@ -2421,8 +2422,9 @@ impl LR35902 {
 
     // 0xCB0E - RRC (HL)
     fn rrc_hl_0xcb0e(&mut self) -> u64 {
-        let value = self.rrc(self.mmu.read(self.get_hl()));
-        self.mmu.write(value, self.get_hl());
+        let val = self.mmu.read(self.get_hl());
+        let val = self.rrc(val);
+        self.mmu.write(val, self.get_hl());
         16
     }
 
@@ -2472,7 +2474,8 @@ impl LR35902 {
 
     // 0xCB16 - RL HL
     fn rl_hl_0xcb16(&mut self) -> u64 {
-        let val = self.rl(self.mmu.read(self.get_hl()));
+        let val = self.mmu.read(self.get_hl());
+        let val = self.rl(val);
         self.mmu.write(val, self.get_hl());
         16
     }
@@ -2520,7 +2523,8 @@ impl LR35902 {
 
     // 0xCB1E - RL HL
     fn rr_hl_0xcb1e(&mut self) -> u64 {
-        let val = self.rr(self.mmu.read(self.get_hl()));
+        let val= self.mmu.read(self.get_hl());
+        let val = self.rr(val);
         self.mmu.write(val, self.get_hl());
         16
     }
@@ -2571,8 +2575,9 @@ impl LR35902 {
 
     // 0xCB26 - SLA (HL)
     fn sla_hl_0xcb26(&mut self) -> u64 {
-        let value = self.sla(self.mmu.read(self.get_hl()));
-        self.mmu.write(value, self.get_hl());
+        let val = self.mmu.read(self.get_hl());
+        let val = self.sla(val);
+        self.mmu.write(val, self.get_hl());
         16
     }
 
@@ -2620,8 +2625,9 @@ impl LR35902 {
 
     // 0xCB2E - SRA (HL)
     fn sra_hl_0xcb2e(&mut self) -> u64 {
-        let value = self.sra(self.mmu.read(self.get_hl()));
-        self.mmu.write(value, self.get_hl());
+        let val = self.mmu.read(self.get_hl());
+        let val = self.sra(val);
+        self.mmu.write(val, self.get_hl());
         16
     }
 
@@ -2675,7 +2681,8 @@ impl LR35902 {
 
     // 0xCB36 - SWAP HL
     fn swap_hl_0xcb36(&mut self) -> u64 {
-        let val = self.swap(self.mmu.read(self.get_hl()));
+        let val = self.mmu.read(self.get_hl());
+        let val = self.swap(val);
         self.mmu.write(val, self.get_hl());
         16
     }
@@ -2723,7 +2730,8 @@ impl LR35902 {
     }
     // 0xCB3E - SRL HL
     fn srl_hl_0xcb3e(&mut self) -> u64 {
-        let val = self.srl(self.mmu.read(self.get_hl()));
+        let val = self.mmu.read(self.get_hl());
+        let val = self.srl(val);
         self.mmu.write(val, self.get_hl());
         16
     }
