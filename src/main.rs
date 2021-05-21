@@ -30,9 +30,8 @@ fn main() {
 
             println!("Cartridge!");
 
-            let mut clone = bytes.clone();
 
-            let new_cartridge = cartridge::Cartridge::new(clone);
+            let new_cartridge = cartridge::Cartridge::new(bytes);
 
             println!("{:?}", new_cartridge);
 

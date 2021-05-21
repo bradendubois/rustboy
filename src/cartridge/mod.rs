@@ -13,7 +13,7 @@ pub struct Cartridge {
     cgb_flag: u8,                   // 0x0143
     new_licensee_code: u16,         // 0x0144 - 0x0145
     sgb_flag: u8,                   // 0x0146
-    cartidge_type: u8,              // 0x0147
+    cartridge_type: u8,             // 0x0147
     rom_size: u8,                   // 0x0148
     ram_size: u8,                   // 0x0149
     destination_code: u8,           // 0x014A
@@ -30,12 +30,12 @@ impl Cartridge {
             rom: data.clone(),
             entry_point: 0x0100,
             nintendo_logo: Vec::from(&data[0x0104..=0x0133]),
-            title: std::str::from_utf8(&data[0x0134 ..= 0x0142]).unwrap()?,
-            manufacturer_code: std::str::from_utf8(&data[0x13F ..= 0142]).unwrap()?,
+            title: Box::from(std::str::from_utf8(&data[0x0134 ..= 0x0142]).unwrap()),
+            manufacturer_code: Box::from(std::str::from_utf8(&data[0x013F ..= 0x0142]).unwrap()),
             cgb_flag: data[0x0143],
-            new_licensee_code: ((data[0x0144] as u16) << 8) | data[0145],
+            new_licensee_code: ((data[0x0144] as u16) << 8) | (data[0x0145] as u16),
             sgb_flag: data[0x0146],
-            cartidge_type: data[0x0147],
+            cartridge_type: data[0x0147],
             rom_size: data[0x0148],
             ram_size: data[0x0149],
             destination_code: data[0x014A],
