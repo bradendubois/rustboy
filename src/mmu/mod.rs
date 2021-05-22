@@ -2,6 +2,7 @@ mod mbc;
 
 use mbc::{MBC, mbc0::{MBC0}};
 use std::fmt;
+use crate::cartridge::Cartridge;
 
 const W_RAM_SIZE: usize = 0x8000;
 
@@ -25,7 +26,7 @@ pub struct MMU {
 #[allow(dead_code)]
 impl MMU {
 
-    pub fn new(rom: Vec<u8>) -> MMU {
+    pub fn new(cartridge: Cartridge) -> MMU {
         MMU {
             in_bios: false,
             bios: vec![],
@@ -38,14 +39,14 @@ impl MMU {
             z_ram: vec![],
 
 
-            mbc: Box::new(match rom[0x147] {
-                0x00 ..= 0x00 => MBC0::new(rom),
+            mbc: Box::new(match cartridge.cartridge_type {
+                0x00 ..= 0x00 => MBC0::new(cartridge),
                 0x01 ..= 0x03 => panic!("MBC1 not implemented!"), // MBC1::new(cartridge),
                 0x05 ..= 0x06 => panic!("MBC2 not implemented!"), // MBC2::new(cartridge),
                 0x0F ..= 0x13 => panic!("MBC3 not implemented!"), // MBC3::new(cartridge),
                 0x19 ..= 0x1E => panic!("MBC5 not implemented!"), // MBC5::new(cartridge)
 
-                _ => panic!("Unsupported cartridge type: {}!", rom[0x147]),
+                _ => panic!("Unsupported cartridge type: {}!", cartridge.cartridge_type),
             })
         }
     }

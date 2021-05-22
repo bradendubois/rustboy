@@ -6,6 +6,7 @@ use std::fs::read;
 
 
 
+
 fn main() {
 
     println!("Hello, world!");
@@ -29,7 +30,6 @@ fn main() {
             };
 
             println!("Cartridge!");
-
 
             let new_cartridge = cartridge::Cartridge::new(bytes);
 

@@ -1,18 +1,19 @@
 use crate::mmu::mbc::MBC;
+use crate::cartridge::Cartridge;
 
 pub struct MBC0 {
-    rom: Vec<u8>
+    cartridge: Cartridge
 }
 
 impl MBC0 {
-    pub fn new(rom: Vec<u8>) -> MBC0 {
+    pub fn new(cartridge: Cartridge) -> MBC0 {
         MBC0 {
-            rom
+            cartridge
         }
     }
 }
 
-/// Implmentation of traits for the basic mbc with no additional banks or ram writes
+/// Implementation of traits for the basic mbc with no additional banks or ram writes
 impl MBC for MBC0 {
 
     fn read_ram(&mut self, _address: u16) -> u8 {
@@ -20,7 +21,7 @@ impl MBC for MBC0 {
     }
 
     fn read_rom(&mut self, address: u16) -> u8 {
-        self.rom[address as usize]
+        self.cartridge.rom[address as usize]
     }
 
     fn write_ram(&mut self, _value: u8, _address: u16) { }

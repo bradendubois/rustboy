@@ -2,7 +2,7 @@ use std::fmt;
 
 pub struct Cartridge {
 
-    rom: Vec<u8>,
+    pub rom: Vec<u8>,
 
     // Meta-data extracted from above ROM
     entry_point: usize,             // 0x0100 - 0x0103
@@ -12,7 +12,7 @@ pub struct Cartridge {
     cgb_flag: u8,                   // 0x0143
     new_licensee_code: u16,         // 0x0144 - 0x0145
     sgb_flag: u8,                   // 0x0146
-    cartridge_type: u8,             // 0x0147
+    pub cartridge_type: u8,             // 0x0147
     rom_size: u8,                   // 0x0148
     ram_size: u8,                   // 0x0149
     destination_code: u8,           // 0x014A
@@ -48,7 +48,7 @@ impl Cartridge {
 impl fmt::Debug for Cartridge {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "\
-            Cartridge Data\n
+            Cartridge Data\n\
             =========================\n\
             Entry Point: {:#04x}\n\
             Nintendo Logo: {:?}\n\

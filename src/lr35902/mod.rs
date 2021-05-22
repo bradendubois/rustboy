@@ -8,6 +8,7 @@ use status::Status;
 use registers::Registers;
 
 use super::mmu;
+use crate::cartridge::Cartridge;
 
 
 // Struct representing the LR35902 CPU
@@ -33,11 +34,11 @@ pub struct LR35902 {
 impl LR35902 {
 
     /// Initializer for a LR35902 CPU
-    pub fn new(rom: Vec<u8>, skip_bios: bool) -> LR35902 {
+    pub fn new(cartridge: Cartridge, skip_bios: bool) -> LR35902 {
         LR35902 {
 
             // MMU Unit
-            mmu: mmu::MMU::new(rom),
+            mmu: mmu::MMU::new(cartridge),
 
             registers: Registers::new(skip_bios),
 
