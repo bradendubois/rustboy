@@ -57,9 +57,13 @@ impl LR35902 {
     /// Run the cycle until otherwise halted / interrupted by an interrupt / exception
     pub fn run(&mut self) {
 
+        println!("cpu beginning run");
+
         while let Status::RUNNING = self.status {
             self.step();
         }
+
+        println!("cpu halted with status: {:?}", self.status);
     }
 
 
@@ -659,12 +663,11 @@ impl fmt::Debug for LR35902 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "\
             Registers\n\
-            ========\
+            ========\n\
             {:?}\n
             ========\n\
-            Clock: {}\n\
-            Status: {:?}\n\
-            CB Prefix Set: {}",
-               self.registers, self.clock, self.status, self.use_cb_table)
+            Clock: {:?}\n\
+            CB Prefix Set: {:?}", self.registers, self.clock, self.use_cb_table)
+
     }
 }

@@ -51,7 +51,7 @@ impl fmt::Debug for Cartridge {
             Cartridge Data\n\
             =========================\n\
             Entry Point: {:#04x}\n\
-            Nintendo Logo: {:?}\n\
+            Nintendo Logo: {:02X?}\n\
             Title: {}\n\
             Manufacturer Code: {}\n\
             CGB Flag: {}\n\

@@ -9,14 +9,16 @@ use std::fs::read;
 
 fn main() {
 
-    println!("Hello, world!");
-
+    // let file = "./roms/Tetris (World).gb";
     let file = "./roms/Tetris (World).gb";
 
-    match read(file) {
+    let cartridge = match read(file) {
 
         Ok(bytes) => {
 
+            cartridge::Cartridge::new(bytes)
+
+                /*
             print!("{:?}", bytes);
 
             match bytes[0x147] {
@@ -35,10 +37,18 @@ fn main() {
 
             println!("{:?}", new_cartridge);
 
+                 */
+
         },
 
         Err(err) => panic!("{}", err)
     };
 
+    println!("{:?}", cartridge);
 
+    let mut cpu = lr35902::LR35902::new(cartridge, true);
+
+    println!("{:?}", cpu);
+
+    cpu.run();
 }
