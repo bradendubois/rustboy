@@ -70,11 +70,17 @@ impl LR35902 {
     /// Run one step the CPU, fetching/decoding/executing at the PC
     pub fn step(&mut self) {
 
+        println!("program counter: {}", self.registers.pc);
+
         // Get the opcode number to execute
         let opcode = self.byte();
 
+        println!("fetched instruction: {:#02X}", opcode);
+
         // Execute from standard table
         let cycles = self.call_instruction(opcode);
+
+        println!("cycles taken: {}", cycles);
 
         // Adjust clock and program counter (PC)
         self.clock += cycles as u64;
@@ -97,7 +103,7 @@ impl LR35902 {
 
         self.unset_subtraction();
 
-        match ((s & 0xF) + (t & 0xF)) > 0xF {
+        match (s & 0xF).wrapping_add(t & 0xF) > 0xF {
             true => self.set_half_carry(),
             false => self.unset_half_carry(),
         };
@@ -116,7 +122,7 @@ impl LR35902 {
 
         self.unset_subtraction();
 
-        match (s & 0x07FF) + (t & 0x07FF) > 0x07FF {
+        match (s & 0x07FF).wrapping_add(t & 0x07FF) > 0x07FF {
             true => self.set_half_carry(),
             false => self.unset_half_carry(),
         };
@@ -160,7 +166,7 @@ impl LR35902 {
         };
 
         self.set_subtraction();
-        match ((s & 0xf) - (t & 0xf)) & 0x10 != 0 {
+        match (s & 0xf).wrapping_sub(t & 0xf) & 0x10 != 0 {
             true => self.set_half_carry(),
             false => self.unset_half_carry(),
         };

@@ -9,8 +9,8 @@ use std::fs::read;
 
 fn main() {
 
-    // let file = "./roms/Tetris (World).gb";
     let file = "./roms/Tetris (World).gb";
+    // let file = "./roms/instr_timing.gb";
 
     let cartridge = match read(file) {
 
