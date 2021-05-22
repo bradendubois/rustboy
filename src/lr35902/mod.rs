@@ -54,18 +54,26 @@ impl LR35902 {
 
     }
 
-    /// Run the CPU, fetching/decoding/executing at the PC until otherwise halted / interrupted
-    pub fn step(&mut self) {
-        loop {
-            // Get the opcode number to execute
-            let opcode = self.byte();
+    /// Run the cycle until otherwise halted / interrupted by an interrupt / exception
+    pub fn run(&mut self) {
 
-            // Execute from standard table
-            let cycles = self.call_instruction(opcode);
-
-            // Adjust clock and program counter (PC)
-            self.clock += cycles as u64;
+        while let Status::RUNNING = self.status {
+            self.step();
         }
+    }
+
+
+    /// Run one step the CPU, fetching/decoding/executing at the PC
+    pub fn step(&mut self) {
+
+        // Get the opcode number to execute
+        let opcode = self.byte();
+
+        // Execute from standard table
+        let cycles = self.call_instruction(opcode);
+
+        // Adjust clock and program counter (PC)
+        self.clock += cycles as u64;
     }
 
     /*************************/
