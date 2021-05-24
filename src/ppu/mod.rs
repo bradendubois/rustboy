@@ -3,6 +3,11 @@ use std::convert::TryFrom;
 const V_RAM_SIZE: usize = 0x2000;
 const   OAM_SIZE: usize = 0x0100;
 const TILE_SIZE: usize = 128;
+
+/// GameBoy Screen Height
+pub const HEIGHT: usize = 144;
+/// GameBoy Screen Width
+pub const WIDTH: usize = 160;
 enum Mode {
     Mode0,  // HBlank Period
     Mode1,  // VBlank Period
