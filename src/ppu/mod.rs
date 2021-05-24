@@ -1,13 +1,20 @@
 
-pub struct PPU {
+enum Mode {
+    Mode0,  // HBlank Period
+    Mode1,  // VBlank Period
+    Mode2   // Searching OAM Period
+}
 
+
+pub struct PPU {
+    mode: Mode
 }
 
 impl PPU {
 
     pub fn new() -> PPU {
         PPU {
-
+            mode: Mode::Mode0
         }
     }
 
