@@ -36,21 +36,14 @@ impl PPU {
         }
     }
 
-    pub fn read_vram(&mut self, address: u16) -> u8 {
-        let _true_address = PPU::addr_into_vram_space(address);
-        0
-    }
+    pub fn read(&mut self, address: u16) -> u8 {
 
-    pub fn write_vram(&mut self, value: u8, address: u16) {
-        let _true_address = PPU::addr_into_vram_space(address);
-    }
-
-    pub fn read_oam(&mut self, address: u16) -> u8 {
-        0
-    }
-
-    pub fn write_oam(&mut self, value: u8, address: u16) {
-        let _true_address = PPU::addr_into_vram_space(address);
+        match address {
+            0x8000 ..= 0x9FFF => self.vram[PPU::addr_into_vram_space(address)],
+            0xFE00 ..= 0xFE9F => self.oam[PPU::addr_into_oam_space(address)],
+            0xFF40 => self.lcdc,
+            0xFF41 => self.lcds
+        }
     }
 
     fn addr_into_vram_space(address: u16) -> usize {
