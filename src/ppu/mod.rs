@@ -23,7 +23,7 @@ impl PPU {
         PPU {
             mode: Mode::Mode0,
             vram: [0; V_RAM_SIZE],
-            oam: [0; OAM_SIZE],
+             oam: [0; OAM_SIZE],
             lcdc: 0,
         }
     }
@@ -33,7 +33,15 @@ impl PPU {
         0
     }
 
-    pub fn write_vram(&mut self, _value: u8, address: u16) {
+    pub fn write_vram(&mut self, value: u8, address: u16) {
+        let _true_address = PPU::addr_into_vram_space(address);
+    }
+
+    pub fn read_oam(&mut self, address: u16) -> u8 {
+        0
+    }
+
+    pub fn write_oam(&mut self, value: u8, address: u16) {
         let _true_address = PPU::addr_into_vram_space(address);
     }
 
