@@ -15,7 +15,7 @@ impl PPU {
         0
     }
 
-    pub fn write_vram(&mut self, _address: u16) {
+    pub fn write_vram(&mut self, _value: u8, _address: u16) {
 
     }
 }

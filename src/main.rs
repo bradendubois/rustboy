@@ -1,6 +1,7 @@
 mod mmu;
 mod lr35902;
 mod cartridge;
+mod ppu;
 
 use std::fs::read;
 

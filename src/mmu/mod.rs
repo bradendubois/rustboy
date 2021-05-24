@@ -1,8 +1,8 @@
 mod mbc;
-
 use mbc::{MBC, mbc0::{MBC0}};
 use std::fmt;
 use crate::cartridge::Cartridge;
+use crate::ppu::PPU;
 
 const W_RAM_SIZE: usize = 0x8000;
 
@@ -19,7 +19,9 @@ pub struct MMU {
     z_ram: Vec<u8>,
 
 
-    mbc: Box<dyn MBC>
+    mbc: Box<dyn MBC>,
+
+    ppu: PPU,
 }
 
 #[allow(unreachable_patterns)]
@@ -47,7 +49,9 @@ impl MMU {
                 0x19 ..= 0x1E => panic!("MBC5 not implemented!"), // MBC5::new(cartridge)
 
                 _ => panic!("Unsupported cartridge type: {}!", cartridge.cartridge_type),
-            })
+            }),
+            ppu: PPU::new()
+
         }
     }
 
@@ -56,7 +60,7 @@ impl MMU {
         match address {
             0x0000 ..= 0x3FFF => self.mbc.read_rom(address),    // ROM
             0x4000 ..= 0x7FFF => self.mbc.read_rom(address),    // Switchable ROM Bank
-            0x8000 ..= 0x9FFF => 0,                             // Video RAM
+            0x8000 ..= 0x9FFF => self.ppu.read_vram(address),                             // Video RAM
             0xA000 ..= 0xBFFF => self.mbc.read_ram(address),    // Switchable RAM Bank
             0xC000 ..= 0xCFFF => self.read_ram(address),        // Internal RAM
             0xD000 ..= 0xDFFF => self.read_rambank(address),    // Internal RAM
@@ -77,7 +81,7 @@ impl MMU {
         match address {
             0x0000 ..= 0x3FFF => self.mbc.write_rom(value, address),    // ROM
             0x4000 ..= 0x7FFF => self.mbc.write_rom(value, address),    // Switchable ROM Bank
-            0x8000 ..= 0x9FFF => (),                                    // Video RAM
+            0x8000 ..= 0x9FFF => self.ppu.write_vram(value, address),                                    // Video RAM
             0xA000 ..= 0xBFFF => self.mbc.write_ram(value, address),    // Switchable RAM Bank
             0xC000 ..= 0xCFFF => self.write_ram(value, address),        // Internal RAM
             0xD000 ..= 0xDFFF => self.write_rambank(value, address),    // Internal RAM
