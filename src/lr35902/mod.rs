@@ -1,98 +1,89 @@
+mod instructions;
+mod status;
+mod registers;
+
+use std::fmt;
+
+use status::Status;
+use registers::Registers;
+
 use super::mmu;
+use crate::cartridge::Cartridge;
 
-#[allow(dead_code)]
-#[derive(Debug)]
-pub enum Status {
-    STOPPED,
-    HALTED,
-    RUNNING,
-}
 
-#[derive(Debug)]
-pub struct Registers {
-    pub a: u8,
-    pub b: u8,
-    pub c: u8,
-    pub d: u8,
-    pub e: u8,
-    pub h: u8,
-    pub l: u8,
-    pub f: u8,
-    pub pc: u16,
-    pub sp: u16,
-
-    pub ime: bool,
-}
-
-// Struct representing the Z80 CPU
-#[derive(Debug)]
-pub struct Z80 {
-    // Struct of all registers in the Z80
-    pub registers: Registers,
-
-    // Struct representing the clock of the Z80 for purposes of timing
-    pub clock: u64,
-
-    // Enum representing the Z80's current running status
-    pub status: Status,
-
-    // CB Flag : Will set whether to use the default table or the CB Prefix table
-    pub use_cb_table: bool,
+// Struct representing the LR35902 CPU
+pub struct LR35902 {
 
     // Struct representing the memory unit
     pub mmu: mmu::MMU,
+
+    // Struct of all registers in the LR35902
+    pub registers: Registers,
+
+    // Enum representing the LR35902's current running status
+    pub status: Status,
+
+    // Struct representing the clock of the LR35902 for purposes of timing
+    pub clock: u64,
+
+    // CB Flag : Will set whether to use the default table or the CB Prefix table
+    pub use_cb_table: bool,
 }
 
 #[allow(dead_code)]
-impl Z80 {
-    /// Initializer for a Z80 CPU
-    pub fn new(mmu: mmu::MMU) -> Z80 {
-        Z80 {
-            // All registers begin empty
-            registers: Registers {
-                a: 0x01,
-                f: 0xB0,
+impl LR35902 {
 
-                b: 0x00,
-                c: 0x13,
+    /// Initializer for a LR35902 CPU
+    pub fn new(cartridge: Cartridge, skip_bios: bool) -> LR35902 {
+        LR35902 {
 
-                d: 0x00,
-                e: 0xD8,
+            // MMU Unit
+            mmu: mmu::MMU::new(cartridge),
 
-                h: 0x01,
-                l: 0x4D,
-
-                pc: 0x0100,
-                sp: 0xFFFE,
-
-                ime: false,
-            },
-
-            // Clock begins at 0
-            clock: 0,
+            registers: Registers::new(skip_bios),
 
             // status enum starts as running.
             status: Status::RUNNING,
 
+            // Clock begins at 0
+            clock: 0,
+
             use_cb_table: false,
 
-            // MMU Unit
-            mmu,
         }
+
     }
 
-    /// Run the CPU, fetching/decoding/executing at the PC until otherwise halted / interrupted
-    pub fn step(&mut self) {
-        loop {
-            // Get the opcode number to execute
-            let opcode = self.byte();
+    /// Run the cycle until otherwise halted / interrupted by an interrupt / exception
+    pub fn run(&mut self) {
 
-            // Execute from standard table
-            let cycles = self.call_instruction(opcode);
+        println!("cpu beginning run");
 
-            // Adjust clock and program counter (PC)
-            self.clock += cycles as u64;
+        while let Status::RUNNING = self.status {
+            self.step();
         }
+
+        println!("cpu halted with status: {:?}", self.status);
+    }
+
+
+    /// Run one step the CPU, fetching/decoding/executing at the PC
+    pub fn step(&mut self) {
+
+        println!("program counter: {}", self.registers.pc);
+
+        // Get the opcode number to execute
+        let opcode = self.byte();
+
+        println!("fetched instruction: {:#02X}", opcode);
+
+        // Execute from standard table
+        let cycles = self.call_instruction(opcode);
+
+        println!("cycles taken: {}", cycles);
+
+        // Adjust clock and program counter (PC)
+        self.clock += cycles as u64;
     }
 
     /*************************/
@@ -112,7 +103,7 @@ impl Z80 {
 
         self.unset_subtraction();
 
-        match ((s & 0xF) + (t & 0xF)) > 0xF {
+        match (s & 0xF).wrapping_add(t & 0xF) > 0xF {
             true => self.set_half_carry(),
             false => self.unset_half_carry(),
         };
@@ -131,7 +122,7 @@ impl Z80 {
 
         self.unset_subtraction();
 
-        match (s & 0x07FF) + (t & 0x07FF) > 0x07FF {
+        match (s & 0x07FF).wrapping_add(t & 0x07FF) > 0x07FF {
             true => self.set_half_carry(),
             false => self.unset_half_carry(),
         };
@@ -175,7 +166,7 @@ impl Z80 {
         };
 
         self.set_subtraction();
-        match ((s & 0xf) - (t & 0xf)) & 0x10 != 0 {
+        match (s & 0xf).wrapping_sub(t & 0xf) & 0x10 != 0 {
             true => self.set_half_carry(),
             false => self.unset_half_carry(),
         };
@@ -475,14 +466,14 @@ impl Z80 {
     pub fn word(&mut self) -> u16 {
         let lower = self.byte();
         let upper = self.byte();
-        Z80::u16_from_u8(upper, lower)
+        LR35902::u16_from_u8(upper, lower)
     }
 
     /*   Stack Pointer (SP)  */
 
     /// Push 16 bits to the stack (SP)
     pub fn push_sp(&mut self, v: u16) {
-        let value = Z80::u8_pair(v);
+        let value = LR35902::u8_pair(v);
         self.registers.sp -= 2;
         self.mmu.write(value.1, self.registers.sp);
         self.mmu.write(value.0, self.registers.sp + 1);
@@ -493,7 +484,7 @@ impl Z80 {
         let lower = self.mmu.read(self.registers.sp);
         let upper = self.mmu.read(self.registers.sp + 1);
         self.registers.sp += 2;
-        Z80::u16_from_u8(upper, lower)
+        LR35902::u16_from_u8(upper, lower)
     }
 
     /*        Control       */
@@ -540,48 +531,48 @@ impl Z80 {
 
     /// Get the register pair AF as a u16
     pub fn get_af(&self) -> u16 {
-        Z80::u16_from_u8(self.registers.a, self.registers.f)
+        LR35902::u16_from_u8(self.registers.a, self.registers.f)
     }
 
     /// Set the register pair AF to the given u16
     pub fn set_af(&mut self, x: u16) {
-        let u8_pair = Z80::u8_pair(x);
+        let u8_pair = LR35902::u8_pair(x);
         self.registers.a = u8_pair.0;
         self.registers.f = u8_pair.1;
     }
 
     /// Get the register pair BC as a u16
     pub fn get_bc(&self) -> u16 {
-        Z80::u16_from_u8(self.registers.b, self.registers.c)
+        LR35902::u16_from_u8(self.registers.b, self.registers.c)
     }
 
     /// Set the register pair BC to the given u16
     pub fn set_bc(&mut self, x: u16) {
-        let u8_pair = Z80::u8_pair(x);
+        let u8_pair = LR35902::u8_pair(x);
         self.registers.b = u8_pair.0;
         self.registers.c = u8_pair.1;
     }
 
     /// Get the register pair DE as a u16
     pub fn get_de(&self) -> u16 {
-        Z80::u16_from_u8(self.registers.d, self.registers.e)
+        LR35902::u16_from_u8(self.registers.d, self.registers.e)
     }
 
     /// Set the register pair DE to the given u16
     pub fn set_de(&mut self, x: u16) {
-        let u8_pair = Z80::u8_pair(x);
+        let u8_pair = LR35902::u8_pair(x);
         self.registers.d = u8_pair.0;
         self.registers.e = u8_pair.1;
     }
 
     /// Get the register pair HL as a u16
     pub fn get_hl(&self) -> u16 {
-        Z80::u16_from_u8(self.registers.h, self.registers.l)
+        LR35902::u16_from_u8(self.registers.h, self.registers.l)
     }
 
     /// Set the register pair HL to the given u16
     pub fn set_hl(&mut self, x: u16) {
-        let u8_pair = Z80::u8_pair(x);
+        let u8_pair = LR35902::u8_pair(x);
         self.registers.h = u8_pair.0;
         self.registers.l = u8_pair.1;
     }
@@ -671,5 +662,18 @@ impl Z80 {
     /// Unset the IME flag
     pub fn unset_ime(&mut self) {
         self.registers.ime = false;
+    }
+}
+
+impl fmt::Debug for LR35902 {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "\
+            Registers\n\
+            ========\n\
+            {:?}\n
+            ========\n\
+            Clock: {:?}\n\
+            CB Prefix Set: {:?}", self.registers, self.clock, self.use_cb_table)
+
     }
 }
