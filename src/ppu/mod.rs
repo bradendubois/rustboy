@@ -55,7 +55,8 @@ impl PPU {
     }
 
 
-    /* Potentially unused code. May be useful for the
+    /*
+       Potentially unused code. May be useful for the
        graphical implementations we create later.
      */
     #[allow(dead_code)]
