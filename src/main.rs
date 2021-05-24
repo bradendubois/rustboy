@@ -37,5 +37,5 @@ fn main() {
 
     println!("{:?}", cpu);
 
-    // cpu.run();
+    cpu.run();
 }

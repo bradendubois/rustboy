@@ -1,5 +1,3 @@
-use std::convert::TryFrom;
-
 const V_RAM_SIZE: usize = 0x2000;
 const   OAM_SIZE: usize = 0x0100;
 const  TILE_SIZE: usize = 128;
@@ -16,12 +14,13 @@ enum Mode {
     Mode2   // Searching OAM Period
 }
 
-
 pub struct PPU {
     mode: Mode,                 // PPU Mode
     vram: [u8; V_RAM_SIZE],     // VRAM
      oam: [u8; OAM_SIZE],       // OAM / Sprite Attribute Table
-    lcdc:  u8                   // LCDC Register : LCD C(ontrol) Register
+    lcdc:  u8,                  // LCDC Register : LCD C(ontrol) Register   ; 0xFF40
+    lcds:  u8,                  // LCDS Register : LCD S(tatus) Register    ; 0xFF41
+    lcd_enabled: bool           // Status of the PPU / LCD ; true = on, false = off
 }
 
 impl PPU {
@@ -32,6 +31,8 @@ impl PPU {
             vram: [0; V_RAM_SIZE],
              oam: [0; OAM_SIZE],
             lcdc:  0,
+            lcds:  0,
+            lcd_enabled: true
         }
     }
 
@@ -52,8 +53,27 @@ impl PPU {
         let _true_address = PPU::addr_into_vram_space(address);
     }
 
-    fn addr_into_vram_space(address: u16) -> u16 {
-        address % 0x8000
+    fn addr_into_vram_space(address: u16) -> usize {
+        address as usize - 0x8000
+    }
+
+    fn addr_into_oam_space(address: u16) -> usize {
+        address as usize - 0xFE00
+    }
+
+    pub fn read_lcdc(&self) -> u8 {
+        self.lcdc
+    }
+
+    pub fn write_lcdc(&mut self, value: u8) {
+
+        match (value & 0x80) >> 7 {
+            0 => self.lcd_enabled = false,
+            1 => self.lcd_enabled = true,
+            _ => panic!("arithmetic failure")
+        }
+
+        self.lcdc = value;
     }
 
 
