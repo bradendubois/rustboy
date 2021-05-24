@@ -1,6 +1,8 @@
+use std::convert::TryFrom;
+
 const V_RAM_SIZE: usize = 0x2000;
 const   OAM_SIZE: usize = 0x0100;
-
+const TILE_SIZE: usize = 128;
 enum Mode {
     Mode0,  // HBlank Period
     Mode1,  // VBlank Period
@@ -37,5 +39,30 @@ impl PPU {
 
     fn addr_into_vram_space(address: u16) -> u16 {
         address % 0x8000
+    }
+
+
+    /* Potentially unused code. May be useful for the
+       graphical implementations we create later.
+     */
+    #[allow(dead_code)]
+    pub fn get_tile_set_1(&self) -> Vec<u8> {
+        self.vram[0..0x07ff].into_vec()
+    }
+    #[allow(dead_code)]
+    pub fn get_tile_set_1_and_0(&self) -> Vec<u8> {
+        self.vram[0x0800..0x0FFF].into_vec()
+    }
+    #[allow(dead_code)]
+    pub fn get_tile_set_0(&self) -> Vec<u8> {
+        self.vram[0x1000..0x17ff].into_vec()
+    }
+    #[allow(dead_code)]
+    pub fn get_tile_map_0(&self) -> Vec<u8> {
+        self.vram[0x1800..0x1bff].into_vec()
+    }
+    #[allow(dead_code)]
+    pub fn get_tile_map_1(&self) -> Vec<u8> {
+        self.vram[0x1c00..0x1FFF].into_vec()
     }
 }
