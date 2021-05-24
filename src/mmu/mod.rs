@@ -58,19 +58,19 @@ impl MMU {
     pub fn read(&mut self, address: u16) -> u8 {
 
         match address {
-            0x0000 ..= 0x3FFF => self.mbc.read_rom(address),    // ROM
-            0x4000 ..= 0x7FFF => self.mbc.read_rom(address),    // Switchable ROM Bank
-            0x8000 ..= 0x9FFF => self.ppu.read_vram(address),   // Video RAM
-            0xA000 ..= 0xBFFF => self.mbc.read_ram(address),    // Switchable RAM Bank
-            0xC000 ..= 0xCFFF => self.read_ram(address),        // Internal RAM
-            0xD000 ..= 0xDFFF => self.read_rambank(address),    // Internal RAM
-            0xE000 ..= 0xEFFF => self.read_ram(address),        // Internal RAM
-            0xF000 ..= 0xFDFF => self.read_rambank(address),    // Echo RAM
-            0xFE00 ..= 0xFE9F => self.ppu.read_oam(address),    // Sprite Attributes
-            0xFEA0 ..= 0xFEFF => 0,                             // Unusable
-            0xFF00 ..= 0xFF7F => 0,                             // I/O Registers
-            0xFF80 ..= 0xFFFE => 0,                             // High RAM
-            0xFFFF ..= 0xFFFF => 0,                             // Interrupt Register
+            0x0000 ..= 0x3FFF => self.mbc.read_rom(address),                // ROM
+            0x4000 ..= 0x7FFF => self.mbc.read_rom(address),                // Switchable ROM Bank
+            0x8000 ..= 0x9FFF => self.ppu.read_vram(address),               // Video RAM
+            0xA000 ..= 0xBFFF => self.mbc.read_ram(address),                // Switchable RAM Bank
+            0xC000 ..= 0xCFFF => self.read_ram(address),                    // Internal RAM
+            0xD000 ..= 0xDFFF => self.read_rambank(address),                // Internal RAM
+            0xE000 ..= 0xEFFF => self.read_ram(address),                    // Internal RAM
+            0xF000 ..= 0xFDFF => self.read_rambank(address),                // Echo RAM
+            0xFE00 ..= 0xFE9F => self.ppu.read_oam(address),                // Sprite Attributes
+            0xFEA0 ..= 0xFEFF => 0,                                         // Unusable
+            0xFF00 ..= 0xFF7F => self.read_io_registers(address),           // I/O Registers
+            0xFF80 ..= 0xFFFE => 0,                                         // High RAM
+            0xFFFF ..= 0xFFFF => 0,                                         // Interrupt Register
 
             _ => panic!("Unmapped address {}", address)
         }
@@ -79,31 +79,25 @@ impl MMU {
     pub fn write(&mut self, value: u8, address: u16) {
 
         match address {
-            0x0000 ..= 0x3FFF => self.mbc.write_rom(value, address),    // ROM
-            0x4000 ..= 0x7FFF => self.mbc.write_rom(value, address),    // Switchable ROM Bank
-            0x8000 ..= 0x9FFF => self.ppu.write_vram(value, address),   // Video RAM
-            0xA000 ..= 0xBFFF => self.mbc.write_ram(value, address),    // Switchable RAM Bank
-            0xC000 ..= 0xCFFF => self.write_ram(value, address),        // Internal RAM
-            0xD000 ..= 0xDFFF => self.write_rambank(value, address),    // Internal RAM
-            0xE000 ..= 0xEFFF => self.write_ram(value, address),        // Internal RAM
-            0xF000 ..= 0xFDFF => self.write_rambank(value, address),    // Echo RAM
-            0xFE00 ..= 0xFE9F => self.ppu.write_oam(value, address),    // Sprite Attributes
-            0xFEA0 ..= 0xFEFF => (),                                    // Unusable
-            0xFF00 ..= 0xFF7F => (),                                    // I/O Registers
-            0xFF80 ..= 0xFFFE => (),                                    // High RAM
-            0xFFFF ..= 0xFFFF => (),                                    // Interrupt Register
+            0x0000 ..= 0x3FFF => self.mbc.write_rom(value, address),        // ROM
+            0x4000 ..= 0x7FFF => self.mbc.write_rom(value, address),        // Switchable ROM Bank
+            0x8000 ..= 0x9FFF => self.ppu.write_vram(value, address),       // Video RAM
+            0xA000 ..= 0xBFFF => self.mbc.write_ram(value, address),        // Switchable RAM Bank
+            0xC000 ..= 0xCFFF => self.write_ram(value, address),            // Internal RAM
+            0xD000 ..= 0xDFFF => self.write_rambank(value, address),        // Internal RAM
+            0xE000 ..= 0xEFFF => self.write_ram(value, address),            // Internal RAM
+            0xF000 ..= 0xFDFF => self.write_rambank(value, address),        // Echo RAM
+            0xFE00 ..= 0xFE9F => self.ppu.write_oam(value, address),        // Sprite Attributes
+            0xFEA0 ..= 0xFEFF => (),                                        // Unusable
+            0xFF00 ..= 0xFF7F => self.write_io_registers(value, address),   // I/O Registers
+            0xFF80 ..= 0xFFFE => (),                                        // High RAM
+            0xFFFF ..= 0xFFFF => (),                                        // Interrupt Register
 
             _ => panic!("Unmapped address {}", address)
         };
     }
 
-    fn w_ram_conv(address: u16) -> usize {
-        address as usize & 0x0FFF
-    }
-
-    fn w_rambank_conv(&self, address: u16) -> usize {
-        MMU::w_ram_conv(address) | (self.w_ram_bank * 0x1000)
-    }
+    // RAM
 
     fn read_ram(&mut self, address: u16) -> u8 {
         self.w_ram[MMU::w_ram_conv(address)]
@@ -120,6 +114,27 @@ impl MMU {
     fn write_rambank(&mut self, value: u8, address: u16) {
         self.w_ram[self.w_rambank_conv(address)] = value;
     }
+
+    // IO
+
+    fn read_io_registers(&mut self, address: u16) -> u8 {
+        0
+    }
+
+    fn write_io_registers(&mut self, value: u8, address: u16) {
+
+    }
+
+    // Helper
+
+    fn w_ram_conv(address: u16) -> usize {
+        address as usize & 0x0FFF
+    }
+
+    fn w_rambank_conv(&self, address: u16) -> usize {
+        MMU::w_ram_conv(address) | (self.w_ram_bank * 0x1000)
+    }
+
 }
 
 

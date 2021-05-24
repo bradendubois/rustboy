@@ -2,12 +2,14 @@ use std::convert::TryFrom;
 
 const V_RAM_SIZE: usize = 0x2000;
 const   OAM_SIZE: usize = 0x0100;
-const TILE_SIZE: usize = 128;
+const  TILE_SIZE: usize = 128;
 
 /// GameBoy Screen Height
 pub const HEIGHT: usize = 144;
+
 /// GameBoy Screen Width
 pub const WIDTH: usize = 160;
+
 enum Mode {
     Mode0,  // HBlank Period
     Mode1,  // VBlank Period
@@ -19,7 +21,7 @@ pub struct PPU {
     mode: Mode,                 // PPU Mode
     vram: [u8; V_RAM_SIZE],     // VRAM
      oam: [u8; OAM_SIZE],       // OAM / Sprite Attribute Table
-    lcdc: u8                    // LCDC Register : LCD C(ontrol) Register
+    lcdc:  u8                   // LCDC Register : LCD C(ontrol) Register
 }
 
 impl PPU {
@@ -29,7 +31,7 @@ impl PPU {
             mode: Mode::Mode0,
             vram: [0; V_RAM_SIZE],
              oam: [0; OAM_SIZE],
-            lcdc: 0,
+            lcdc:  0,
         }
     }
 
@@ -61,22 +63,22 @@ impl PPU {
      */
     #[allow(dead_code)]
     pub fn get_tile_set_1(&self) -> Vec<u8> {
-        self.vram[0..0x07ff].into_vec()
+        self.vram[0..0x07ff].to_vec()
     }
     #[allow(dead_code)]
     pub fn get_tile_set_1_and_0(&self) -> Vec<u8> {
-        self.vram[0x0800..0x0FFF].into_vec()
+        self.vram[0x0800..0x0FFF].to_vec()
     }
     #[allow(dead_code)]
     pub fn get_tile_set_0(&self) -> Vec<u8> {
-        self.vram[0x1000..0x17ff].into_vec()
+        self.vram[0x1000..0x17ff].to_vec()
     }
     #[allow(dead_code)]
     pub fn get_tile_map_0(&self) -> Vec<u8> {
-        self.vram[0x1800..0x1bff].into_vec()
+        self.vram[0x1800..0x1bff].to_vec()
     }
     #[allow(dead_code)]
     pub fn get_tile_map_1(&self) -> Vec<u8> {
-        self.vram[0x1c00..0x1FFF].into_vec()
+        self.vram[0x1c00..0x1FFF].to_vec()
     }
 }
