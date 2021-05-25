@@ -14,6 +14,7 @@ enum Mode {
     Mode2   // Searching OAM Period
 }
 
+
 pub struct PPU {
     mode: Mode,                 // PPU Mode
     vram: [u8; V_RAM_SIZE],     // VRAM
@@ -94,4 +95,42 @@ impl PPU {
     pub fn get_tile_map_1(&self) -> Vec<u8> {
         self.vram[0x1c00..0x1FFF].to_vec()
     }
+
+    /// Check if the LCD is ON and PPU is active
+    /// Returns true if the register bit is set and false otherwise
+    pub fn lcdc_lcd_enable(&self) -> bool{self.lcdc & 0x80 == 0x80}
+
+    /// Window tile map area
+    /// if the bit is set the tile map area is 9C00-9FFF otherwise it's 9800-9BFF
+    /// Controls the background map the window uses for rendering
+    pub fn lcdc_window_tile_map_area(&self) -> bool{self.lcdc & 0x40 == 0x40}
+
+    /// Window enable
+    /// Controls whether the window shall be displayed or not.
+    pub fn lcdc_window_enabled(&self) -> bool{self.lcdc & 0x20 == 0x20}
+
+    /// BG and Window Tile Data Area
+    /// controls which addressing mode the BG and Window use to pick tiles
+    /// 0 = 9800 - 9BFF, 1 = 9C00 - 9FFF
+    pub fn lcdc_bg_window_tile_area(&self) -> bool{self.lcdc & 0x10 == 0x10}
+
+    /// BG Tile Map Area
+    /// Similar to the window tile map area
+    /// if the bit is set the tile map area is 9C00-9FFF otherwise it's 9800-9BFF
+    pub fn lcdc_bg_tile_map_area(&self) -> bool{self.lcdc & 0x08 == 0x08}
+
+    /// OBJ Size
+    /// Controls sprite size
+    /// 0 = 1 tile, 1 = 2 tiles (stacked vertically)
+    pub fn lcdc_obj_size(&self) -> bool{self.lcdc & 0x04 == 0x04}
+
+    /// OBJ Enable
+    /// Toggles whether sprites are displayed or not
+    pub fn lcdc_obj_enable(&self) -> bool{self.lcdc & 0x02 == 0x02}
+
+    /// BG and Window enable/priority
+    /// This has different meanings depending on the gameboy type and mode
+    /// [For more Info](https://gbdev.io/pandocs/LCDC.html#lcdc0---bg-and-window-enablepriority)
+    pub fn lcdc_zero_bit(&self) -> bool{self.lcdc & 0x01 == 0x01}
+
 }
