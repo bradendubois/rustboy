@@ -19,9 +19,19 @@ pub struct PPU {
     mode: Mode,                 // PPU Mode
     vram: [u8; V_RAM_SIZE],     // VRAM
      oam: [u8; OAM_SIZE],       // OAM / Sprite Attribute Table
-    lcdc:  u8,                  // LCDC Register : LCD C(ontrol) Register   ; 0xFF40
-    lcds:  u8,                  // LCDS Register : LCD S(tatus) Register    ; 0xFF41
-    lcd_enabled: bool           // Status of the PPU / LCD ; true = on, false = off
+    lcd_enabled: bool,          // Status of the PPU / LCD ; true = on, false = off
+
+    lcdc: u8,       // 0xFF40 : LCDC Register : LCD C(ontrol) Register
+    lcds: u8,       // 0xFF41 : LCDS Register : LCD S(tatus) Register
+     scy: u8,       // 0xFF42 : Scroll Y
+     scx: u8,       // 0xFF43 : Scroll X
+      ly: u8,       // 0xFF44 : LY  (LCD Y)
+     lyc: u8,       // 0xFF45 : LYC (LY Compare)
+     bgp: u8,       // 0xFF47 : BGP Palette Data (Non-CGB)
+    obp0: u8,       // 0xFF48 : Object Palette 0 (Non-CGB)
+    obp1: u8,       // 0xFF49 : Object Palette 1 (Non-CGB)
+      wy: u8,       // 0xFF4A : Window Y Position
+      wx: u8        // 0xFF4B : Window X Position
 }
 
 impl PPU {
@@ -31,9 +41,19 @@ impl PPU {
             mode: Mode::Mode0,
             vram: [0; V_RAM_SIZE],
              oam: [0; OAM_SIZE],
-            lcdc:  0,
-            lcds:  0,
-            lcd_enabled: true
+            lcd_enabled: true,
+
+            lcdc: 0,
+            lcds: 0,
+             scy: 0,
+             scx: 0,
+              ly: 0,
+             lyc: 0,
+             bgp: 0,
+            obp0: 0,
+            obp1: 0,
+              wy: 0,
+              wx: 0
         }
     }
 
@@ -43,9 +63,44 @@ impl PPU {
             0x8000 ..= 0x9FFF => self.vram[PPU::addr_into_vram_space(address)],
             0xFE00 ..= 0xFE9F => self.oam[PPU::addr_into_oam_space(address)],
             0xFF40 => self.lcdc,
-            0xFF41 => self.lcds
+            0xFF41 => self.lcds,
+            0xFF42 => self.scy,
+            0xFF43 => self.scx,
+            0xFF44 => self.ly,
+            0xFF45 => self.lyc,
+
+            0xFF47 => self.bgp,
+            0xFF48 => self.obp0,
+            0xFF49 => self.obp1,
+
+            0xFF4A => self.wy,
+            0xFF4B => self.wx,
+
+            _ => panic!("unmapped address: {}", address)
         }
     }
+
+    pub fn write(&mut self, value: u8, address: u16) {
+
+        match address {
+            0x8000 ..= 0x9FFF => self.vram[PPU::addr_into_vram_space(address)] = value,
+            0xFE00 ..= 0xFE9F => self.oam[PPU::addr_into_oam_space(address)] = value,
+            0xFF40 => self.lcdc = value,
+            0xFF41 => self.lcds = value,
+            0xFF42 => self.scy = value,
+            0xFF43 => self.scx = value,
+            0xFF44 => (),   // read-only
+            0xFF45 => self.lyc = value,
+            0xFF47 => self.bgp = value,
+            0xFF48 => self.obp0 = value,
+            0xFF49 => self.obp1 = value,
+            0xFF4A => self.wy = value,
+            0xFF4B => self.wx = value,
+
+            _ => panic!("unmapped address: {}", address)
+        }
+    }
+
 
     fn addr_into_vram_space(address: u16) -> usize {
         address as usize - 0x8000
