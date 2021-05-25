@@ -91,7 +91,7 @@ impl PPU {
         match address {
             0x8000 ..= 0x9FFF => self.vram[PPU::addr_into_vram_space(address)] = value,
             0xFE00 ..= 0xFE9F => self.oam[PPU::addr_into_oam_space(address)] = value,
-            0xFF40 => self.lcdc = value,
+            0xFF40 => self.write_lcdc(value),
             0xFF41 => self.lcds = value,
             0xFF42 => self.scy = value,
             0xFF43 => self.scx = value,
@@ -107,6 +107,19 @@ impl PPU {
         }
     }
 
+    fn draw_screen(&mut self) {
+
+        // TODO - Flesh this out as we read
+
+        // clear_screen ?
+
+        // draw background ?
+
+        // draw sprites ?
+
+    }
+
+    // Helper
 
     fn addr_into_vram_space(address: u16) -> usize {
         address as usize - 0x8000
@@ -116,9 +129,7 @@ impl PPU {
         address as usize - 0xFE00
     }
 
-    pub fn read_lcdc(&self) -> u8 {
-        self.lcdc
-    }
+    // LCDC
 
     pub fn write_lcdc(&mut self, value: u8) {
 
@@ -130,7 +141,6 @@ impl PPU {
 
         self.lcdc = value;
     }
-
 
     /*
        Potentially unused code. May be useful for the
@@ -159,57 +169,71 @@ impl PPU {
 
     /// Check if the LCD is ON and PPU is active
     /// Returns true if the register bit is set and false otherwise
+    #[allow(dead_code)]
     pub fn lcdc_lcd_enable(&self) -> bool{self.lcdc & 0x80 == 0x80}
 
     /// Window tile map area
     /// if the bit is set the tile map area is 9C00-9FFF otherwise it's 9800-9BFF
     /// Controls the background map the window uses for rendering
+    #[allow(dead_code)]
     pub fn lcdc_window_tile_map_area(&self) -> bool{self.lcdc & 0x40 == 0x40}
 
     /// Window enable
     /// Controls whether the window shall be displayed or not.
+    #[allow(dead_code)]
     pub fn lcdc_window_enabled(&self) -> bool{self.lcdc & 0x20 == 0x20}
 
     /// BG and Window Tile Data Area
     /// controls which addressing mode the BG and Window use to pick tiles
     /// 0 = 9800 - 9BFF, 1 = 9C00 - 9FFF
+    #[allow(dead_code)]
     pub fn lcdc_bg_window_tile_area(&self) -> bool{self.lcdc & 0x10 == 0x10}
 
     /// BG Tile Map Area
     /// Similar to the window tile map area
     /// if the bit is set the tile map area is 9C00-9FFF otherwise it's 9800-9BFF
+    #[allow(dead_code)]
     pub fn lcdc_bg_tile_map_area(&self) -> bool{self.lcdc & 0x08 == 0x08}
 
     /// OBJ Size
     /// Controls sprite size
     /// 0 = 1 tile, 1 = 2 tiles (stacked vertically)
+    #[allow(dead_code)]
     pub fn lcdc_obj_size(&self) -> bool{self.lcdc & 0x04 == 0x04}
 
     /// OBJ Enable
     /// Toggles whether sprites are displayed or not
+    #[allow(dead_code)]
     pub fn lcdc_obj_enable(&self) -> bool{self.lcdc & 0x02 == 0x02}
 
     /// BG and Window enable/priority
     /// This has different meanings depending on the gameboy type and mode
     /// [For more Info](https://gbdev.io/pandocs/LCDC.html#lcdc0---bg-and-window-enablepriority)
+    #[allow(dead_code)]
     pub fn lcdc_zero_bit(&self) -> bool{self.lcdc & 0x01 == 0x01}
 
     /// LYC = LY STATE Interrupt Source
+    #[allow(dead_code)]
     pub fn lcds_lyc_int(&self) -> bool {self.lcds & 0x40 == 0x40}
 
     /// Mode 2 OAM STAT Interrupt Source
+    #[allow(dead_code)]
     pub fn lcds_oam_int(&self) -> bool {self.lcds & 0x20 == 0x20}
 
     /// Mode 1 VBlank STAT Interrupt source
+    #[allow(dead_code)]
     pub fn lcds_vblank_int(&self) -> bool {self.lcds & 0x10 == 0x10}
 
     /// Mode 0 HBlank STAT Interrupt source
+    #[allow(dead_code)]
     pub fn lcds_hblank_int(&self) -> bool {self.lcds & 0x08 == 0x08}
 
     /// LYC = LY Flag
+    #[allow(dead_code)]
     pub fn lcds_lyc_ly(&self) -> bool {self.lcds & 0x04 == 0x04}
 
     /// Mode Flag
+    #[allow(dead_code)]
     pub fn lcds_mode_flag(&self) -> u8 {
         (self.lcds << 6 ) >> 6
     }

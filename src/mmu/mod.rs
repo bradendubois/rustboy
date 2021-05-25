@@ -121,7 +121,7 @@ impl MMU {
     fn read_io_registers(&mut self, address: u16) -> u8 {
         match address {
 
-            0xFF40 => self.ppu.read_lcdc(),
+            0xFF40 ..= 0xFF4F => self.ppu.read(address),
 
             _ => panic!("unmapped address: {}", address)
         }
@@ -130,7 +130,7 @@ impl MMU {
     fn write_io_registers(&mut self, value: u8, address: u16) {
         match address {
 
-            0xFF40 => self.ppu.write_lcdc(value),
+            0xFF40 ..= 0xFF4F => self.ppu.write(value, address),
 
             _ => panic!("unmapped address: {}", address)
         }
