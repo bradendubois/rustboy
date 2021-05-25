@@ -194,4 +194,23 @@ impl PPU {
     /// [For more Info](https://gbdev.io/pandocs/LCDC.html#lcdc0---bg-and-window-enablepriority)
     pub fn lcdc_zero_bit(&self) -> bool{self.lcdc & 0x01 == 0x01}
 
+    /// LYC = LY STATE Interrupt Source
+    pub fn lcds_lyc_int(&self) -> bool {self.lcds & 0x40 == 0x40}
+
+    /// Mode 2 OAM STAT Interrupt Source
+    pub fn lcds_oam_int(&self) -> bool {self.lcds & 0x20 == 0x20}
+
+    /// Mode 1 VBlank STAT Interrupt source
+    pub fn lcds_vblank_int(&self) -> bool {self.lcds & 0x10 == 0x10}
+
+    /// Mode 0 HBlank STAT Interrupt source
+    pub fn lcds_hblank_int(&self) -> bool {self.lcds & 0x08 == 0x08}
+
+    /// LYC = LY Flag
+    pub fn lcds_lyc_ly(&self) -> bool {self.lcds & 0x04 == 0x04}
+
+    /// Mode Flag
+    pub fn lcds_mode_flag(&self) -> u8 {
+        (self.lcds << 6 ) >> 6
+    }
 }
