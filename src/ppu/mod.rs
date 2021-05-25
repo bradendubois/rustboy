@@ -1,13 +1,18 @@
 const V_RAM_SIZE: usize = 0x2000;
 const   OAM_SIZE: usize = 0x0100;
+
+#[allow(dead_code)]
 const  TILE_SIZE: usize = 128;
 
 /// GameBoy Screen Height
+#[allow(dead_code)]
 pub const HEIGHT: usize = 144;
 
 /// GameBoy Screen Width
+#[allow(dead_code)]
 pub const WIDTH: usize = 160;
 
+#[allow(dead_code)]
 enum Mode {
     Mode0,  // HBlank Period
     Mode1,  // VBlank Period
@@ -16,6 +21,7 @@ enum Mode {
 
 
 pub struct PPU {
+    #[allow(dead_code)]
     mode: Mode,                 // PPU Mode
     vram: [u8; V_RAM_SIZE],     // VRAM
      oam: [u8; OAM_SIZE],       // OAM / Sprite Attribute Table

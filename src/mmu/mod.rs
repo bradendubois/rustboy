@@ -7,6 +7,7 @@ use crate::ppu::PPU;
 const W_RAM_SIZE: usize = 0x8000;
 
 #[allow(unreachable_patterns)]
+#[allow(dead_code)]
 pub struct MMU {
     in_bios: bool,
     bios: Vec<u8>,
