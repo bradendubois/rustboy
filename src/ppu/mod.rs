@@ -143,6 +143,21 @@ impl PPU {
         self.lcdc = value;
     }
 
+    /// Returns the bg palette color in 00 ..= 11 associated with given 00 ..= 11
+    fn bg_palette(&mut self, color: u8) -> u8 {
+
+        let ff47 = self.read(0xFF47);
+
+        match color {
+            0b00 => ((ff47 & 0x01) << 1) | ((ff47 & 0x02) >> 1),    // Bits 0-1 -> 00
+            0b01 => ((ff47 & 0x04) >> 1) | ((ff47 & 0x08) >> 3),    // Bits 2-3 -> 01
+            0b10 => ((ff47 & 0x10) >> 3) | ((ff47 & 0x20) >> 5),    // Bits 4-5 -> 10
+            0b11 => ((ff47 & 0x40) >> 5) | ((ff47 & 0x80) >> 7),    // Bits 6-7 -> 11
+
+            _ => panic!("unexpected color code: {}", color)
+        }
+    }
+
     /*
        Potentially unused code. May be useful for the
        graphical implementations we create later.
