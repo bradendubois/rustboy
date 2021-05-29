@@ -41,6 +41,16 @@ pub struct PPU {
       wx: u8        // 0xFF4B : Window X Position
 }
 
+
+/// An entry in the OAM table for a sprite
+pub struct OAMEntry {
+    position_y: u8,     // Position X
+    position_x: u8,     // Position Y
+    tile_number: u8,    // Tile Number
+    flags: u8           // Flags
+}
+
+
 impl PPU {
 
     pub fn new() -> PPU {
@@ -118,6 +128,20 @@ impl PPU {
 
         // draw sprites ?
 
+    }
+
+    fn oam_entry(&mut self, entry_number: u8) -> OAMEntry {
+        assert!(entry_number < 40, "asking for entry number beyond 40");
+
+        // OAM entries are aligned on 4-byte boundaries beginning at 0xFE00
+        let oam_address: u16 = 0xFE00 + (entry_number * 4) as u16;
+
+        OAMEntry {
+             position_y: self.read(oam_address),
+             position_x: self.read(oam_address + 1),
+            tile_number: self.read(oam_address + 2),
+                  flags: self.read(oam_address + 3)
+        }
     }
 
     // Helper
