@@ -1,15 +1,15 @@
-mod byte;
-mod mode;
-
-use crate::ppu::byte::Byte;
-
 use byte::{
     lcdc::LCDC,
     lcds::LCDS
 };
-
 use mode::Mode;
+use oam::{OAMEntry, OAMFlags};
 
+use crate::ppu::byte::Byte;
+
+mod byte;
+mod mode;
+mod oam;
 
 const V_RAM_SIZE: usize = 0x2000;
 const   OAM_SIZE: usize = 0x0100;
@@ -45,24 +45,6 @@ pub struct PPU {
     obp1: u8,       // 0xFF49 : Object Palette 1 (Non-CGB)
       wy: u8,       // 0xFF4A : Window Y Position
       wx: u8        // 0xFF4B : Window X Position
-}
-
-
-#[allow(dead_code)]
-struct OAMFlags {
-    priority: u8,   // OBJ-to-BG Priority   (0 = above BG,      1 = behind BG colors 1 - 3)
-      flip_y: u8,   // Y Flip               (0 = normal,        1 = vertical mirror)
-      flip_x: u8,   // X Flip               (0 = normal,        1 = horizontal mirror)
-     palette: u8    // Object Palette       (0 = obp0 @ 0xFF48, 1 = obp1 @ 0xFF49)
-}
-
-/// An entry in the OAM table for a sprite
-#[allow(dead_code)]
-pub struct OAMEntry {
-    position_y: u8,     // Position X
-    position_x: u8,     // Position Y
-    tile_number: u8,    // Tile Number
-    flags: OAMFlags     // Flags
 }
 
 
@@ -154,8 +136,8 @@ impl PPU {
         let flags = self.read(oam_address + 3);
 
         OAMEntry {
-             position_y: self.read(oam_address),
-             position_x: self.read(oam_address + 1),
+             y: self.read(oam_address),
+             x: self.read(oam_address + 1),
             tile_number: self.read(oam_address + 2),
                   flags: OAMFlags {
                       priority: (flags & 0x80) >> 7,
