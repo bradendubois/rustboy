@@ -19,6 +19,7 @@ const  TILE_SIZE: usize = 128;
 /// GameBoy Screen Height
 #[allow(dead_code)]
 pub const HEIGHT: u8 = 144;
+pub const MAX_SCREEN_Y: u8 = HEIGHT - 1;
 
 /// GameBoy Screen Width
 #[allow(dead_code)]
@@ -198,7 +199,7 @@ impl PPU {
             // One horizontal row is completed, as one horizontal row takes 114 cycles
             //  1 row = 20 cycles (OAM Search) + ~43 cycles (Pixel Transfer) + ~51 cycles (H-Blank)
             if self.clock >= CYCLES_PER_LINE as u64 {
-                self.clock %= CYCLES_PER_LINE;
+                self.clock %= CYCLES_PER_LINE as u64;
 
                 // Advance to next line (wrapping "around" back to top if necessary)
                 self.ly += 1;
@@ -206,24 +207,29 @@ impl PPU {
 
                 // If toggled, check for lyc interrupt
                 if self.lcds.lyc_interrupt() && self.ly == self.lyc {
-                    self.lcds.set_coincidence_flag();
+
+                    // Enable the LCDS Coincidence bit
+                    let value = self.lcds.read() | 0x04;
+                    self.lcds.write(value);
+
                     self.stat_interrupt = true;
                 }
             }
+
 
             // Compute the mode the PPU 'should' be in, based on whether ly is on the visible area,
             //  (and if so, whether in OAM / Transfer / HBlank), or in a VBlank area
             let target_mode = match self.ly {
 
-                0..HEIGHT => match self.clock {
+                0 ..= MAX_SCREEN_Y => match self.clock {
                      0 ..= 20 => Mode2,
                     21 ..= 43 => Mode3,
-                    44 .. 114 => Mode0,
+                    44 ..= 114 => Mode0,
 
                     _ => panic!("impossible clock value: {}", self.clock)
                 },
 
-                HEIGHT..TOTAL_LINES => Mode1,
+                HEIGHT ..= TOTAL_LINES => Mode1,
 
                 _ => panic!("impossible ly value: {}", self.ly)
             };

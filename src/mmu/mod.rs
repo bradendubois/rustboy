@@ -29,6 +29,12 @@ pub struct MMU {
     mbc: Box<dyn MBC>,
 
     ppu: PPU,
+
+    // Corresponds to the IF (Interrupt Flag R/W) Register at 0xFF0F
+    interrupt_flag: interrupt_flag::InterruptFlag,
+
+    // Corresponds to the IE (Interrupt Enable R/W) Register at 0xFFFF
+    interrupt_enable: interrupt_enable::InterruptEnable,
 }
 
 #[allow(unreachable_patterns)]
@@ -36,6 +42,9 @@ pub struct MMU {
 impl MMU {
 
     pub fn new(cartridge: Cartridge) -> MMU {
+
+        let new_ppu = PPU::new();
+
         MMU {
             in_bios: false,
             bios: vec![],
@@ -57,7 +66,12 @@ impl MMU {
 
                 _ => panic!("Unsupported cartridge type: {}!", cartridge.cartridge_type),
             }),
-            ppu: PPU::new()
+
+            ppu: new_ppu,
+
+            // TODO These need the PPU or something similar, but can't move PPU
+            interrupt_flag: interrupt_flag::InterruptFlag::new(),
+            interrupt_enable: interrupt_enable::InterruptEnable::new()
 
         }
     }
@@ -77,7 +91,7 @@ impl MMU {
             0xFEA0 ..= 0xFEFF => 0,                                         // Unusable
             0xFF00 ..= 0xFF7F => self.read_io_registers(address),           // I/O Registers
             0xFF80 ..= 0xFFFE => 0,                                         // High RAM
-            0xFFFF ..= 0xFFFF => 0,                                         // Interrupt Register
+            0xFFFF ..= 0xFFFF => self.interrupt_enable.read(),              // Interrupt Register
 
             _ => panic!("Unmapped address {}", address)
         }
@@ -98,7 +112,7 @@ impl MMU {
             0xFEA0 ..= 0xFEFF => (),                                        // Unusable
             0xFF00 ..= 0xFF7F => self.write_io_registers(value, address),   // I/O Registers
             0xFF80 ..= 0xFFFE => (),                                        // High RAM
-            0xFFFF ..= 0xFFFF => (),                                        // Interrupt Register
+            0xFFFF ..= 0xFFFF => self.interrupt_enable.write(value),        // Interrupt Register
 
             _ => panic!("Unmapped address {}", address)
         };
@@ -129,8 +143,7 @@ impl MMU {
 
             0xFF40 ..= 0xFF4F => self.ppu.read(address),
 
-            0xFF0F ..= 0xFF0F => self.interrupt_flag(),
-            0xFFFF ..= 0xFFFF => self.interrupt_enable(),
+            0xFF0F ..= 0xFF0F => self.interrupt_flag.read(),
 
             _ => panic!("unmapped address: {}", address)
         }
@@ -140,6 +153,8 @@ impl MMU {
         match address {
 
             0xFF40 ..= 0xFF4F => self.ppu.write(value, address),
+
+            0xFF0F ..= 0xFF0F => self.interrupt_flag.write(value),
 
             _ => panic!("unmapped address: {}", address)
         }

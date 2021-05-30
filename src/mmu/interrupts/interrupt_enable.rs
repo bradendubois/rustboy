@@ -1,7 +1,7 @@
-use crate::ppu::PPU;
+// use crate::ppu::PPU;
 
 pub struct InterruptEnable {
-    ppu: PPU,
+    // ppu: PPU,
     // timer: Timer
     // serial: Serial
     // joypad: Joypad
@@ -9,9 +9,17 @@ pub struct InterruptEnable {
 
 impl InterruptEnable {
 
-    fn new(ppu: PPU) -> InterruptEnable {
+    pub fn new() -> InterruptEnable {
         InterruptEnable {
-            ppu
+            // ppu
         }
+    }
+
+    pub fn read(&mut self) -> u8 {
+        0
+    }
+
+    pub fn write(&mut self, value: u8) {
+        let _value = value;
     }
 }

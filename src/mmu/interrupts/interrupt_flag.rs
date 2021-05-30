@@ -1,8 +1,7 @@
-use crate::ppu::PPU;
-use crate::mmu::byte::Byte;
+// use crate::ppu::PPU;
 
 pub struct InterruptFlag {
-    ppu: PPU,
+    // ppu: PPU,
     // timer: Timer
     // serial: Serial
     // joypad: Joypad
@@ -10,18 +9,17 @@ pub struct InterruptFlag {
 
 impl InterruptFlag {
 
-    fn new(ppu: PPU) -> InterruptFlag {
+    pub fn new() -> InterruptFlag {
         InterruptFlag {
-            ppu
         }
     }
 
-    fn read(&mut self) -> u8 {
+    pub fn read(&mut self) -> u8 {
         // TODO - "build" the number from the various structs
-        self.ppu.
+        0
     }
 
-    fn write(&mut self, value: u8) {
-
+    pub fn write(&mut self, value: u8) {
+        let _value = value;
     }
 }
