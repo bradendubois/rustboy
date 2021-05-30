@@ -1,4 +1,6 @@
 mod mbc;
+mod memory_map;
+
 use mbc::{MBC, mbc0::{MBC0}};
 use std::fmt;
 use crate::cartridge::Cartridge;

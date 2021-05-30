@@ -138,8 +138,6 @@ impl PPU {
 
         // TODO - Flesh this out as we read
 
-
-
         // clear_screen ?
 
         // draw background ?
