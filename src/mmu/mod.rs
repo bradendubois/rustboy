@@ -1,6 +1,9 @@
 pub mod byte;
 mod mbc;
 mod memory_map;
+mod interrupts;
+
+use interrupts::{interrupt_flag, interrupt_enable};
 
 use mbc::{MBC, mbc0::{MBC0}};
 use std::fmt;
@@ -119,12 +122,15 @@ impl MMU {
         self.w_ram[self.w_rambank_conv(address)] = value;
     }
 
-    // IO
+    // IO Registers
 
     fn read_io_registers(&mut self, address: u16) -> u8 {
         match address {
 
             0xFF40 ..= 0xFF4F => self.ppu.read(address),
+
+            0xFF0F ..= 0xFF0F => self.interrupt_flag(),
+            0xFFFF ..= 0xFFFF => self.interrupt_enable(),
 
             _ => panic!("unmapped address: {}", address)
         }

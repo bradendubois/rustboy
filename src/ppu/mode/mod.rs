@@ -5,3 +5,9 @@ pub enum Mode {
     Mode2,  // Searching OAM Period
     Mode3   // Transferring Data to LCD Controller
 }
+
+impl PartialEq for Mode {
+    fn eq(&self, other: &Self) -> bool {
+        self == other
+    }
+}
