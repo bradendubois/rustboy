@@ -23,14 +23,36 @@ const OBJ_8_16: (u8, u8) = (8, 16);
 #[allow(dead_code)]
 pub struct LCDC {
 
-    // Dissected 8-bit value interpretation
+    /// LCD Display Enable
+    /// Bit 7 : 0/False = Display Disabled, 1/True = Display Enabled
     lcd_display_enable: bool,
+
+    /// Window Tile Map Display Select
+    /// Bit 6 : 0/False = 0x9800-0x9BFF, 1/True = 0x9C00-0x9FFF
     window_tile_map_display_select: (u16, u16),
+
+    /// Window Display Enable
+    /// Bit 5 : 0/False = Window Disabled, 1/True = Window Enabled
     window_display_enable: bool,
+
+    /// BG & Window Tile Data Select
+    /// Bit 4 : 0 = 0x8800-0x97FF, 1 = 0x8000-0x8FFF
     bg_window_tile_data_select: (u16, u16),
+
+    /// BG Tile Map Display Select
+    /// Bit 3 : 0 = 0x9800-0x9BFF, 1 = 0x9C00-0x9FFF
     bg_tile_map_display_select: (u16, u16),
+
+    /// Obj (Sprite) Size
+    /// Bit 2 : 0 = 8x8, 1 = 8x16
     obj_size: (u8, u8),
+
+    /// Obj (Sprite) Display Enable
+    /// Bit 1 : 0/False = Objects Disabled, 1/True = Objects Enabled
     obj_display_enable: bool,
+
+    /// BG Display
+    /// Bit 0 : 0/False = BG Disabled, 1/True = BG Enabled
     bg_display: bool,
 
     // Real 8-bit value written

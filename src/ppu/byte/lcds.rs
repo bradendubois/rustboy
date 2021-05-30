@@ -5,14 +5,32 @@ use crate::ppu::Mode;
 pub struct LCDS {
 
     // Dissected 8-bit value interpretation
+
+    /// LYC=LY Coincidence Interrupt
+    /// Bit 6 : 0/False = Disabled, 1/True = Enabled
     lyc_interrupt: bool,
+
+    /// Mode 2 OAM Interrupt
+    /// Bit 5 : 0/False = Disabled, 1/True = Enabled
     mode_2_oam_interrupt: bool,
+
+    /// Mode 1 V-Blank Interrupt
+    /// Bit 4 : 0/False = Disabled, 1/True = Enabled
     mode_1_v_blank_interrupt: bool,
+
+    /// Mode 0  H-Blank Interrupt
+    /// Bit 3 : 0/False = Disabled, 1/True = Enabled
     mode_0_h_blank_interrupt: bool,
+
+    /// Coincidence Flag
+    /// Bit 2 : 0/False = LYC != LC, 1/True = LYC == LC
     coincidence_flag: bool,
+
+    /// Mode Flag
+    /// See Mode enum.
     mode_flag: Mode,
 
-    // Real 8-bit value written
+    /// Real 8-bit value stored
     value: u8
 }
 
@@ -60,20 +78,11 @@ impl Byte for LCDS {
 
         self.value = value;
 
-        // Bit 6
-        self.lyc_interrupt = value & 0x40 != 0;
-
-        // Bit 5
-        self.mode_2_oam_interrupt = value & 0x20 != 0;
-
-        // Bit 4
-        self.mode_1_v_blank_interrupt = value & 0x10 != 0;
-
-        // Bit 3
-        self.mode_0_h_blank_interrupt = value & 0x08 != 0;
-
-        // Bit 2
-        self.coincidence_flag = value & 0x04 != 0;
+        self.lyc_interrupt = value & 0x40 != 0;                 // Bit 6
+        self.mode_2_oam_interrupt = value & 0x20 != 0;          // Bit 5
+        self.mode_1_v_blank_interrupt = value & 0x10 != 0;      // Bit 4
+        self.mode_0_h_blank_interrupt = value & 0x08 != 0;      // Bit 3
+        self.coincidence_flag = value & 0x04 != 0;              // Bit 2
 
         // Bits 0-1
         self.mode_flag = match value & 0x03 {
