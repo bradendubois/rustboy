@@ -16,6 +16,7 @@ pub struct LCDS {
     value: u8
 }
 
+#[allow(dead_code)]
 impl LCDS {
     pub fn new() -> LCDS {
         LCDS {
@@ -28,6 +29,24 @@ impl LCDS {
             value: 0
         }
     }
+
+    /// LYC = LY STATE Interrupt Source
+    pub fn lyc_interrupt(&self) -> bool { self.lyc_interrupt }
+
+    /// Mode 2 OAM STAT Interrupt Source
+    pub fn mode_2_oam_interrupt(&self) -> bool { self.mode_2_oam_interrupt }
+
+    /// Mode 1 VBlank STAT Interrupt source
+    pub fn mode_1_v_blank_interrupt(&self) -> bool { self.mode_1_v_blank_interrupt }
+
+    /// Mode 0 HBlank STAT Interrupt source
+    pub fn mode_0_h_blank_interrupt(&self) -> bool { self.mode_0_h_blank_interrupt }
+
+    /// LYC = LY Flag
+    pub fn coincidence_flag(&self) -> bool { self.coincidence_flag }
+
+    /// Mode Flag
+    pub fn mode_flag(&self) -> Mode { self.mode_flag }
 }
 
 impl Byte for LCDS {
@@ -41,51 +60,29 @@ impl Byte for LCDS {
 
         self.value = value;
 
-        // Bit 7
-        // self.lcd_display_enable = value & 0x80 != 0;
-
         // Bit 6
-        /*
-        self.window_tile_map_display_select = match value & 0x40 != 0 {
-            false => 0x9800,
-            true  => 0x9C00
-        };
-
-         */
+        self.lyc_interrupt = value & 0x40 != 0;
 
         // Bit 5
-        // self.window_display_enable = value & 0x20 != 0;
+        self.mode_2_oam_interrupt = value & 0x20 != 0;
 
         // Bit 4
-        /*
-        self.bg_window_tile_data_select = match value & 0x10 != 0 {
-            false => 0x8800,
-            true  => 0x8000
-        };
-
-         */
+        self.mode_1_v_blank_interrupt = value & 0x10 != 0;
 
         // Bit 3
-        /*
-        self.bg_tile_map_display_select = match value & 0x08 != 0 {
-            false => 0x9800,
-            true  => 0x9C00
-        };
-         */
+        self.mode_0_h_blank_interrupt = value & 0x08 != 0;
 
         // Bit 2
-        /*
-        self.obj_size = match value & 0x04 != 0 {
-            false => (8,  8),
-            true  => (8, 16)
+        self.coincidence_flag = value & 0x04 != 0;
+
+        // Bits 0-1
+        self.mode_flag = match value & 0x03 {
+            0b00 => Mode::Mode0,
+            0b01 => Mode::Mode1,
+            0b10 => Mode::Mode2,
+            0b11 => Mode::Mode3,
+
+            _ => panic!("arithmetic error: {}", value)
         };
-
-         */
-
-        // Bit 1
-        // self.obj_display_enable = value & 0x02 != 0;
-
-        // Bit 0
-        // self.bg_display = value & 0x01 != 0;
     }
 }

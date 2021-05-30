@@ -1,5 +1,5 @@
 pub mod lcdc;
-mod lcds;
+pub mod lcds;
 
 pub trait Byte {
     fn read(&self) -> u8;

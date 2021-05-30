@@ -18,7 +18,9 @@ const OBJ_8_8: (u8, u8) = (8, 8);
 const OBJ_8_16: (u8, u8) = (8, 16);
 
 
+
 // Fields taken from: http://bgb.bircd.org/pandocs.htm#lcdcontrolregister
+#[allow(dead_code)]
 pub struct LCDC {
 
     // Dissected 8-bit value interpretation
@@ -36,6 +38,7 @@ pub struct LCDC {
 }
 
 
+#[allow(dead_code)]
 impl LCDC {
 
     pub fn new() -> LCDC {
@@ -89,6 +92,7 @@ impl LCDC {
 
 }
 
+#[allow(dead_code)]
 impl Byte for LCDC {
 
     fn read(&self) -> u8 {

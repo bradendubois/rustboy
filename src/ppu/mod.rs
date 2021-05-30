@@ -1,9 +1,15 @@
 mod byte;
 mod mode;
 
-use mode::Mode;
-use byte::lcdc::LCDC;
 use crate::ppu::byte::Byte;
+
+use byte::{
+    lcdc::LCDC,
+    lcds::LCDS
+};
+
+use mode::Mode;
+
 
 const V_RAM_SIZE: usize = 0x2000;
 const   OAM_SIZE: usize = 0x0100;
@@ -22,15 +28,14 @@ pub const WIDTH: usize = 160;
 
 
 
+#[allow(dead_code)]
 pub struct PPU {
-    #[allow(dead_code)]
     mode: Mode,                 // PPU Mode
     vram: [u8; V_RAM_SIZE],     // VRAM
      oam: [u8; OAM_SIZE],       // OAM / Sprite Attribute Table
-    lcd_enabled: bool,          // Status of the PPU / LCD ; true = on, false = off
 
     lcdc: LCDC,     // 0xFF40 : lcdc Register : LCD C(ontrol) Register
-    lcds: u8,       // 0xFF41 : LCDS Register : LCD S(tatus) Register
+    lcds: LCDS,     // 0xFF41 : LCDS Register : LCD S(tatus) Register
      scy: u8,       // 0xFF42 : Scroll Y
      scx: u8,       // 0xFF43 : Scroll X
       ly: u8,       // 0xFF44 : LY  (LCD Y)
@@ -43,6 +48,7 @@ pub struct PPU {
 }
 
 
+#[allow(dead_code)]
 struct OAMFlags {
     priority: u8,   // OBJ-to-BG Priority   (0 = above BG,      1 = behind BG colors 1 - 3)
       flip_y: u8,   // Y Flip               (0 = normal,        1 = vertical mirror)
@@ -51,6 +57,7 @@ struct OAMFlags {
 }
 
 /// An entry in the OAM table for a sprite
+#[allow(dead_code)]
 pub struct OAMEntry {
     position_y: u8,     // Position X
     position_x: u8,     // Position Y
@@ -59,7 +66,7 @@ pub struct OAMEntry {
 }
 
 
-
+#[allow(dead_code)]
 impl PPU {
 
     pub fn new() -> PPU {
@@ -67,10 +74,9 @@ impl PPU {
             mode: Mode::Mode0,
             vram: [0; V_RAM_SIZE],
              oam: [0; OAM_SIZE],
-            lcd_enabled: true,
 
             lcdc: LCDC::new(),
-            lcds: 0,
+            lcds: LCDS::new(),
              scy: 0,
              scx: 0,
               ly: 0,
@@ -89,7 +95,7 @@ impl PPU {
             0x8000 ..= 0x9FFF => self.vram[PPU::addr_into_vram_space(address)],
             0xFE00 ..= 0xFE9F => self.oam[PPU::addr_into_oam_space(address)],
             0xFF40 => self.lcdc.read(),
-            0xFF41 => self.lcds,
+            0xFF41 => self.lcds.read(),
             0xFF42 => self.scy,
             0xFF43 => self.scx,
             0xFF44 => self.ly,
@@ -111,8 +117,8 @@ impl PPU {
         match address {
             0x8000 ..= 0x9FFF => self.vram[PPU::addr_into_vram_space(address)] = value,
             0xFE00 ..= 0xFE9F => self.oam[PPU::addr_into_oam_space(address)] = value,
-            0xFF40 => self.write_lcdc(value),
-            0xFF41 => self.lcds = value,
+            0xFF40 => self.lcdc.write(value),
+            0xFF41 => self.lcds.write(value),
             0xFF42 => self.scy = value,
             0xFF43 => self.scx = value,
             0xFF44 => (),   // read-only
@@ -171,19 +177,6 @@ impl PPU {
         address as usize - 0xFE00
     }
 
-    // lcdc
-
-    pub fn write_lcdc(&mut self, value: u8) {
-
-        match (value & 0x80) >> 7 {
-            0 => self.lcd_enabled = false,
-            1 => self.lcd_enabled = true,
-            _ => panic!("arithmetic failure")
-        }
-
-        self.lcdc.write(value);
-    }
-
     /// Returns the bg palette color in 00 ..= 11 associated with given 00 ..= 11
     fn bg_palette(&mut self, color: u8) -> u8 {
 
@@ -222,31 +215,5 @@ impl PPU {
     #[allow(dead_code)]
     pub fn get_tile_map_1(&self) -> Vec<u8> {
         self.vram[0x1c00..0x1FFF].to_vec()
-    }
-
-    /// LYC = LY STATE Interrupt Source
-    #[allow(dead_code)]
-    pub fn lcds_lyc_int(&self) -> bool {self.lcds & 0x40 == 0x40}
-
-    /// Mode 2 OAM STAT Interrupt Source
-    #[allow(dead_code)]
-    pub fn lcds_oam_int(&self) -> bool {self.lcds & 0x20 == 0x20}
-
-    /// Mode 1 VBlank STAT Interrupt source
-    #[allow(dead_code)]
-    pub fn lcds_vblank_int(&self) -> bool {self.lcds & 0x10 == 0x10}
-
-    /// Mode 0 HBlank STAT Interrupt source
-    #[allow(dead_code)]
-    pub fn lcds_hblank_int(&self) -> bool {self.lcds & 0x08 == 0x08}
-
-    /// LYC = LY Flag
-    #[allow(dead_code)]
-    pub fn lcds_lyc_ly(&self) -> bool {self.lcds & 0x04 == 0x04}
-
-    /// Mode Flag
-    #[allow(dead_code)]
-    pub fn lcds_mode_flag(&self) -> u8 {
-        (self.lcds << 6 ) >> 6
     }
 }

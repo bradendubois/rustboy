@@ -1,4 +1,4 @@
-#[allow(dead_code)]
+#[derive(Copy, Clone)]
 pub enum Mode {
     Mode0,  // HBlank Period
     Mode1,  // VBlank Period
