@@ -158,7 +158,7 @@ impl PPU {
 
 
     /// 'Main' Execution - run the PPU for a given number of cycles
-    pub fn run_for(&mut self, cycles: u8) {
+    pub fn run_for(&mut self, cycles: u64) {
 
         let mut cycles_left = cycles;
 

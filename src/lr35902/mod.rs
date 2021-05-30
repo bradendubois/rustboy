@@ -8,6 +8,8 @@ use status::Status;
 use registers::Registers;
 
 use super::mmu;
+use super::ppu;
+
 use crate::cartridge::Cartridge;
 
 
@@ -16,6 +18,9 @@ pub struct LR35902 {
 
     // Struct representing the memory unit
     pub mmu: mmu::MMU,
+
+    // Struct representing the PPU / graphics
+    pub ppu: ppu::PPU,
 
     // Struct of all registers in the LR35902
     pub registers: Registers,
@@ -36,20 +41,12 @@ impl LR35902 {
     /// Initializer for a LR35902 CPU
     pub fn new(cartridge: Cartridge, skip_bios: bool) -> LR35902 {
         LR35902 {
-
-            // MMU Unit
             mmu: mmu::MMU::new(cartridge),
-
+            ppu: ppu::PPU::new(),
             registers: Registers::new(skip_bios),
-
-            // status enum starts as running.
             status: Status::RUNNING,
-
-            // Clock begins at 0
             clock: 0,
-
             use_cb_table: false,
-
         }
 
     }
@@ -84,6 +81,9 @@ impl LR35902 {
 
         // Adjust clock and program counter (PC)
         self.clock += cycles as u64;
+
+        // Run the PPU for this many cycles
+        self.ppu.run_for(cycles);
     }
 
     /*************************/
