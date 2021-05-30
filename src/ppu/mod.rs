@@ -42,12 +42,19 @@ pub struct PPU {
 }
 
 
+struct OAMFlags {
+    priority: u8,   // OBJ-to-BG Priority   (0 = above BG,      1 = behind BG colors 1 - 3)
+      flip_y: u8,   // Y Flip               (0 = normal,        1 = vertical mirror)
+      flip_x: u8,   // X Flip               (0 = normal,        1 = horizontal mirror)
+     palette: u8    // Object Palette       (0 = obp0 @ 0xFF48, 1 = obp1 @ 0xFF49)
+}
+
 /// An entry in the OAM table for a sprite
 pub struct OAMEntry {
     position_y: u8,     // Position X
     position_x: u8,     // Position Y
     tile_number: u8,    // Tile Number
-    flags: u8           // Flags
+    flags: OAMFlags     // Flags
 }
 
 
@@ -135,12 +142,18 @@ impl PPU {
 
         // OAM entries are aligned on 4-byte boundaries beginning at 0xFE00
         let oam_address: u16 = 0xFE00 + (entry_number * 4) as u16;
+        let flags = self.read(oam_address + 3);
 
         OAMEntry {
              position_y: self.read(oam_address),
              position_x: self.read(oam_address + 1),
             tile_number: self.read(oam_address + 2),
-                  flags: self.read(oam_address + 3)
+                  flags: OAMFlags {
+                      priority: (flags & 0x80) >> 7,
+                        flip_y: (flags & 0x40) >> 6,
+                        flip_x: (flags & 0x20) >> 5,
+                       palette: (flags & 0x10) >> 4
+                  }
         }
     }
 
