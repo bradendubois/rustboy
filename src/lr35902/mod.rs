@@ -19,9 +19,6 @@ pub struct LR35902 {
     // Struct representing the memory unit
     pub mmu: mmu::MMU,
 
-    // Struct representing the PPU / graphics
-    pub ppu: ppu::PPU,
-
     // Struct of all registers in the LR35902
     pub registers: Registers,
 
@@ -40,9 +37,9 @@ impl LR35902 {
 
     /// Initializer for a LR35902 CPU
     pub fn new(cartridge: Cartridge, skip_bios: bool) -> LR35902 {
+
         LR35902 {
             mmu: mmu::MMU::new(cartridge),
-            ppu: ppu::PPU::new(),
             registers: Registers::new(skip_bios),
             status: Status::RUNNING,
             clock: 0,
@@ -84,7 +81,7 @@ impl LR35902 {
 
         // The PPU runs at a clock rate of 4.2 MHz, while the LR35902 runs at 1.05 MHz
         //  Each cycle run by the CPU corresponds to 4 PPU cycles
-        self.ppu.run_for(cycles * 4);
+        self.mmu.ppu.run_for(cycles * 4);
     }
 
     /*************************/

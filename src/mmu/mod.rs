@@ -28,7 +28,7 @@ pub struct MMU {
 
     mbc: Box<dyn MBC>,
 
-    ppu: PPU,
+    pub ppu: PPU,
 
     // Corresponds to the IF (Interrupt Flag R/W) Register at 0xFF0F
     interrupt_flag: interrupt_flag::InterruptFlag,
@@ -42,8 +42,6 @@ pub struct MMU {
 impl MMU {
 
     pub fn new(cartridge: Cartridge) -> MMU {
-
-        let new_ppu = PPU::new();
 
         MMU {
             in_bios: false,
@@ -67,7 +65,7 @@ impl MMU {
                 _ => panic!("Unsupported cartridge type: {}!", cartridge.cartridge_type),
             }),
 
-            ppu: new_ppu,
+            ppu: PPU::new(),
 
             // TODO These need the PPU or something similar, but can't move PPU
             interrupt_flag: interrupt_flag::InterruptFlag::new(),
@@ -77,6 +75,8 @@ impl MMU {
     }
 
     pub fn read(&mut self, address: u16) -> u8 {
+
+        println!("reading: {:#06X}", address);
 
         match address {
             0x0000 ..= 0x3FFF => self.mbc.read_rom(address),                // ROM
@@ -93,7 +93,7 @@ impl MMU {
             0xFF80 ..= 0xFFFE => 0,                                         // High RAM
             0xFFFF ..= 0xFFFF => self.interrupt_enable.read(),              // Interrupt Register
 
-            _ => panic!("Unmapped address {}", address)
+            _ => panic!("Unmapped address {:#06X}", address)
         }
     }
 
@@ -114,7 +114,7 @@ impl MMU {
             0xFF80 ..= 0xFFFE => (),                                        // High RAM
             0xFFFF ..= 0xFFFF => self.interrupt_enable.write(value),        // Interrupt Register
 
-            _ => panic!("Unmapped address {}", address)
+            _ => panic!("Unmapped address {:#06X}", address)
         };
     }
 
@@ -141,22 +141,28 @@ impl MMU {
     fn read_io_registers(&mut self, address: u16) -> u8 {
         match address {
 
+            0xFF01 => { println!("unimplemented serial data transfer"); 0 },
+            0xFF02 => { println!("unimplemented serial transfer control"); 0 },
+
             0xFF40 ..= 0xFF4F => self.ppu.read(address),
 
             0xFF0F ..= 0xFF0F => self.interrupt_flag.read(),
 
-            _ => panic!("unmapped address: {}", address)
+            _ => panic!("Unmapped address {:#06X}", address)
         }
     }
 
     fn write_io_registers(&mut self, value: u8, address: u16) {
         match address {
 
+            0xFF01 => println!("unimplemented serial data transfer : {}", value),
+            0xFF02 => println!("unimplemented serial transfer control : {}", value),
+
             0xFF40 ..= 0xFF4F => self.ppu.write(value, address),
 
             0xFF0F ..= 0xFF0F => self.interrupt_flag.write(value),
 
-            _ => panic!("unmapped address: {}", address)
+            _ => panic!("Unmapped address {:#06X}", address)
         }
     }
 

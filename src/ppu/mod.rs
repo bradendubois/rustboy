@@ -7,6 +7,8 @@ mod oam;
 use oam::{OAMEntry, OAMFlags};
 
 mod registers;
+mod display;
+
 use registers::lcdc::LCDC;
 use registers::lcds::LCDS;
 
@@ -35,6 +37,8 @@ const TOTAL_LINES: u8 = HEIGHT + V_BLANK_LINES;
 
 #[allow(dead_code)]
 pub struct PPU {
+
+    display: display::Screen,
 
     clock: u64,     // Behaves as a counter of how many cycles / ticks have occurred, used to determine
                     // an appropriate "mode" to switch to at a given point
@@ -69,6 +73,7 @@ impl PPU {
     pub fn new() -> PPU {
         PPU {
             clock: 0,
+            display: display::Screen::new(),
 
             mode: Mode0,
             vram: [0; V_RAM_SIZE],
@@ -297,7 +302,7 @@ impl PPU {
         // 1 - OAM Search
         let mut visible: Vec<OAMEntry> = Vec::new();
 
-        for entry_number in 0..=40 {
+        for entry_number in 0..40 {
 
             let entry = self.oam_entry(entry_number);
 
@@ -314,7 +319,9 @@ impl PPU {
 
         // GameBoy can only have up to 10 sprites per line, remove (don't draw) anything to the
         //  'right' of the first 10 sprites, as this is how the hardware will resolve >10 sprites
-        visible.drain(10..);
+        if visible.len() > 10 {
+            visible.drain(10..);
+        }
 
         // 2 - Pixel Transfer
 
