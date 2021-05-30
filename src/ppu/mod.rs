@@ -1,15 +1,16 @@
+mod byte;
+mod mode;
+mod oam;
+
 use byte::{
     lcdc::LCDC,
     lcds::LCDS
 };
-use mode::Mode;
+
+use mode::{Mode, Mode::*};
 use oam::{OAMEntry, OAMFlags};
 
 use crate::ppu::byte::Byte;
-
-mod byte;
-mod mode;
-mod oam;
 
 const V_RAM_SIZE: usize = 0x2000;
 const   OAM_SIZE: usize = 0x0100;
@@ -53,7 +54,7 @@ impl PPU {
 
     pub fn new() -> PPU {
         PPU {
-            mode: Mode::Mode0,
+            mode: Mode0,
             vram: [0; V_RAM_SIZE],
              oam: [0; OAM_SIZE],
 
@@ -74,8 +75,27 @@ impl PPU {
     pub fn read(&mut self, address: u16) -> u8 {
 
         match address {
-            0x8000 ..= 0x9FFF => self.vram[PPU::addr_into_vram_space(address)],
-            0xFE00 ..= 0xFE9F => self.oam[PPU::addr_into_oam_space(address)],
+
+            // VRAM Space
+            0x8000 ..= 0x9FFF => match self.lcds.mode_flag()  {
+
+                // Mode 0 / 1 / 2 allow VRAM access
+                Mode0 | Mode1 | Mode2 => self.vram[PPU::addr_into_vram_space(address)],
+
+                // Cannot access VRAM / OAM in Mode 3
+                Mode3 => 0xFF,
+            },
+
+            // OAM Space
+            0xFE00 ..= 0xFE9F => match self.lcds.mode_flag() {
+
+                // Mode 0 / 1 allow OAM access
+                Mode0 | Mode1 => self.oam[PPU::addr_into_oam_space(address)],
+
+                // Cannot access OAM in Mode 2 / 3
+                Mode2 | Mode3 => 0xFF
+            },
+
             0xFF40 => self.lcdc.read(),
             0xFF41 => self.lcds.read(),
             0xFF42 => self.scy,
@@ -98,8 +118,28 @@ impl PPU {
 
         // TODO - Add checks on VRAM / OAM against MODE to ensure access is possible
         match address {
-            0x8000 ..= 0x9FFF => self.vram[PPU::addr_into_vram_space(address)] = value,
-            0xFE00 ..= 0xFE9F => self.oam[PPU::addr_into_oam_space(address)] = value,
+
+            // VRAM Space
+            0x8000 ..= 0x9FFF => match self.lcds.mode_flag()  {
+
+                // Mode 0 / 1 / 2 allow VRAM access
+                Mode0 | Mode1 | Mode2 => self.vram[PPU::addr_into_vram_space(address)] = value,
+
+                // Cannot access VRAM / OAM in Mode 3
+                Mode3 => (),
+            },
+
+            // OAM Space
+            0xFE00 ..= 0xFE9F => match self.lcds.mode_flag() {
+
+                // Mode 0 / 1 allow OAM access
+                Mode0 | Mode1 => self.oam[PPU::addr_into_oam_space(address)] = value,
+
+                // Cannot access OAM in Mode 2 / 3
+                Mode2 | Mode3 => ()
+            },
+
+            // I/O Registers
             0xFF40 => self.lcdc.write(value),
             0xFF41 => self.lcds.write(value),
             0xFF42 => self.scy = value,
@@ -116,7 +156,22 @@ impl PPU {
         }
     }
 
+
+    /// 'Main' Execution - run the PPU for a given number of cycles
+    pub fn run_for(&mut self, cycles: u8) {
+
+        let mut cycles_left = cycles;
+
+        while cycles_left {
+
+            // TODO
+
+            cycles_left -= 1;
+        }
+    }
+
     fn draw_screen(&mut self) {
+
 
         // TODO - Flesh this out as we read
 
@@ -125,7 +180,36 @@ impl PPU {
         // draw background ?
 
         // draw sprites ?
+    }
 
+    fn draw_row(&mut self) {
+
+        let h = self.lcdc.obj_size().1;
+
+        // 1 - OAM Search
+        let mut visible: Vec<OAMEntry> = Vec::new();
+
+        for entry_number in 0..=40 {
+
+            let entry = self.oam_entry(entry_number);
+
+            // Comparison method by which the GameBoy PPU uses to determine whether a given object
+            //  should be considered 'visible' on the current line
+            if entry.x != 0 && self.ly + 16 >= entry.y && self.ly + 16 < entry.y + h {
+                visible.push(entry);
+            }
+        }
+
+        // Order based on x position, as the 'first' (from the left) 10 sprites should be shown
+        visible.sort_by(|a, b| b.x.cmp(&a.x));
+
+        // GameBoy can only have up to 10 sprites per line, remove (don't draw) anything to the
+        //  'right' of the first 10 sprites, as this is how the hardware will resolve >10 sprites
+        visible.drain(10..);
+
+        // 2 - Pixel Transfer
+
+        // 3 - H-Blank
     }
 
     fn oam_entry(&mut self, entry_number: u8) -> OAMEntry {
