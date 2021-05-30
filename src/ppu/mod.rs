@@ -1,4 +1,9 @@
 mod byte;
+mod mode;
+
+use mode::Mode;
+use byte::lcdc::LCDC;
+use crate::ppu::byte::Byte;
 
 const V_RAM_SIZE: usize = 0x2000;
 const   OAM_SIZE: usize = 0x0100;
@@ -14,13 +19,7 @@ pub const HEIGHT: usize = 144;
 #[allow(dead_code)]
 pub const WIDTH: usize = 160;
 
-#[allow(dead_code)]
-enum Mode {
-    Mode0,  // HBlank Period
-    Mode1,  // VBlank Period
-    Mode2,  // Searching OAM Period
-    Mode3   // Transferring Data to LCD Controller
-}
+
 
 
 pub struct PPU {
@@ -30,7 +29,7 @@ pub struct PPU {
      oam: [u8; OAM_SIZE],       // OAM / Sprite Attribute Table
     lcd_enabled: bool,          // Status of the PPU / LCD ; true = on, false = off
 
-    lcdc: u8,       // 0xFF40 : lcdc Register : LCD C(ontrol) Register
+    lcdc: LCDC,     // 0xFF40 : lcdc Register : LCD C(ontrol) Register
     lcds: u8,       // 0xFF41 : LCDS Register : LCD S(tatus) Register
      scy: u8,       // 0xFF42 : Scroll Y
      scx: u8,       // 0xFF43 : Scroll X
@@ -70,7 +69,7 @@ impl PPU {
              oam: [0; OAM_SIZE],
             lcd_enabled: true,
 
-            lcdc: 0,
+            lcdc: LCDC::new(),
             lcds: 0,
              scy: 0,
              scx: 0,
@@ -89,7 +88,7 @@ impl PPU {
         match address {
             0x8000 ..= 0x9FFF => self.vram[PPU::addr_into_vram_space(address)],
             0xFE00 ..= 0xFE9F => self.oam[PPU::addr_into_oam_space(address)],
-            0xFF40 => self.lcdc,
+            0xFF40 => self.lcdc.read(),
             0xFF41 => self.lcds,
             0xFF42 => self.scy,
             0xFF43 => self.scx,
@@ -182,7 +181,7 @@ impl PPU {
             _ => panic!("arithmetic failure")
         }
 
-        self.lcdc = value;
+        self.lcdc.write(value);
     }
 
     /// Returns the bg palette color in 00 ..= 11 associated with given 00 ..= 11
@@ -224,51 +223,6 @@ impl PPU {
     pub fn get_tile_map_1(&self) -> Vec<u8> {
         self.vram[0x1c00..0x1FFF].to_vec()
     }
-
-    /// Check if the LCD is ON and PPU is active
-    /// Returns true if the register bit is set and false otherwise
-    #[allow(dead_code)]
-    pub fn lcdc_lcd_enable(&self) -> bool{self.lcdc & 0x80 == 0x80}
-
-    /// Window tile map area
-    /// if the bit is set the tile map area is 9C00-9FFF otherwise it's 9800-9BFF
-    /// Controls the background map the window uses for rendering
-    #[allow(dead_code)]
-    pub fn lcdc_window_tile_map_area(&self) -> bool{self.lcdc & 0x40 == 0x40}
-
-    /// Window enable
-    /// Controls whether the window shall be displayed or not.
-    #[allow(dead_code)]
-    pub fn lcdc_window_enabled(&self) -> bool{self.lcdc & 0x20 == 0x20}
-
-    /// BG and Window Tile Data Area
-    /// controls which addressing mode the BG and Window use to pick tiles
-    /// 0 = 9800 - 9BFF, 1 = 9C00 - 9FFF
-    #[allow(dead_code)]
-    pub fn lcdc_bg_window_tile_area(&self) -> bool{self.lcdc & 0x10 == 0x10}
-
-    /// BG Tile Map Area
-    /// Similar to the window tile map area
-    /// if the bit is set the tile map area is 9C00-9FFF otherwise it's 9800-9BFF
-    #[allow(dead_code)]
-    pub fn lcdc_bg_tile_map_area(&self) -> bool{self.lcdc & 0x08 == 0x08}
-
-    /// OBJ Size
-    /// Controls sprite size
-    /// 0 = 1 tile, 1 = 2 tiles (stacked vertically)
-    #[allow(dead_code)]
-    pub fn lcdc_obj_size(&self) -> bool{self.lcdc & 0x04 == 0x04}
-
-    /// OBJ Enable
-    /// Toggles whether sprites are displayed or not
-    #[allow(dead_code)]
-    pub fn lcdc_obj_enable(&self) -> bool{self.lcdc & 0x02 == 0x02}
-
-    /// BG and Window enable/priority
-    /// This has different meanings depending on the gameboy type and mode
-    /// [For more Info](https://gbdev.io/pandocs/LCDC.html#lcdc0---bg-and-window-enablepriority)
-    #[allow(dead_code)]
-    pub fn lcdc_zero_bit(&self) -> bool{self.lcdc & 0x01 == 0x01}
 
     /// LYC = LY STATE Interrupt Source
     #[allow(dead_code)]

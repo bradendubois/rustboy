@@ -1,20 +1,92 @@
 use crate::ppu::byte::Byte;
 
+// Ranges for the window tile map
+const WINDOW_TILE_MAP_DISPLAY_SELECT_0: (u16, u16) = (0x9800, 0x9BFF);
+const WINDOW_TILE_MAP_DISPLAY_SELECT_1: (u16, u16) = (0x9C00, 0x9FFF);
+
+// Ranges for the background and window tile data
+const BG_WINDOW_TILE_DATA_SELECT_0: (u16, u16) = (0x8800, 0x97FF);
+const BG_WINDOW_TILE_DATA_SELECT_1: (u16, u16) = (0x8000, 0x8FFF);
+
+// Ranges for the background tile map
+const BG_TILE_MAP_DISPLAY_SELECT_0: (u16, u16) = (0x9800, 0x9BFF);
+const BG_TILE_MAP_DISPLAY_SELECT_1: (u16, u16) = (0x9C00, 0x9FFF);
+
+
+// Valid Object (Sprite) dimensions
+const OBJ_8_8: (u8, u8) = (8, 8);
+const OBJ_8_16: (u8, u8) = (8, 16);
+
+
 // Fields taken from: http://bgb.bircd.org/pandocs.htm#lcdcontrolregister
 pub struct LCDC {
 
     // Dissected 8-bit value interpretation
     lcd_display_enable: bool,
-    window_tile_map_display_select: u16,
+    window_tile_map_display_select: (u16, u16),
     window_display_enable: bool,
-    bg_window_tile_data_select: u16,
-    bg_tile_map_display_select: u16,
+    bg_window_tile_data_select: (u16, u16),
+    bg_tile_map_display_select: (u16, u16),
     obj_size: (u8, u8),
     obj_display_enable: bool,
     bg_display: bool,
 
     // Real 8-bit value written
     value: u8
+}
+
+
+impl LCDC {
+
+    pub fn new() -> LCDC {
+        LCDC {
+            lcd_display_enable: false,
+            window_tile_map_display_select: WINDOW_TILE_MAP_DISPLAY_SELECT_0,
+            window_display_enable: false,
+            bg_window_tile_data_select: BG_WINDOW_TILE_DATA_SELECT_0,
+            bg_tile_map_display_select: BG_TILE_MAP_DISPLAY_SELECT_0,
+            obj_size: OBJ_8_8,
+            obj_display_enable: false,
+            bg_display: false,
+            value: 0
+        }
+    }
+
+
+    /// Check if the LCD is ON and PPU is active
+    /// Returns true if the register bit is set and false otherwise
+    pub fn lcd_display_enable(&self) -> bool { self.lcd_display_enable }
+
+    /// Window tile map area
+    /// if the bit is set the tile map area is 9C00-9FFF otherwise it's 9800-9BFF
+    /// Controls the background map the window uses for rendering
+    pub fn window_tile_map_display_select(&self) -> (u16, u16) { self.window_tile_map_display_select }
+
+    /// Window enable
+    /// Controls whether the window shall be displayed or not.
+    pub fn window_display_enable(&self) -> bool { self.window_display_enable }
+
+    /// BG and Window Tile Data Area
+    /// controls which addressing mode the BG and Window use to pick tiles
+    pub fn bg_window_tile_data_select(&self) -> (u16, u16) { self.bg_window_tile_data_select }
+
+    /// BG Tile Map Area
+    /// Similar to the window tile map area
+    pub fn bg_tile_map_display_select(&self) -> (u16, u16) { self.bg_tile_map_display_select }
+
+    /// OBJ Size
+    /// Controls sprite size
+    pub fn obj_size(&self) -> (u8, u8) { self.obj_size }
+
+    /// OBJ Enable
+    /// Toggles whether sprites are displayed or not
+    pub fn obj_display_enable(&self) -> bool { self.obj_display_enable }
+
+    /// BG and Window enable/priority
+    /// This has different meanings depending on the gameboy type and mode
+    /// [For more Info](https://gbdev.io/pandocs/LCDC.html#lcdc0---bg-and-window-enablepriority)
+    pub fn bg_display(&self) -> bool { self.bg_display }
+
 }
 
 impl Byte for LCDC {
@@ -32,8 +104,8 @@ impl Byte for LCDC {
 
         // Bit 6
         self.window_tile_map_display_select = match value & 0x40 != 0 {
-            false => 0x9800,
-            true  => 0x9C00
+            false => WINDOW_TILE_MAP_DISPLAY_SELECT_0,
+            true  => WINDOW_TILE_MAP_DISPLAY_SELECT_1
         };
 
         // Bit 5
@@ -41,20 +113,20 @@ impl Byte for LCDC {
 
         // Bit 4
         self.bg_window_tile_data_select = match value & 0x10 != 0 {
-            false => 0x8800,
-            true  => 0x8000
+            false => BG_WINDOW_TILE_DATA_SELECT_0,
+            true  => BG_WINDOW_TILE_DATA_SELECT_1
         };
 
         // Bit 3
         self.bg_tile_map_display_select = match value & 0x08 != 0 {
-            false => 0x9800,
-            true  => 0x9C00
+            false => BG_TILE_MAP_DISPLAY_SELECT_0,
+            true  => BG_TILE_MAP_DISPLAY_SELECT_1
         };
 
         // Bit 2
         self.obj_size = match value & 0x04 != 0 {
-            false => (8,  8),
-            true  => (8, 16)
+            false => OBJ_8_8,
+            true  => OBJ_8_16
         };
 
         // Bit 1
