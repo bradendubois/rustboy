@@ -114,6 +114,7 @@ impl PPU {
 
     pub fn write(&mut self, value: u8, address: u16) {
 
+        // TODO - Add checks on VRAM / OAM against MODE to ensure access is possible
         match address {
             0x8000 ..= 0x9FFF => self.vram[PPU::addr_into_vram_space(address)] = value,
             0xFE00 ..= 0xFE9F => self.oam[PPU::addr_into_oam_space(address)] = value,
