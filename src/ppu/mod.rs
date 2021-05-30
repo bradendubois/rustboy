@@ -1,3 +1,5 @@
+mod byte;
+
 const V_RAM_SIZE: usize = 0x2000;
 const   OAM_SIZE: usize = 0x0100;
 
@@ -28,7 +30,7 @@ pub struct PPU {
      oam: [u8; OAM_SIZE],       // OAM / Sprite Attribute Table
     lcd_enabled: bool,          // Status of the PPU / LCD ; true = on, false = off
 
-    lcdc: u8,       // 0xFF40 : LCDC Register : LCD C(ontrol) Register
+    lcdc: u8,       // 0xFF40 : lcdc Register : LCD C(ontrol) Register
     lcds: u8,       // 0xFF41 : LCDS Register : LCD S(tatus) Register
      scy: u8,       // 0xFF42 : Scroll Y
      scx: u8,       // 0xFF43 : Scroll X
@@ -56,6 +58,7 @@ pub struct OAMEntry {
     tile_number: u8,    // Tile Number
     flags: OAMFlags     // Flags
 }
+
 
 
 impl PPU {
@@ -129,6 +132,8 @@ impl PPU {
 
         // TODO - Flesh this out as we read
 
+
+
         // clear_screen ?
 
         // draw background ?
@@ -167,7 +172,7 @@ impl PPU {
         address as usize - 0xFE00
     }
 
-    // LCDC
+    // lcdc
 
     pub fn write_lcdc(&mut self, value: u8) {
 
