@@ -82,8 +82,9 @@ impl LR35902 {
         // Adjust clock and program counter (PC)
         self.clock += cycles as u64;
 
-        // Run the PPU for this many cycles
-        self.ppu.run_for(cycles);
+        // The PPU runs at a clock rate of 4.2 MHz, while the LR35902 runs at 1.05 MHz
+        //  Each cycle run by the CPU corresponds to 4 PPU cycles
+        self.ppu.run_for(cycles * 4);
     }
 
     /*************************/

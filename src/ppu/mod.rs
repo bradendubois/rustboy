@@ -1,16 +1,14 @@
-mod byte;
+use crate::mmu::byte::Byte;
+
 mod mode;
-mod oam;
-
-use byte::{
-    lcdc::LCDC,
-    lcds::LCDS
-};
-
 use mode::{Mode, Mode::*};
+
+mod oam;
 use oam::{OAMEntry, OAMFlags};
 
-use crate::ppu::byte::Byte;
+mod registers;
+use registers::lcdc::LCDC;
+use registers::lcds::LCDS;
 
 const V_RAM_SIZE: usize = 0x2000;
 const   OAM_SIZE: usize = 0x0100;
@@ -27,15 +25,21 @@ pub const HEIGHT: usize = 144;
 pub const WIDTH: usize = 160;
 
 
+const CYCLES_PER_LINE: u64 = 114;
+const   V_BLANK_LINES: u8 = 10;
 
 
 #[allow(dead_code)]
 pub struct PPU {
+
+    clock: u64,     // Behaves as a counter of how many cycles / ticks have occurred, used to determine
+                    // an appropriate "mode" to switch to at a given point
+
     mode: Mode,                 // PPU Mode
     vram: [u8; V_RAM_SIZE],     // VRAM
      oam: [u8; OAM_SIZE],       // OAM / Sprite Attribute Table
 
-    lcdc: LCDC,     // 0xFF40 : lcdc Register : LCD C(ontrol) Register
+    lcdc: LCDC,     // 0xFF40 : LCDC Register : LCD C(ontrol) Register
     lcds: LCDS,     // 0xFF41 : LCDS Register : LCD S(tatus) Register
      scy: u8,       // 0xFF42 : Scroll Y
      scx: u8,       // 0xFF43 : Scroll X
@@ -54,6 +58,8 @@ impl PPU {
 
     pub fn new() -> PPU {
         PPU {
+            clock: 0,
+
             mode: Mode0,
             vram: [0; V_RAM_SIZE],
              oam: [0; OAM_SIZE],
@@ -160,13 +166,39 @@ impl PPU {
     /// 'Main' Execution - run the PPU for a given number of cycles
     pub fn run_for(&mut self, cycles: u64) {
 
+        // Display is turned off
+        if !self.lcdc.lcd_display_enable() {
+            return
+        }
+
         let mut cycles_left = cycles;
 
-        while cycles_left {
+        while cycles_left > 0 {
 
-            // TODO
+            let current = std::cmp::min(cycles, 80);
 
-            cycles_left -= 1;
+            // Any amount of "cycles given" should be cleanly divisible by 4, as the CPU will call
+            //  this function, and should 'scale' the cycles by 4, to correspond with the difference
+            //  between the CPU and PPU in clock speed
+            assert_eq!(current % 4, 0);
+            self.clock += current / 4;
+
+            // One horizontal row is completed, as one horizontal row takes 114 cycles
+            //  1 row = 20 cycles (OAM Search) + ~43 cycles (Pixel Transfer) + ~51 cycles (H-Blank)
+            if self.clock >= CYCLES_PER_LINE {
+                self.clock %= CYCLES_PER_LINE;
+
+                // Advance to next line (wrapping "around" back to top if necessary)
+                self.ly += 1;
+                self.ly %= (HEIGHT as u8) + V_BLANK_LINES;
+
+                // If toggled, check for lyc interrupt
+                if self.lcds.lyc_interrupt() && self.ly == self.lyc {
+                    
+                }
+            }
+
+            cycles_left -= current;
         }
     }
 
@@ -201,6 +233,7 @@ impl PPU {
         }
 
         // Order based on x position, as the 'first' (from the left) 10 sprites should be shown
+        // TODO - Perhaps it's really just the first 10 from the start of the OAM, no search?
         visible.sort_by(|a, b| b.x.cmp(&a.x));
 
         // GameBoy can only have up to 10 sprites per line, remove (don't draw) anything to the

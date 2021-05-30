@@ -1,4 +1,4 @@
-use crate::ppu::byte::Byte;
+use crate::mmu::byte::Byte;
 use crate::ppu::Mode;
 
 // Fields taken from: http://bgb.bircd.org/pandocs.htm#lcdstatusregister

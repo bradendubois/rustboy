@@ -1,3 +1,4 @@
+pub mod byte;
 mod mbc;
 mod memory_map;
 

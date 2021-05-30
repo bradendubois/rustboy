@@ -1,4 +1,4 @@
-use crate::ppu::byte::Byte;
+use crate::mmu::byte::Byte;
 
 // Ranges for the window tile map
 const WINDOW_TILE_MAP_DISPLAY_SELECT_0: (u16, u16) = (0x9800, 0x9BFF);
@@ -76,7 +76,6 @@ impl LCDC {
             value: 0
         }
     }
-
 
     /// Check if the LCD is ON and PPU is active
     /// Returns true if the register bit is set and false otherwise
