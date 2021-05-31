@@ -99,6 +99,7 @@ impl PPU {
         }
     }
 
+
     pub fn read(&mut self, address: u16) -> u8 {
 
         match address {
@@ -308,7 +309,7 @@ impl PPU {
         }
 
         // Order based on x position, as the 'first' (from the left) 10 sprites should be shown
-        // TODO - Perhaps it's really just the first 10 from the start of the OAM, no search?
+        // TODO - Perhaps it's really just the first 10 from the start of the OAM, no sort?
         visible.sort_by(|a, b| b.x.cmp(&a.x));
 
         // GameBoy can only have up to 10 sprites per line, remove (don't draw) anything to the
@@ -318,11 +319,177 @@ impl PPU {
         }
 
         // 2 - Pixel Transfer
-        let clear_bg = (0..WIDTH).into_iter().map(|x| (Point::new(x as u32 as i32, self.ly as u32 as i32), Color::RGB(0, 0, 0))).collect();
-        self.display.draw(clear_bg);
+
+        // 2.a - Clear Background
+
+        let mut clear_pixels = Vec::new();
+        for i in 0..WIDTH {
+            clear_pixels.push((Point::new(i as u32 as i32, self.ly as u32 as i32), Color::RGB(255, 255, 255)));
+        }
+        // self.display.draw(clear_pixels);
+
+        // let clear_bg = (0..WIDTH).into_iter().map(|x| (Point::new(x as u32 as i32, self.ly as u32 as i32), Color::RGB(0, 0, 0))).collect();
+        //self.display.draw(clear_bg);
+
+        // 2.b - Background
+        let background_pixels = self.background_pixels();
+        // self.display.draw(background_pixels);
+
+        // 2.c - Objects
+        let object_pixels = self.object_pixels(visible);
+        // self.display.draw(object_pixels);
+
+        let mut dump = Vec::new();
+        for y in 0..18 {
+            for x in 0..20 {
+
+                let start = 0x8000 as u16 + (y * 16 * 18) + (x * 16);
+                let dx = (x * 8) as u32 as i32 - 8;
+                let dy = (y * 8) as u32 as i32 - 16;
+
+                for oy in 0..8 {
+
+                    println!("{:#06X} {:#06X}", start + (oy * 2), start + (oy * 2) + 1);
+
+                    let txt1 = self.read(start + (oy * 2));
+                    let txt2 = self.read(start + (oy * 2) + 1);
+
+                    println!("{:#010b} {:#010b}", txt1, txt2);
+
+                    for ox in 0..8 {
+
+                        let v0 = if (txt1 & (0x80 >> ox)) != 0 { 1 } else { 0 };
+                        let v1 = if (txt2 & (0x80 >> ox)) != 0 { 1 } else { 0 };
+
+                        let v = v0 << 1 | v1;
+
+                        let color = match v {
+                            0b00 => Color::RGB(0, 0, 0),
+                            0b01 => Color::RGB(60, 60, 60),
+                            0b10 => Color::RGB(120, 120, 120),
+                            0b11 => Color::RGB(180, 180, 180),
+                            _ => panic!("{}", v)
+                        };
+
+                        dump.push((Point::new(dx + ox as u32 as i32,  dy + oy as u32 as i32), color));
+
+                    }
+                }
+            }
+        }
+
+        // println!("{:?}", dump);
+
+        self.display.draw(dump);
 
         // 3 - H-Blank
     }
+
+
+    fn object_pixels(&mut self, visible: Vec<OAMEntry>) -> Vec<(Point, Color)> {
+
+        let mut pixels = Vec::new();
+
+        if visible.len() > 0 {
+            println!("******************************** active sprites");
+        }
+
+        for object in visible.iter() {
+
+            let destination_x = ((object.x as i8) - 8) as i32;
+            let destination_y = ((object.y as i8) - 16) as i32;
+
+            let obj_y = match object.flags.flip_y {
+                true  => self.lcdc.obj_size().1 - 1 - (self.ly - object.y),
+                false => self.ly - object.y
+            };
+
+            assert!(obj_y >= 0 && obj_y < 16);
+
+            for x in 0..8 {
+
+                if object.x + x < 0 || object.x + x >= WIDTH as u8 {
+                    continue;
+                }
+
+                let col = match object.flags.flip_x {
+                    true => 7 - x,
+                    false => x
+                };
+
+                let address = 0x8000 as u16 + (object.tile_number * 16) as u16 + (obj_y * 2) as u16;
+
+                let object_bytes = (self.read(address), self.read(address + 1));
+
+                let color = (object_bytes.0 & (1 << col)) << 1 | (object_bytes.1 & (1 << col));
+
+                // Translucent
+                if color == 0b00 {
+                    continue;
+                }
+
+                // TODO - Connect to "real" palette
+                let color = match color {
+
+                    0b01 => Color::RGB(80, 80, 80),
+                    0b10 => Color::RGB(140, 140, 140),
+                    0b11 => Color::RGB(200, 200, 200),
+
+                    _ => panic!("impossible color: {}", color)
+                };
+
+                pixels.push((Point::new(destination_x, destination_y), color));
+            }
+        }
+
+        pixels
+    }
+
+    fn background_pixels(&mut self) -> Vec<(Point, Color)> {
+
+        let mut pixels: Vec<(Point, Color)> = Vec::new();
+
+        if !self.lcdc.bg_display() {
+            return pixels
+        }
+
+        let y = self.ly as i32 - self.wy as i32;
+
+        if y < 0 {
+            return pixels
+        }
+
+        /*
+        let sprite_bytes = match self.lcdc.bg_window_tile_data_select().0 {
+
+            // "8000" method
+            0x8000 => {
+
+                let base_tile_address = object.tile_number as u16;
+                let address = base_tile_address * 16 + (object_data_y * 2) as u16;
+                let address = 0x8000 + address as u16;
+
+                (self.read(address),  self.read(address + 1))
+            },
+
+            // "8800" method
+            0x8800 => {
+
+                let base_tile_address = (object.tile_number * 16) as i16;
+                let address = (0x9000 as i32 + base_tile_address as i32) as u16 + (object_data_y * 2) as u16;
+
+                (self.read(address), self.read(address + 1))
+            },
+
+            _ => panic!("impossible addressing method: {:?}", self.lcdc.bg_window_tile_data_select())
+        };
+
+         */
+
+        pixels
+
+    }
+
 
     fn oam_entry(&mut self, entry_number: u8) -> OAMEntry {
         assert!(entry_number < 40, "asking for entry number beyond 40");
@@ -336,10 +503,10 @@ impl PPU {
              x: self.read(oam_address + 1),
             tile_number: self.read(oam_address + 2),
                   flags: OAMFlags {
-                      priority: (flags & 0x80) >> 7,
-                        flip_y: (flags & 0x40) >> 6,
-                        flip_x: (flags & 0x20) >> 5,
-                       palette: (flags & 0x10) >> 4
+                      priority: (flags & 0x80) >> 7 != 0,
+                        flip_y: (flags & 0x40) >> 6 != 0,
+                        flip_x: (flags & 0x20) >> 5 != 0,
+                       palette: (flags & 0x10) >> 4 != 0
                   }
         }
     }

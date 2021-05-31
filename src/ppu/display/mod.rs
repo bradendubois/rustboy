@@ -56,7 +56,7 @@ impl Screen {
 
     pub fn draw(&mut self, pixels: Vec<(Point, Color)>) {
 
-        for (point, color) in row.iter() {
+        for (point, color) in pixels.iter() {
             self.canvas.set_draw_color(*color);
             self.canvas.draw_point(*point);
         }
