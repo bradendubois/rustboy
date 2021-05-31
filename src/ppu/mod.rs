@@ -11,6 +11,9 @@ mod display;
 
 use registers::lcdc::LCDC;
 use registers::lcds::LCDS;
+use std::ops::Range;
+use sdl2::rect::Point;
+use sdl2::pixels::Color;
 
 const V_RAM_SIZE: usize = 0x2000;
 const   OAM_SIZE: usize = 0x0100;
@@ -244,7 +247,10 @@ impl PPU {
                 self.enter_mode(target_mode);
             }
 
-            cycles_left -= current;
+            cycles_left = match cycles_left.checked_sub(current) {
+                Some(i) => i,
+                None => 0
+            };
         }
     }
 
@@ -283,18 +289,6 @@ impl PPU {
         self.mode = mode;
     }
 
-    fn draw_screen(&mut self) {
-
-
-        // TODO - Flesh this out as we read
-
-        // clear_screen ?
-
-        // draw background ?
-
-        // draw sprites ?
-    }
-
     fn draw_row(&mut self) {
 
         let h = self.lcdc.obj_size().1;
@@ -324,6 +318,8 @@ impl PPU {
         }
 
         // 2 - Pixel Transfer
+        let clear_bg = (0..WIDTH).into_iter().map(|x| (Point::new(x as u32 as i32, self.ly as u32 as i32), Color::RGB(0, 0, 0))).collect();
+        self.display.draw(clear_bg);
 
         // 3 - H-Blank
     }

@@ -141,8 +141,14 @@ impl MMU {
     fn read_io_registers(&mut self, address: u16) -> u8 {
         match address {
 
+            0xFF00 => { println!("unimplemented joypad"); 0 },
+
             0xFF01 => { println!("unimplemented serial data transfer"); 0 },
             0xFF02 => { println!("unimplemented serial transfer control"); 0 },
+
+            0xFF04 ..= 0xFF07 => { println!("unimplemented timer!"); 0 },
+
+            0xFF10 ..= 0xFF3F => { println!("unimplemented sound!"); 0 },
 
             0xFF40 ..= 0xFF4F => self.ppu.read(address),
 
@@ -155,8 +161,14 @@ impl MMU {
     fn write_io_registers(&mut self, value: u8, address: u16) {
         match address {
 
+            0xFF00 => println!("unimplemented joypad : {}", value),
+
             0xFF01 => println!("unimplemented serial data transfer : {}", value),
             0xFF02 => println!("unimplemented serial transfer control : {}", value),
+
+            0xFF04 ..= 0xFF07 => { println!("unimplemented timer! {:#06X}", address); },
+
+            0xFF10 ..= 0xFF3F => { println!("unimplemented sound! {:#06X}", address); },
 
             0xFF40 ..= 0xFF4F => self.ppu.write(value, address),
 
