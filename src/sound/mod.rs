@@ -68,4 +68,14 @@ impl Sound {
             sound_on_off: 0
         }
     }
+
+    pub fn read(&self, address: u16) -> u8 {
+        let _addr = address;
+        0
+    }
+
+    pub fn write(&mut self, value: u8, address: u16) {
+        let _val = value;
+        let _addr = address;
+    }
 }
