@@ -1,6 +1,7 @@
 mod instructions;
 mod status;
 mod registers;
+mod ime;
 
 use std::fmt;
 
@@ -10,6 +11,7 @@ use registers::Registers;
 use super::mmu;
 
 use crate::cartridge::Cartridge;
+use crate::lr35902::ime::IME;
 
 
 // Struct representing the LR35902 CPU
@@ -23,6 +25,9 @@ pub struct LR35902 {
 
     // Enum representing the LR35902's current running status
     pub status: Status,
+
+    // IME - Interrupt Master Enable Flag
+    ime: IME,
 
     // Struct representing the clock of the LR35902 for purposes of timing
     pub clock: u64,
@@ -41,10 +46,10 @@ impl LR35902 {
             mmu: mmu::MMU::new(cartridge),
             registers: Registers::new(),
             status: Status::RUNNING,
+            ime: IME::Enabled,
             clock: 0,
             use_cb_table: false,
         }
-
     }
 
     /// Run the cycle until otherwise halted / interrupted by an interrupt / exception
@@ -62,6 +67,15 @@ impl LR35902 {
 
     /// Run one step the CPU, fetching/decoding/executing at the PC
     pub fn step(&mut self) {
+
+        // The IME has a delay of one cycle, so when 're-enabled' there must be a delay
+        //  before actually re-enabling it.
+        self.ime = match self.ime {
+            IME::Disabled => IME::Disabled,
+            IME::OneCycleDelay => IME::ReadyToEnable,
+            IME::ReadyToEnable => IME::Enabled,
+            IME::Enabled => IME::Enabled
+        };
 
         // println!("program counter: {:#06X}", self.registers.pc);
 
@@ -648,17 +662,17 @@ impl LR35902 {
 
     /// Get the Interrupt Master Enable flag
     pub fn is_ime(&self) -> bool {
-        self.registers.ime
+        self.ime == IME::Enabled
     }
 
     /// Set the Interrupt Master Enable flag
     pub fn set_ime(&mut self) {
-        self.registers.ime = true;
+        self.ime = IME::OneCycleDelay;
     }
 
     /// Unset the IME flag
     pub fn unset_ime(&mut self) {
-        self.registers.ime = false;
+        self.ime = IME::Disabled;
     }
 }
 
