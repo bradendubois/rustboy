@@ -10,6 +10,8 @@ use std::fmt;
 use crate::cartridge::Cartridge;
 use crate::ppu::PPU;
 use crate::sound::Sound;
+use crate::timer::Timer;
+use crate::joypad::Joypad;
 
 const W_RAM_SIZE: usize = 0x8000;
 const H_RAM_SIZE: usize = 0x7F;
@@ -19,7 +21,6 @@ const H_RAM_SIZE: usize = 0x7F;
 pub struct MMU {
     in_bios: bool,
     bios: Vec<u8>,
-    rom: Vec<u16>,
 
     w_ram: [u8; W_RAM_SIZE],
     w_ram_bank: usize,
@@ -28,9 +29,13 @@ pub struct MMU {
 
     mbc: Box<dyn MBC>,
 
-    pub ppu: PPU,
+    ppu: PPU,
 
-    pub apu: Sound,
+    apu: Sound,
+
+    timer: Timer,
+
+    joypad: Joypad,
 
     // Corresponds to the IF (Interrupt Flag R/W) Register at 0xFF0F
     interrupt_flag: interrupt_flag::InterruptFlag,
@@ -48,7 +53,6 @@ impl MMU {
         let mut mmu = MMU {
             in_bios: false,
             bios: vec![],
-            rom: vec![],
 
             w_ram: [0; W_RAM_SIZE],
             w_ram_bank: 1,
@@ -68,6 +72,10 @@ impl MMU {
             ppu: PPU::new(),
 
             apu: Sound::new(),
+
+            timer: Timer::new(),
+
+            joypad: Joypad::new(),
 
             // TODO These need the PPU or something similar, but can't move PPU
             interrupt_flag: interrupt_flag::InterruptFlag::new(),
@@ -94,7 +102,7 @@ impl MMU {
             0xE000 ..= 0xEFFF => self.read_ram(address),                    // Internal RAM
             0xF000 ..= 0xFDFF => self.read_rambank(address),                // Echo RAM
             0xFE00 ..= 0xFE9F => self.ppu.read(address),                    // Sprite Attributes
-            0xFEA0 ..= 0xFEFF => 0,                                         // Unusable
+            0xFEA0 ..= 0xFEFF => 0xFF,                                      // Unusable
             0xFF00 ..= 0xFF7F => self.read_io_registers(address),           // I/O Registers
             0xFF80 ..= 0xFFFE => self.read_hram(address),                   // High RAM
             0xFFFF ..= 0xFFFF => self.interrupt_enable.read(),              // Interrupt Register
@@ -126,6 +134,12 @@ impl MMU {
 
             _ => panic!("Unmapped address {:#06X}", address)
         };
+    }
+
+    // PPU
+
+    pub fn run_ppu(&mut self, cycles: u64) {
+        self.ppu.run_for(cycles);
     }
 
     // RAM
@@ -193,25 +207,21 @@ impl MMU {
 
     fn read_io_registers(&mut self, address: u16) -> u8 {
         match address {
-
-            0xFF00 => { /* println!("unimplemented joypad"); */ 0 },
+            0xFF00 => self.joypad.read(),
 
             0xFF01 => { /* println!("unimplemented serial data transfer"); */ 0 },
             0xFF02 => { /* println!("unimplemented serial transfer control"); */ 0 },
 
-            0xFF03 => 0xFF, //unmapped
-
-
-            0xFF04 ..= 0xFF07 => { /* println!("unimplemented timer!"); */ 0 },
-
-            0xFF08 ..= 0xFF0E => 0xFF, // unmapped
+            0xFF03 ..= 0xFF03 => 0xFF,                                      //unmapped
+            0xFF04 ..= 0xFF07 => self.timer.read(address),
+            0xFF08 ..= 0xFF0E => 0xFF,                                      // unmapped
             0xFF0F ..= 0xFF0F => self.interrupt_flag.read(),
             0xFF10 ..= 0xFF14 => self.apu.read(address),
-            0xFF15 ..= 0xFF15 => 0xFF, // unmapped
+            0xFF15 ..= 0xFF15 => 0xFF,                                      // unmapped
             0xFF16 ..= 0xFF1E => self.apu.read(address),
-            0xFF1F ..= 0xFF1F => 0xFF, // unmapped
+            0xFF1F ..= 0xFF1F => 0xFF,                                      // unmapped
             0xFF20 ..= 0xFF26 => self.apu.read(address),
-            0xFF27 ..= 0xFF2F => 0xFF, // unmapped
+            0xFF27 ..= 0xFF2F => 0xFF,                                      // unmapped
             0xFF30 ..= 0xFF3F => self.apu.read(address),
             0xFF40 ..= 0xFF4F => self.ppu.read(address),
             0xFF50 ..= 0xFF50 => 0xFF, // (), // TODO - Boot ROM Control
@@ -223,24 +233,21 @@ impl MMU {
 
     fn write_io_registers(&mut self, value: u8, address: u16) {
         match address {
-
-            0xFF00 => (),// println!("unimplemented joypad : {}", value),
+            0xFF00 => self.joypad.write(value),
 
             0xFF01 => (),//println!("unimplemented serial data transfer : {}", value),
             0xFF02 => (),//println!("unimplemented serial transfer control : {}", value),
 
-            0xFF03 => (),    // Unimplemented!
-
-            0xFF04 ..= 0xFF07 => { /* println!("unimplemented timer!"); */  },
-
-            0xFF08 ..= 0xFF0E => (), // unmapped
+            0xFF03 => (),                                                   // unmapped
+            0xFF04 ..= 0xFF07 => self.timer.write(value, address),
+            0xFF08 ..= 0xFF0E => (),                                        // unmapped
             0xFF0F ..= 0xFF0F => self.interrupt_flag.write(value),
             0xFF10 ..= 0xFF14 => self.apu.write(value, address),
-            0xFF15 ..= 0xFF15 => (), // unmapped
+            0xFF15 ..= 0xFF15 => (),                                        // unmapped
             0xFF16 ..= 0xFF1E => self.apu.write(value, address),
-            0xFF1F ..= 0xFF1F => (), // unmapped
+            0xFF1F ..= 0xFF1F => (),                                        // unmapped
             0xFF20 ..= 0xFF26 => self.apu.write(value, address),
-            0xFF27 ..= 0xFF2F => (), // unmapped
+            0xFF27 ..= 0xFF2F => (),                                        // unmapped
             0xFF30 ..= 0xFF3F => self.apu.write(value, address),
             0xFF40 ..= 0xFF4F => self.ppu.write(value, address),
             0xFF50 ..= 0xFF50 => (), // TODO - Boot ROM Control / DMA

@@ -1,3 +1,5 @@
+
+#[allow(dead_code)]
 pub struct Timer {
     divider_register: u8,   // 0xFF04 - DIV
     timer_counter: u8,      // 0xFF05 - TIMA

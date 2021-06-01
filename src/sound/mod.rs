@@ -1,3 +1,5 @@
+
+#[allow(dead_code)]
 pub struct Sound {
 
     // Channel 1 : Tone & Sweep - 0xFF10-0xFF14

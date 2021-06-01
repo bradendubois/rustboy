@@ -8,7 +8,6 @@ use status::Status;
 use registers::Registers;
 
 use super::mmu;
-use super::ppu;
 
 use crate::cartridge::Cartridge;
 
@@ -81,7 +80,7 @@ impl LR35902 {
 
         // The PPU runs at a clock rate of 4.2 MHz, while the LR35902 runs at 1.05 MHz
         //  Each cycle run by the CPU corresponds to 4 PPU cycles
-        self.mmu.ppu.run_for(cycles * 4);
+        self.mmu.run_ppu(cycles * 4);
     }
 
     /*************************/

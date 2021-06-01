@@ -4,6 +4,7 @@ mod cartridge;
 mod ppu;
 mod sound;
 mod timer;
+mod joypad;
 
 use std::{fs::read, env::args};
 
