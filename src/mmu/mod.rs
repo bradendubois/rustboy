@@ -217,8 +217,7 @@ impl MMU {
             0xFF27 ..= 0xFF2F => 0xFF,                              // unmapped
             0xFF30 ..= 0xFF3F => self.apu.read(address),
             0xFF40 ..= 0xFF4F => self.ppu.read(address),
-            0xFF50 ..= 0xFF50 => 0xFF, // (), // TODO - Boot ROM Control
-            0xFFFE => 0xFF,  // Unimplemented!
+            0xFF50 ..= 0xFF50 => if self.in_bios { 1 } else { 0 },
 
             _ => panic!("Unmapped address {:#06X}", address)
         }
@@ -240,8 +239,10 @@ impl MMU {
             0xFF27 ..= 0xFF2F => (),                                        // unmapped
             0xFF30 ..= 0xFF3F => self.apu.write(value, address),
             0xFF40 ..= 0xFF4F => self.ppu.write(value, address),
-            0xFF50 ..= 0xFF50 => (), // TODO - Boot ROM Control / DMA
-            0xFFFE => (), // Unimplemented!
+            0xFF50 ..= 0xFF50 => self.in_bios = self.in_bios && value != 0,
+            0xFF51 ..= 0xFF55 => (),        // Color GB Only - VRAM DMA
+            0xFF68 ..= 0xFF69 => (),        // Color GB Only - BG / OBJ Palettes
+            0xFF70 ..= 0xFF70 => (),        // Color GB Only - WRAM Bank Select
 
             _ => panic!("Unmapped address {:#06X}", address)
         }
