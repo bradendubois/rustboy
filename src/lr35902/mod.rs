@@ -35,11 +35,11 @@ pub struct LR35902 {
 impl LR35902 {
 
     /// Initializer for a LR35902 CPU
-    pub fn new(cartridge: Cartridge, skip_bios: bool) -> LR35902 {
+    pub fn new(cartridge: Cartridge) -> LR35902 {
 
         LR35902 {
             mmu: mmu::MMU::new(cartridge),
-            registers: Registers::new(skip_bios),
+            registers: Registers::new(),
             status: Status::RUNNING,
             clock: 0,
             use_cb_table: false,

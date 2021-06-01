@@ -2125,8 +2125,8 @@ impl LR35902 {
 
     // 0xD9 - RETI
     fn ret_0xd9(&mut self) -> u64 {
-        self.ret();
         self.set_ime();
+        self.ret();
         16
     }
 

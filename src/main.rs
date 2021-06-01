@@ -5,6 +5,7 @@ mod ppu;
 mod sound;
 mod timer;
 mod joypad;
+mod serial;
 
 use std::{fs::read, env::args};
 
@@ -36,7 +37,7 @@ fn main() {
 
     println!("{:?}", cartridge);
 
-    let mut cpu = lr35902::LR35902::new(cartridge, true);
+    let mut cpu = lr35902::LR35902::new(cartridge);
 
     println!("{:?}", cpu);
 

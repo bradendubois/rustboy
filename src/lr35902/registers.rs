@@ -17,46 +17,17 @@ pub struct Registers {
 
 impl Registers {
 
-    pub fn new(skip_bios: bool) -> Registers {
+    pub fn new() -> Registers {
+        Registers {
+            a: 0x01, f: 0xB0,
+            b: 0x00, c: 0x13,
+            d: 0x00, e: 0xD8,
+            h: 0x01, l: 0x4D,
 
-        match skip_bios {
-            true => Registers {
-                a: 0x01,
-                f: 0xB0,
+            pc: 0x0100,
+            sp: 0xFFFE,
 
-                b: 0x00,
-                c: 0x13,
-
-                d: 0x00,
-                e: 0xD8,
-
-                h: 0x01,
-                l: 0x4D,
-
-                pc: 0x0100,
-                sp: 0xFFFE,
-
-                ime: true,
-            },
-
-            false => Registers {
-                a: 0x00,
-                f: 0x00,
-
-                b: 0x00,
-                c: 0x00,
-
-                d: 0x00,
-                e: 0x00,
-
-                h: 0x00,
-                l: 0x00,
-
-                pc: 0x0000,
-                sp: 0xFFFE,
-
-                ime: true,
-            },
+            ime: false,
         }
     }
 }
