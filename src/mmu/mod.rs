@@ -199,22 +199,23 @@ impl MMU {
             0xFF01 => { /* println!("unimplemented serial data transfer"); */ 0 },
             0xFF02 => { /* println!("unimplemented serial transfer control"); */ 0 },
 
-            0xFF03 => 0,    // Unimplemented!
+            0xFF03 => 0xFF, //unmapped
+
 
             0xFF04 ..= 0xFF07 => { /* println!("unimplemented timer!"); */ 0 },
 
-            0xFF08 ..= 0xFF0E => 0,
-
+            0xFF08 ..= 0xFF0E => 0xFF, // unmapped
             0xFF0F ..= 0xFF0F => self.interrupt_flag.read(),
             0xFF10 ..= 0xFF14 => self.apu.read(address),
-            0xFF15 ..= 0xFF15 => 0, // Unimplemented!
+            0xFF15 ..= 0xFF15 => 0xFF, // unmapped
             0xFF16 ..= 0xFF1E => self.apu.read(address),
-            0xFF1F ..= 0xFF1F => 0, // Unimplemented!
+            0xFF1F ..= 0xFF1F => 0xFF, // unmapped
             0xFF20 ..= 0xFF26 => self.apu.read(address),
-            0xFF27 ..= 0xFF2F => 0, // Unimplemented!
+            0xFF27 ..= 0xFF2F => 0xFF, // unmapped
             0xFF30 ..= 0xFF3F => self.apu.read(address),
             0xFF40 ..= 0xFF4F => self.ppu.read(address),
-            0xFF50 ..= 0xFFFE => 0, // Unimplemented!
+            0xFF50 ..= 0xFF50 => 0xFF, // (), // TODO - Boot ROM Control
+            0xFFFE => 0xFF,  // Unimplemented!
 
             _ => panic!("Unmapped address {:#06X}", address)
         }
@@ -232,18 +233,18 @@ impl MMU {
 
             0xFF04 ..= 0xFF07 => { /* println!("unimplemented timer!"); */  },
 
-            0xFF08 ..= 0xFF0E => (),
-
+            0xFF08 ..= 0xFF0E => (), // unmapped
             0xFF0F ..= 0xFF0F => self.interrupt_flag.write(value),
             0xFF10 ..= 0xFF14 => self.apu.write(value, address),
-            0xFF15 ..= 0xFF15 => (), // Unimplemented!
+            0xFF15 ..= 0xFF15 => (), // unmapped
             0xFF16 ..= 0xFF1E => self.apu.write(value, address),
-            0xFF1F ..= 0xFF1F => (), // Unimplemented!
+            0xFF1F ..= 0xFF1F => (), // unmapped
             0xFF20 ..= 0xFF26 => self.apu.write(value, address),
-            0xFF27 ..= 0xFF2F => (), // Unimplemented!
+            0xFF27 ..= 0xFF2F => (), // unmapped
             0xFF30 ..= 0xFF3F => self.apu.write(value, address),
             0xFF40 ..= 0xFF4F => self.ppu.write(value, address),
-            0xFF50 ..= 0xFFFE => (), // Unimplemented!
+            0xFF50 ..= 0xFF50 => (), // TODO - Boot ROM Control / DMA
+            0xFFFE => (), // Unimplemented!
 
             _ => panic!("Unmapped address {:#06X}", address)
         }

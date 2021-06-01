@@ -3,6 +3,7 @@ mod lr35902;
 mod cartridge;
 mod ppu;
 mod sound;
+mod timer;
 
 use std::{fs::read, env::args};
 
