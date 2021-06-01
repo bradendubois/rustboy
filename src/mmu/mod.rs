@@ -9,6 +9,7 @@ use mbc::{MBC, mbc0::{MBC0}};
 use std::fmt;
 use crate::cartridge::Cartridge;
 use crate::ppu::PPU;
+use crate::sound::Sound;
 
 const W_RAM_SIZE: usize = 0x8000;
 const H_RAM_SIZE: usize = 0x7F;
@@ -28,6 +29,8 @@ pub struct MMU {
     mbc: Box<dyn MBC>,
 
     pub ppu: PPU,
+
+    pub apu: Sound,
 
     // Corresponds to the IF (Interrupt Flag R/W) Register at 0xFF0F
     interrupt_flag: interrupt_flag::InterruptFlag,
@@ -63,6 +66,8 @@ impl MMU {
             }),
 
             ppu: PPU::new(),
+
+            apu: Sound::new(),
 
             // TODO These need the PPU or something similar, but can't move PPU
             interrupt_flag: interrupt_flag::InterruptFlag::new(),
