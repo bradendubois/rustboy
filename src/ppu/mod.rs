@@ -130,11 +130,10 @@ impl PPU {
             0xFF43 => self.scx,
             0xFF44 => self.ly,
             0xFF45 => self.lyc,
-
+            0xFF46 => panic!("cannot read DMA register"),
             0xFF47 => self.bgp,
             0xFF48 => self.obp0,
             0xFF49 => self.obp1,
-
             0xFF4A => self.wy,
             0xFF4B => self.wx,
 
@@ -180,6 +179,7 @@ impl PPU {
             0xFF43 => self.scx = value,
             0xFF44 => (),   // read-only
             0xFF45 => self.lyc = value,
+            0xFF46 => self.dma_transfer(value),
             0xFF47 => self.bgp = value,
             0xFF48 => self.obp0 = value,
             0xFF49 => self.obp1 = value,
@@ -188,6 +188,18 @@ impl PPU {
 
             _ => panic!("unmapped address: {}", address)
         }
+    }
+
+
+    pub fn dma_transfer(&mut self, value: u8) {
+        let source = ((value as u16) << 8) * 0x0100;
+
+        for i in 0x00..=0x9F {
+            let read = self.read(source + i as u16);
+            self.write(read, 0xFE00 + i as u16);
+        }
+
+        self.clock += 80;
     }
 
 
