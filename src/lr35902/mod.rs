@@ -59,6 +59,17 @@ impl LR35902 {
 
         while let Status::RUNNING = self.status {
             self.step();
+
+
+            let cycles = self.step();
+            // println!("cycles taken: {}", cycles);
+
+            // Adjust clock and program counter (PC)
+            self.clock += cycles as u64;
+
+            // The PPU runs at a clock rate of 4.2 MHz, while the LR35902 runs at 1.05 MHz
+            //  Each cycle run by the CPU corresponds to 4 PPU cycles
+            self.mmu.run_ppu(cycles * 4);
         }
 
         println!("cpu halted with status: {:?}", self.status);
@@ -66,16 +77,46 @@ impl LR35902 {
 
 
     /// Run one step the CPU, fetching/decoding/executing at the PC
-    pub fn step(&mut self) {
+    pub fn step(&mut self) -> u64 {
 
         // The IME has a delay of one cycle, so when 're-enabled' there must be a delay
         //  before actually re-enabling it.
         self.ime = match self.ime {
-            IME::Disabled => IME::Disabled,
             IME::OneCycleDelay => IME::ReadyToEnable,
             IME::ReadyToEnable => IME::Enabled,
-            IME::Enabled => IME::Enabled
+
+            // No Change
+            IME::Enabled => IME::Enabled,
+            IME::Disabled => IME::Disabled
         };
+
+        // Handle any interrupts
+        if self.ime == IME::Enabled {
+
+            let ff0f = self.mmu.read(0xFF0F);
+            let ffff = self.mmu.read(0xFFFF);
+
+            let interrupts = ff0f & ffff;
+            if interrupts != 0 {
+                let handle = interrupts.trailing_zeros() as u8;
+                self.mmu.write(ff0f & !(1<< handle), 0xFF0F);
+
+                let interrupt_vector: u16 = match handle {
+                    0 => 0x0040,
+                    1 => 0x0048,
+                    2 => 0x0050,
+                    3 => 0x0058,
+                    4 => 0x0060,
+
+                    _ => panic!("invalid interrupt bit: {}", handle)
+                };
+
+                self.call(interrupt_vector);
+                return 4;
+            }
+        }
+
+        // Interrupts disabled, or none to handle
 
         // println!("program counter: {:#06X}", self.registers.pc);
 
@@ -85,16 +126,7 @@ impl LR35902 {
         // println!("fetched instruction: {:#02X}", opcode);
 
         // Execute from standard table
-        let cycles = self.call_instruction(opcode);
-
-        // println!("cycles taken: {}", cycles);
-
-        // Adjust clock and program counter (PC)
-        self.clock += cycles as u64;
-
-        // The PPU runs at a clock rate of 4.2 MHz, while the LR35902 runs at 1.05 MHz
-        //  Each cycle run by the CPU corresponds to 4 PPU cycles
-        self.mmu.run_ppu(cycles * 4);
+        self.call_instruction(opcode)
     }
 
     /*************************/
