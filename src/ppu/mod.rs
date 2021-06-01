@@ -144,6 +144,12 @@ impl PPU {
 
     pub fn write(&mut self, value: u8, address: u16) {
 
+        // println!("address: {:#06X}", address);
+
+        if address == 0xFF00 || address == 0xFF01 {
+            println!("address: {:#06X} {:010b}", address, value);
+        }
+
         // TODO - Add checks on VRAM / OAM against MODE to ensure access is possible
         match address {
 
@@ -339,7 +345,10 @@ impl PPU {
         let object_pixels = self.object_pixels(visible);
         // self.display.draw(object_pixels);
 
+
         let mut dump = Vec::new();
+        let mut base = 0x8000;
+
         for y in 0..18 {
             for x in 0..20 {
 
@@ -349,12 +358,12 @@ impl PPU {
 
                 for oy in 0..8 {
 
-                    println!("{:#06X} {:#06X}", start + (oy * 2), start + (oy * 2) + 1);
+                    //println!("{:#06X} {:#06X}", start + (oy * 2), start + (oy * 2) + 1);
 
                     let txt1 = self.read(start + (oy * 2));
                     let txt2 = self.read(start + (oy * 2) + 1);
 
-                    println!("{:#010b} {:#010b}", txt1, txt2);
+                    //println!("{:#010b} {:#010b}", txt1, txt2);
 
                     for ox in 0..8 {
 
@@ -362,6 +371,8 @@ impl PPU {
                         let v1 = if (txt2 & (0x80 >> ox)) != 0 { 1 } else { 0 };
 
                         let v = v0 << 1 | v1;
+
+                        if v == 0 { continue }
 
                         let color = match v {
                             0b00 => Color::RGB(0, 0, 0),
@@ -378,7 +389,9 @@ impl PPU {
             }
         }
 
-        // println!("{:?}", dump);
+        if dump.len() > 0 {
+            println!("{:?}", dump);
+        }
 
         self.display.draw(dump);
 

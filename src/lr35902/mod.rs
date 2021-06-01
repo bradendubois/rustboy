@@ -64,17 +64,17 @@ impl LR35902 {
     /// Run one step the CPU, fetching/decoding/executing at the PC
     pub fn step(&mut self) {
 
-        println!("program counter: {}", self.registers.pc);
+        // println!("program counter: {:#06X}", self.registers.pc);
 
         // Get the opcode number to execute
         let opcode = self.byte();
 
-        println!("fetched instruction: {:#02X}", opcode);
+        // println!("fetched instruction: {:#02X}", opcode);
 
         // Execute from standard table
         let cycles = self.call_instruction(opcode);
 
-        println!("cycles taken: {}", cycles);
+        // println!("cycles taken: {}", cycles);
 
         // Adjust clock and program counter (PC)
         self.clock += cycles as u64;

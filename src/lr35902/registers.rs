@@ -36,7 +36,7 @@ impl Registers {
                 pc: 0x0100,
                 sp: 0xFFFE,
 
-                ime: false,
+                ime: true,
             },
 
             false => Registers {
@@ -55,7 +55,7 @@ impl Registers {
                 pc: 0x0000,
                 sp: 0xFFFE,
 
-                ime: false,
+                ime: true,
             },
         }
     }

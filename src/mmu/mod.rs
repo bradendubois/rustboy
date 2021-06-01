@@ -11,6 +11,7 @@ use crate::cartridge::Cartridge;
 use crate::ppu::PPU;
 
 const W_RAM_SIZE: usize = 0x8000;
+const H_RAM_SIZE: usize = 0x7F;
 
 #[allow(unreachable_patterns)]
 #[allow(dead_code)]
@@ -22,9 +23,7 @@ pub struct MMU {
     w_ram: [u8; W_RAM_SIZE],
     w_ram_bank: usize,
 
-    e_ram: Vec<u16>,
-    z_ram: Vec<u8>,
-
+    h_ram: [u8; H_RAM_SIZE],
 
     mbc: Box<dyn MBC>,
 
@@ -43,7 +42,7 @@ impl MMU {
 
     pub fn new(cartridge: Cartridge) -> MMU {
 
-        MMU {
+        let mut mmu = MMU {
             in_bios: false,
             bios: vec![],
             rom: vec![],
@@ -51,9 +50,7 @@ impl MMU {
             w_ram: [0; W_RAM_SIZE],
             w_ram_bank: 1,
 
-            e_ram: vec![],
-            z_ram: vec![],
-
+            h_ram: [0; H_RAM_SIZE],
 
             mbc: Box::new(match cartridge.cartridge_type {
                 0x00 ..= 0x00 => MBC0::new(cartridge),
@@ -71,12 +68,16 @@ impl MMU {
             interrupt_flag: interrupt_flag::InterruptFlag::new(),
             interrupt_enable: interrupt_enable::InterruptEnable::new()
 
-        }
+        };
+
+        mmu.set_initial();
+
+        mmu
     }
 
     pub fn read(&mut self, address: u16) -> u8 {
 
-        println!("reading: {:#06X}", address);
+        // println!("reading: {:#06X}", address);
 
         match address {
             0x0000 ..= 0x3FFF => self.mbc.read_rom(address),                // ROM
@@ -90,7 +91,7 @@ impl MMU {
             0xFE00 ..= 0xFE9F => self.ppu.read(address),                    // Sprite Attributes
             0xFEA0 ..= 0xFEFF => 0,                                         // Unusable
             0xFF00 ..= 0xFF7F => self.read_io_registers(address),           // I/O Registers
-            0xFF80 ..= 0xFFFE => 0,                                         // High RAM
+            0xFF80 ..= 0xFFFE => self.read_hram(address),                   // High RAM
             0xFFFF ..= 0xFFFF => self.interrupt_enable.read(),              // Interrupt Register
 
             _ => panic!("Unmapped address {:#06X}", address)
@@ -98,6 +99,10 @@ impl MMU {
     }
 
     pub fn write(&mut self, value: u8, address: u16) {
+
+        if address == 0xFFFF || address == 0xFF0F {
+            println!("address: {:#06X} {:010b}", address, value);
+        }
 
         match address {
             0x0000 ..= 0x3FFF => self.mbc.write_rom(value, address),        // ROM
@@ -111,7 +116,7 @@ impl MMU {
             0xFE00 ..= 0xFE9F => self.ppu.write(value, address),            // Sprite Attributes
             0xFEA0 ..= 0xFEFF => (),                                        // Unusable
             0xFF00 ..= 0xFF7F => self.write_io_registers(value, address),   // I/O Registers
-            0xFF80 ..= 0xFFFE => (),                                        // High RAM
+            0xFF80 ..= 0xFFFE => self.write_hram(value, address),           // High RAM
             0xFFFF ..= 0xFFFF => self.interrupt_enable.write(value),        // Interrupt Register
 
             _ => panic!("Unmapped address {:#06X}", address)
@@ -136,19 +141,62 @@ impl MMU {
         self.w_ram[self.w_rambank_conv(address)] = value;
     }
 
+    // HRAM - 0xFF80 - 0xFFFE
+    fn read_hram(&mut self, address: u16) -> u8 {
+        self.h_ram[(address % 0xFF80) as usize]
+    }
+
+    fn write_hram(&mut self, value: u8, address: u16) {
+        self.h_ram[(address % 0xFF80) as usize] = value;
+    }
+
+    fn set_initial(&mut self) {
+        self.write(0, 0xFF05);
+        self.write(0, 0xFF06);
+        self.write(0, 0xFF07);
+        self.write(0x80, 0xFF10);
+        self.write(0xBF, 0xFF11);
+        self.write(0xF3, 0xFF12);
+        self.write(0xBF, 0xFF14);
+        self.write(0x3F, 0xFF16);
+        self.write(0x3F, 0xFF16);
+        self.write(0, 0xFF17);
+        self.write(0xBF, 0xFF19);
+        self.write(0x7F, 0xFF1A);
+        self.write(0xFF, 0xFF1B);
+        self.write(0x9F, 0xFF1C);
+        self.write(0xFF, 0xFF20);
+        self.write(0xFF, 0xFF1E);
+        self.write(0, 0xFF21);
+        self.write(0, 0xFF22);
+        self.write(0xBF, 0xFF23);
+        self.write(0x77, 0xFF24);
+        self.write(0xF3, 0xFF25);
+        self.write(0xF1, 0xFF26);
+        self.write(0x91, 0xFF40);
+        self.write(0, 0xFF42);
+        self.write(0, 0xFF43);
+        self.write(0, 0xFF45);
+        self.write(0xFC, 0xFF47);
+        self.write(0xFF, 0xFF48);
+        self.write(0xFF, 0xFF49);
+        self.write(0, 0xFF4A);
+        self.write(0, 0xFF4B);
+    }
+
     // IO Registers
 
     fn read_io_registers(&mut self, address: u16) -> u8 {
         match address {
 
-            0xFF00 => { println!("unimplemented joypad"); 0 },
+            0xFF00 => { /* println!("unimplemented joypad"); */ 0 },
 
-            0xFF01 => { println!("unimplemented serial data transfer"); 0 },
-            0xFF02 => { println!("unimplemented serial transfer control"); 0 },
+            0xFF01 => { /* println!("unimplemented serial data transfer"); */ 0 },
+            0xFF02 => { /* println!("unimplemented serial transfer control"); */ 0 },
 
-            0xFF04 ..= 0xFF07 => { println!("unimplemented timer!"); 0 },
+            0xFF04 ..= 0xFF07 => { /* println!("unimplemented timer!"); */ 0 },
 
-            0xFF10 ..= 0xFF3F => { println!("unimplemented sound!"); 0 },
+            0xFF10 ..= 0xFF3F => { /* println!("unimplemented sound!"); */ 0 },
 
             0xFF40 ..= 0xFF4F => self.ppu.read(address),
 
@@ -161,14 +209,14 @@ impl MMU {
     fn write_io_registers(&mut self, value: u8, address: u16) {
         match address {
 
-            0xFF00 => println!("unimplemented joypad : {}", value),
+            0xFF00 => (),// println!("unimplemented joypad : {}", value),
 
-            0xFF01 => println!("unimplemented serial data transfer : {}", value),
-            0xFF02 => println!("unimplemented serial transfer control : {}", value),
+            0xFF01 => (),//println!("unimplemented serial data transfer : {}", value),
+            0xFF02 => (),//println!("unimplemented serial transfer control : {}", value),
 
-            0xFF04 ..= 0xFF07 => { println!("unimplemented timer! {:#06X}", address); },
+            0xFF04 ..= 0xFF07 => (),//{ println!("unimplemented timer! {:#06X}", address); },
 
-            0xFF10 ..= 0xFF3F => { println!("unimplemented sound! {:#06X}", address); },
+            0xFF10 ..= 0xFF3F => (),//{ println!("unimplemented sound! {:#06X}", address); },
 
             0xFF40 ..= 0xFF4F => self.ppu.write(value, address),
 

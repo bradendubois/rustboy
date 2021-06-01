@@ -2,6 +2,7 @@ mod mmu;
 mod lr35902;
 mod cartridge;
 mod ppu;
+mod sound;
 
 use std::{fs::read, env::args};
 
