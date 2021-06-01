@@ -35,11 +35,8 @@ pub struct MMU {
     joypad: Joypad,
     serial: Serial,
 
-    // Corresponds to the IF (Interrupt Flag R/W) Register at 0xFF0F
-    interrupt_flag: interrupt_flag::InterruptFlag,
-
     // Corresponds to the IE (Interrupt Enable R/W) Register at 0xFFFF
-    interrupt_enable: interrupt_enable::InterruptEnable,
+    interrupt_enable: u8
 }
 
 #[allow(unreachable_patterns)]
@@ -73,10 +70,7 @@ impl MMU {
             joypad: Joypad::new(),
             serial: Serial::new(),
 
-            // TODO These need the PPU or something similar, but can't move PPU
-            interrupt_flag: interrupt_flag::InterruptFlag::new(),
-            interrupt_enable: interrupt_enable::InterruptEnable::new()
-
+            interrupt_enable: 0
         };
 
         mmu.set_initial();
@@ -101,7 +95,7 @@ impl MMU {
             0xFEA0 ..= 0xFEFF => 0xFF,                                      // Unusable
             0xFF00 ..= 0xFF7F => self.read_io_registers(address),           // I/O Registers
             0xFF80 ..= 0xFFFE => self.read_hram(address),                   // High RAM
-            0xFFFF ..= 0xFFFF => self.interrupt_enable.read(),              // Interrupt Register
+            0xFFFF ..= 0xFFFF => self.interrupt_enable,                     // Interrupt Register
 
             _ => panic!("Unmapped address {:#06X}", address)
         }
@@ -126,7 +120,7 @@ impl MMU {
             0xFEA0 ..= 0xFEFF => (),                                        // Unusable
             0xFF00 ..= 0xFF7F => self.write_io_registers(value, address),   // I/O Registers
             0xFF80 ..= 0xFFFE => self.write_hram(value, address),           // High RAM
-            0xFFFF ..= 0xFFFF => self.interrupt_enable.write(value),        // Interrupt Register
+            0xFFFF ..= 0xFFFF => self.interrupt_enable = value,             // Interrupt Register
 
             _ => panic!("Unmapped address {:#06X}", address)
         };
@@ -208,7 +202,7 @@ impl MMU {
             0xFF03 ..= 0xFF03 => 0xFF,                              //unmapped
             0xFF04 ..= 0xFF07 => self.timer.read(address),
             0xFF08 ..= 0xFF0E => 0xFF,                              // unmapped
-            0xFF0F ..= 0xFF0F => self.interrupt_flag.read(),
+            0xFF0F ..= 0xFF0F => self.interrupt_flag_read(),
             0xFF10 ..= 0xFF14 => self.apu.read(address),
             0xFF15 ..= 0xFF15 => 0xFF,                              // unmapped
             0xFF16 ..= 0xFF1E => self.apu.read(address),
@@ -218,7 +212,9 @@ impl MMU {
             0xFF30 ..= 0xFF3F => self.apu.read(address),
             0xFF40 ..= 0xFF4F => self.ppu.read(address),
             0xFF50 ..= 0xFF50 => if self.in_bios { 1 } else { 0 },
-
+            0xFF51 ..= 0xFF55 => 0,        // Color GB Only - VRAM DMA
+            0xFF68 ..= 0xFF69 => 0,        // Color GB Only - BG / OBJ Palettes
+            0xFF70 ..= 0xFF70 => 0,        // Color GB Only - WRAM Bank Select
             _ => panic!("Unmapped address {:#06X}", address)
         }
     }
@@ -230,7 +226,7 @@ impl MMU {
             0xFF03 ..= 0xFF03 => (),                                        // unmapped
             0xFF04 ..= 0xFF07 => self.timer.write(value, address),
             0xFF08 ..= 0xFF0E => (),                                        // unmapped
-            0xFF0F ..= 0xFF0F => self.interrupt_flag.write(value),
+            0xFF0F ..= 0xFF0F => self.interrupt_flag_write(value),
             0xFF10 ..= 0xFF14 => self.apu.write(value, address),
             0xFF15 ..= 0xFF15 => (),                                        // unmapped
             0xFF16 ..= 0xFF1E => self.apu.write(value, address),
@@ -246,6 +242,29 @@ impl MMU {
 
             _ => panic!("Unmapped address {:#06X}", address)
         }
+    }
+
+    // Interrupts
+
+    fn interrupt_flag_read(&self) -> u8 {
+
+        let mut result: u8 = 0;
+
+        if self.ppu.vblank_interrupt { result |= 0x01 };
+        if self.ppu.stat_interrupt   { result |= 0x02 };
+        if self.timer.interrupt      { result |= 0x04 };
+        if self.serial.interrupt     { result |= 0x08 };
+        if self.joypad.interrupt     { result |= 0x10 };
+
+        result
+    }
+
+    fn interrupt_flag_write(&mut self, value: u8) {
+        self.ppu.vblank_interrupt = value & 0x01 != 0;
+        self.ppu.stat_interrupt   = value & 0x02 != 0;
+        self.timer.interrupt      = value & 0x04 != 0;
+        self.serial.interrupt     = value & 0x08 != 0;
+        self.joypad.interrupt     = value & 0x10 != 0;
     }
 
     // Helper

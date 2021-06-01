@@ -4,7 +4,9 @@ pub struct Timer {
     divider_register: u8,   // 0xFF04 - DIV
     timer_counter: u8,      // 0xFF05 - TIMA
     timer_modulo: u8,       // 0xFF06 - TMA
-    timer_control: u8       // 0xFF07 - TAC
+    timer_control: u8,      // 0xFF07 - TAC
+
+    pub interrupt: bool     // This corresponds to bit 2 of the IF register at 0xFF0F
 }
 
 impl Timer {
@@ -13,7 +15,9 @@ impl Timer {
             divider_register: 0,
             timer_counter: 0,
             timer_modulo: 0,
-            timer_control: 0
+            timer_control: 0,
+
+            interrupt: false
         }
     }
 
