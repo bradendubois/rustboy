@@ -48,7 +48,7 @@ impl Screen {
 
     pub fn run(&mut self) {
         self.canvas.draw_rect(Rect::new(20, 20,  100, 100));
-        self.canvas.set_draw_color(sdl2::pixels::Color::RGB(0, 0, 0));
+        self.canvas.set_draw_color(sdl2::pixels::Color::RGB(255, 255, 255));
         self.canvas.clear();
         self.canvas.draw_point(Point::new(10, 10));
         self.canvas.present();

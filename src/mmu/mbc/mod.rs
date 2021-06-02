@@ -1,4 +1,5 @@
 pub mod mbc0;
+pub mod mbc1;
 
 /// The traits that any memory bank controller (MBC) must implement
 pub trait MBC {

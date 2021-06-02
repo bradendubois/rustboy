@@ -5,7 +5,7 @@ mod interrupts;
 
 use interrupts::{interrupt_flag, interrupt_enable};
 
-use mbc::{MBC, mbc0::{MBC0}};
+use mbc::{MBC, mbc0::{MBC0}, mbc1::MBC1};
 use std::fmt;
 use crate::cartridge::Cartridge;
 use crate::ppu::PPU;
@@ -56,7 +56,7 @@ impl MMU {
 
             mbc: Box::new(match cartridge.cartridge_type {
                 0x00 ..= 0x00 => MBC0::new(cartridge),
-                0x01 ..= 0x03 => panic!("MBC1 not implemented!"), // MBC1::new(cartridge),
+                // 0x01 ..= 0x03 => MBC1::new(cartridge),
                 0x05 ..= 0x06 => panic!("MBC2 not implemented!"), // MBC2::new(cartridge),
                 0x0F ..= 0x13 => panic!("MBC3 not implemented!"), // MBC3::new(cartridge),
                 0x19 ..= 0x1E => panic!("MBC5 not implemented!"), // MBC5::new(cartridge)
@@ -103,10 +103,6 @@ impl MMU {
 
     pub fn write(&mut self, value: u8, address: u16) {
 
-        if address == 0xFFFF || address == 0xFF0F {
-            println!("address: {:#06X} {:010b}", address, value);
-        }
-
         match address {
             0x0000 ..= 0x3FFF => self.mbc.write_rom(value, address),        // ROM
             0x4000 ..= 0x7FFF => self.mbc.write_rom(value, address),        // Switchable ROM Bank
@@ -124,6 +120,19 @@ impl MMU {
 
             _ => panic!("Unmapped address {:#06X}", address)
         };
+    }
+
+    pub fn read_word(&mut self, address: u16) -> u16 {
+        let lower = self.read(address);
+        let upper = self.read(address + 1);
+        ((upper as u16) << 8) | (lower as u16)
+    }
+
+    pub fn write_word(&mut self, value: u16, address: u16) {
+        let lower = (value & 0xFF) as u8;
+        let upper = (value >> 8) as u8;
+        self.write(lower, address);
+        self.write(upper, address+1);
     }
 
     // PPU

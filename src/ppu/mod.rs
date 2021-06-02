@@ -192,6 +192,9 @@ impl PPU {
 
 
     pub fn dma_transfer(&mut self, value: u8) {
+
+        return;
+
         let source = ((value as u16) << 8) * 0x0100;
 
         for i in 0x00..=0x9F {
