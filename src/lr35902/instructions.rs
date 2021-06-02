@@ -860,6 +860,7 @@ impl LR35902 {
 
     // 0x27 - DAA
     fn daa_0x27(&mut self) -> u64 {
+
         let mut adj = 0x00;
 
         if self.is_full_carry() {
@@ -881,14 +882,14 @@ impl LR35902 {
         self.registers.a = self.registers.a.wrapping_add(adj);
 
         match adj >= 0x60 {
-            true => self.set_full_carry(),
+            true  => self.set_full_carry(),
             false => self.unset_full_carry(),
         };
 
         self.unset_half_carry();
 
         match self.registers.a == 0 {
-            true => self.set_zero(),
+            true  => self.set_zero(),
             false => self.unset_zero(),
         };
 

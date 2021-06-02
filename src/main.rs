@@ -8,6 +8,7 @@ mod joypad;
 mod serial;
 
 use std::{fs::read, env::args};
+use std::process::exit;
 
 
 const DEFAULT_ROM: &str = "./roms/Tetris (World).gb";
@@ -42,4 +43,38 @@ fn main() {
     println!("{:?}", cpu);
 
     cpu.run();
+
+    exit(0);
+}
+
+
+#[cfg(test)]
+mod tests {
+    use std::io::Error;
+    use crate::cartridge::Cartridge;
+    use crate::lr35902::LR35902;
+    use std::process::exit;
+
+    #[test]
+    fn roms() {
+
+        // let rom_queue: Vec::new();
+
+        // std::fs::read_dir("./")
+
+        // std::env::current_dir().unwrap()?;
+
+        let test_rom = "./roms/mooneye-gb_hwtests/acceptance/instr/daa.gb";
+
+        match std::fs::read(test_rom) {
+            Ok(b) => {
+                let cartridge = Cartridge::new(b);
+                let mut cpu = LR35902::new(cartridge);
+                cpu.run();
+            }
+
+            Err(_) => panic!("bad")
+        }
+
+    }
 }

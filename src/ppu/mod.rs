@@ -418,6 +418,8 @@ impl PPU {
 
         let mut pixels = Vec::new();
 
+        return pixels;
+
         if visible.len() > 0 {
             println!("******************************** active sprites");
         }

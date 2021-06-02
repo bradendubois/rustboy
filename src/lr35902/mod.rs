@@ -12,6 +12,7 @@ use super::mmu;
 
 use crate::cartridge::Cartridge;
 use crate::lr35902::ime::IME;
+use std::process::exit;
 
 
 // Struct representing the LR35902 CPU
@@ -57,10 +58,14 @@ impl LR35902 {
 
         println!("cpu beginning run");
 
-        while let Status::RUNNING = self.status {
+        while self.status == Status::RUNNING {
             self.step();
 
             let cycles = self.step();
+            if cycles == 0 {
+                println!("done");
+                return;
+            }
             // println!("cycles taken: {}", cycles);
 
             // Adjust clock and program counter (PC)
@@ -116,15 +121,6 @@ impl LR35902 {
         }
 
         // Interrupts disabled, or none to handle
-
-        /*
-        if self.registers.pc == 0x0038 {
-            println!("{:?}", self.registers);
-            std::process::exit(0);
-        }
-
-         */
-
         println!("program counter: {:#06X}", self.registers.pc);
 
         // Get the opcode number to execute
@@ -132,11 +128,10 @@ impl LR35902 {
 
         println!("fetched instruction: {:#02X}", opcode);
 
-
-
         if opcode == 0x40 {
             println!("{:?}", self.registers);
-            std::process::exit(0);
+            self.status = Status::HALTED;
+            return 0;
         }
 
         // Execute from standard table
