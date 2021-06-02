@@ -36,12 +36,17 @@ impl Registers {
 impl fmt::Debug for Registers {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "\
-            a: {:#010b} f: {:#010b}\n\
-            b: {:#010b} c: {:#010b}\n\
-            d: {:#010b} e: {:#010b}\n\
-            h: {:#010b} l: {:#010b}\n\
-            pc: {:#018b}\n\
-            sp: {:#018b}",
-               self.a, self.f, self.b, self.c, self.d, self.e, self.h, self.l, self.pc, self.sp)
+            a: {:#010b} {:#04X} {} | f: {:#010b} {:#04X} {}\n\
+            b: {:#010b} {:#04X} {} | c: {:#010b} {:#04X} {}\n\
+            d: {:#010b} {:#04X} {} | e: {:#010b} {:#04X} {}\n\
+            h: {:#010b} {:#04X} {} | l: {:#010b} {:#04X} {}\n\
+            pc: {:#018b} {:#06X} {}\n\
+            sp: {:#018b} {:#06X} {}",
+               self.a, self.a, self.a, self.f, self.f, self.f,
+               self.b, self.b, self.b, self.c, self.c, self.c,
+               self.d, self.d, self.d, self.e, self.e, self.e,
+               self.h, self.h, self.h, self.l, self.l, self.l,
+               self.pc, self.pc,self.pc,
+               self.sp, self.sp, self.sp)
     }
 }

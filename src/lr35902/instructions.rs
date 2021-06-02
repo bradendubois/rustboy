@@ -284,7 +284,7 @@ impl LR35902 {
                     0xFA => self.ld_a_a16_0xfa(),
                     0xFB => self.ei_0xfb(),
                     0xFE => self.cp_d8_0xfe(),
-                    0xFF => self.rst_30h_0xff(),
+                    0xFF => self.rst_38h_0xff(),
 
                     // Unmapped code in default table
                     _ => panic!("Unmapped default table opcode {}", code),
@@ -605,8 +605,8 @@ impl LR35902 {
 
     // 0x01 - LD BC, d16
     fn ld_bc_0x01(&mut self) -> u64 {
-        self.registers.c = self.byte();
-        self.registers.b = self.byte();
+        let word = self.word();
+        self.set_bc(word);
         12
     }
 
@@ -618,8 +618,7 @@ impl LR35902 {
 
     // 0x03 - INC BC
     fn inc_bc_0x03(&mut self) -> u64 {
-        let bc = self.inc_16(self.get_bc());
-        self.set_bc(bc);
+        self.set_bc(self.get_bc().wrapping_add(1));
         8
     }
 
@@ -643,32 +642,21 @@ impl LR35902 {
 
     // 0x07 - RLCA
     fn rlca_0x07(&mut self) -> u64 {
-        self.registers.a = (self.registers.a << 1) | (self.registers.a >> 7);
+        self.registers.a = self.rlc(self.registers.a);
         self.unset_zero();
-        self.unset_subtraction();
-        self.unset_half_carry();
-
-        match self.registers.a & 0x80 {
-            0x80 => self.set_full_carry(),
-            _ => self.unset_full_carry(),
-        };
         4
     }
 
     // 0x08 - LD (a16), SP
     fn ld_a16_sp_0x08(&mut self) -> u64 {
-        let addr = self.word();
-        self.mmu.write(self.registers.sp as u8, addr);
-        self.mmu.write((self.registers.sp >> 8) as u8, addr + 1);
+        let address = self.word();
+        self.mmu.write_word(self.registers.sp, address);
         20
     }
 
     // 0x09 - ADD HL, BC
     fn add_hl_bc_0x09(&mut self) -> u64 {
-        let hl = self.get_hl();
-        let bc = self.get_bc();
-        let hl = self.add_16(hl, bc);
-        self.set_hl(hl);
+        self.hl_add_16(self.get_bc());
         8
     }
 
@@ -680,8 +668,7 @@ impl LR35902 {
 
     // 0x0B - DEC BC
     fn dec_bc_0x0b(&mut self) -> u64 {
-        let bc = self.dec_16(self.get_bc());
-        self.set_bc(bc);
+        self.set_bc(self.get_bc().wrapping_sub(1));
         8
     }
 
@@ -705,14 +692,8 @@ impl LR35902 {
 
     // 0x0F - RRCA
     fn rrca_0x0f(&mut self) -> u64 {
-        self.registers.a = (self.registers.a >> 1) | (self.registers.a << 7);
-        self.unset_zero();
+        self.registers.a = self.rrc(self.registers.a);
         self.unset_subtraction();
-        self.unset_half_carry();
-        match self.registers.a >> 7 != 0 {
-            true => self.set_full_carry(),
-            false => self.unset_full_carry(),
-        };
         4
     }
 
@@ -723,15 +704,15 @@ impl LR35902 {
     /// Internal RAM register ports remain unchanged
     /// Cancelled by RESET signal
     fn stop_0x10(&mut self) -> u64 {
-        self.status = Status::STOPPED;
+        self.stop();
         4
     }
 
     /// 0x11 - LD DE, d16 : Loads 2 bytes of immediate data into registers D,E
     /// First byte is the lower byte, second byte is higher. Love Little endian -.-
     fn ld_de_0x11(&mut self) -> u64 {
-        self.registers.d = self.byte();
-        self.registers.e = self.byte();
+        let word = self.word();
+        self.set_de(word);
         12
     }
 
@@ -743,8 +724,7 @@ impl LR35902 {
 
     /// 0x13 - INC DE : Increment the contents of registers DE by 1
     fn inc_de_0x13(&mut self) -> u64 {
-        let de = self.inc_16(self.get_de());
-        self.set_de(de);
+        self.set_de(self.get_de().wrapping_add(1));
         8
     }
 
@@ -768,17 +748,8 @@ impl LR35902 {
 
     ///0x17 - RLA : Rotate contents of register A to the left,
     fn rla_0x17(&mut self) -> u64 {
+        self.registers.a = self.rl(self.registers.a);
         self.unset_zero();
-        self.unset_subtraction();
-        self.unset_half_carry();
-        let temp = self.is_full_carry();
-        if self.registers.a & 0x80 == 1 {
-            self.set_full_carry()
-        } else {
-            self.unset_full_carry()
-        }
-        self.registers.a = self.registers.a << 1;
-        self.registers.a |= temp as u8;
         4
     }
 
@@ -791,8 +762,7 @@ impl LR35902 {
 
     ///0x19 - ADD HL DE : add the contents of de to hl
     fn add_hl_de_0x19(&mut self) -> u64 {
-        let val = self.add_16(self.get_hl(), self.get_de());
-        self.set_hl(val);
+        self.hl_add_16(self.get_de());
         8
     }
 
@@ -805,8 +775,7 @@ impl LR35902 {
     /// 0x1B - DEC DE : decrement contents of de by 1!
     ///
     fn dec_de_0x1b(&mut self) -> u64 {
-        let de = self.get_de();
-        self.set_de(de);
+        self.set_de(self.get_de().wrapping_sub(1));
         8
     }
 
@@ -831,16 +800,8 @@ impl LR35902 {
     ///0x1F - RRA : rotate register A to the right,
     /// through the carry flag,
     fn rra_0x1f(&mut self) -> u64 {
-        let temp = self.is_full_carry();
+        self.registers.a = self.rr(self.registers.a);
         self.unset_zero();
-        self.unset_subtraction();
-        self.unset_half_carry();
-        if self.registers.a & 0x01 != 0 {
-            self.set_full_carry()
-        } else {
-            self.unset_full_carry()
-        }
-        self.registers.a = self.registers.a | (temp as u8) << 7;
         4
     }
 
@@ -861,24 +822,21 @@ impl LR35902 {
 
     // 0x21 - LD HL d16
     fn ld_hl_d16_0x21(&mut self) -> u64 {
-        self.registers.h = self.byte();
-        self.registers.l = self.byte();
+        let word = self.word();
+        self.set_hl(word);
         12
     }
 
     // 0x22 - LD (HL+) A
     fn ld_hlp_a_0x22(&mut self) -> u64 {
-        let hl = self.get_hl();
-        self.mmu.write(self.registers.a, hl);
-        let hl = self.inc_16(hl);
-        self.set_hl(hl);
+        self.mmu.write(self.registers.a, self.get_hl());
+        self.set_hl(self.get_hl().wrapping_add(1));
         8
     }
 
     // 0x23 - INC HL
     fn inc_hl_0x23(&mut self) -> u64 {
-        let hl = self.inc_16(self.get_hl());
-        self.set_hl(hl);
+        self.set_hl(self.get_hl().wrapping_add(1));
         8
     }
 
@@ -952,25 +910,20 @@ impl LR35902 {
 
     // 0x29 - ADD HL HL
     fn add_hl_hl_0x29(&mut self) -> u64 {
-        let hl = self.get_hl();
-        let hl = self.add_16(hl, hl);
-        self.set_hl(hl);
+        self.hl_add_16(self.get_hl());
         8
     }
 
     // 0x2A LD A HL+
     fn ld_a_hlp_0x2a(&mut self) -> u64 {
-        let hl = self.get_hl();
-        self.registers.a = self.mmu.read(hl);
-        let hl = self.inc_16(hl);
-        self.set_hl(hl);
+        self.registers.a = self.mmu.read(self.get_hl());
+        self.set_hl(self.get_hl().wrapping_add(1));
         8
     }
 
     // 0x2B - DEC HL
     fn dec_hl_0x2b(&mut self) -> u64 {
-        let hl = self.dec_16(self.get_hl());
-        self.set_hl(hl);
+        self.set_hl(self.get_hl().wrapping_sub(1));
         8
     }
 
@@ -995,6 +948,8 @@ impl LR35902 {
     // 0x2F - CPL
     fn cpl_0x2f(&mut self) -> u64 {
         self.registers.a = !self.registers.a;
+        self.set_half_carry();
+        self.set_subtraction();
         4
     }
 
@@ -1021,30 +976,29 @@ impl LR35902 {
     // 0x32 - LD HL(-), A
     fn ld_hls_a_0x32(&mut self) -> u64 {
         self.mmu.write(self.registers.a, self.get_hl());
-        let hl = self.dec_16(self.get_hl());
-        self.set_hl(hl);
+        self.set_hl(self.get_hl().wrapping_sub(1));
         8
     }
 
     // 0x33 - INC SP
     fn inc_sp_0x33(&mut self) -> u64 {
-        self.registers.sp = self.inc_16(self.registers.sp);
+        self.registers.sp = self.registers.sp.wrapping_add(1);
         8
     }
 
     // 0x34 - INC (HL)
     fn inc_hl_0x34(&mut self) -> u64 {
-        let mut hl = self.mmu.read(self.get_hl());
-        hl = self.inc_8(hl);
-        self.mmu.write(hl, self.get_hl());
+        let value = self.mmu.read(self.get_hl());
+        let value = self.inc_8(value);
+        self.mmu.write(value, self.get_hl());
         12
     }
 
     //0x35 - DEC (HL)
     fn dec_hl_0x35(&mut self) -> u64 {
-        let mut hl = self.mmu.read(self.get_hl());
-        hl = self.dec_8(hl);
-        self.mmu.write(hl, self.get_hl());
+        let value = self.mmu.read(self.get_hl());
+        let value = self.dec_8(value);
+        self.mmu.write(value, self.get_hl());
         12
     }
 
@@ -1065,9 +1019,9 @@ impl LR35902 {
 
     // 0x38 JR C, s8
     fn jr_c_s8_0x38(&mut self) -> u64 {
+        let s8 = self.byte();
         match self.is_full_carry() {
             true => {
-                let s8 = self.byte();
                 self.jr(s8 as i8);
                 12
             }
@@ -1077,24 +1031,20 @@ impl LR35902 {
 
     // 0x39 - ADD HL SP
     fn add_hl_sp_0x39(&mut self) -> u64 {
-        let sp = self.registers.sp;
-        let hl = self.add_16(self.get_hl(), sp);
-        self.set_hl(hl);
+        self.hl_add_16(self.registers.sp);
         8
     }
 
     //0x3A - LD A, (HL-)
     fn ld_a_hls_0x3a(&mut self) -> u64 {
-        let mut hl = self.get_hl();
-        self.registers.a = self.mmu.read(hl);
-        hl = self.inc_16(hl);
-        self.set_hl(hl);
+        self.registers.a = self.mmu.read(self.get_hl());
+        self.set_hl(self.get_hl().wrapping_sub(1));
         8
     }
 
     // 0x3B - DEC SP
     fn dec_sp_0x3b(&mut self) -> u64 {
-        self.registers.sp = self.dec_16(self.registers.sp);
+        self.registers.sp = self.registers.sp.wrapping_sub(1);
         8
     }
 
@@ -2323,9 +2273,9 @@ impl LR35902 {
         8
     }
 
-    // 0xFF - RST 30H
-    fn rst_30h_0xff(&mut self) -> u64 {
-        self.rst(0x30);
+    // 0xFF - RST 38H
+    fn rst_38h_0xff(&mut self) -> u64 {
+        self.rst(0x38);
         16
     }
     /*****************************************/

@@ -60,7 +60,6 @@ impl LR35902 {
         while let Status::RUNNING = self.status {
             self.step();
 
-
             let cycles = self.step();
             // println!("cycles taken: {}", cycles);
 
@@ -118,12 +117,22 @@ impl LR35902 {
 
         // Interrupts disabled, or none to handle
 
-        // println!("program counter: {:#06X}", self.registers.pc);
+        if self.registers.pc == 0x0038 {
+            println!("{:?}", self.registers);
+            std::process::exit(0);
+        }
+
+        println!("program counter: {:#06X}", self.registers.pc);
 
         // Get the opcode number to execute
         let opcode = self.byte();
 
-        // println!("fetched instruction: {:#02X}", opcode);
+        if opcode == 0x40 {
+            println!("{:?}", self.registers);
+            std::process::exit(0);
+        }
+
+        println!("fetched instruction: {:#02X}", opcode);
 
         // Execute from standard table
         self.call_instruction(opcode)
@@ -176,6 +185,11 @@ impl LR35902 {
         };
 
         result
+    }
+
+    pub fn hl_add_16(&mut self, value: u16) {
+        let result = self.add_16(self.get_hl(), value);
+        self.set_hl(result);
     }
 
     /// ADC - Add the given value and the carry (C) flag to the accumulator (A) register
@@ -234,21 +248,6 @@ impl LR35902 {
         result
     }
 
-    /// Increment a given u16, handling overflow
-    pub fn inc_16(&mut self, s: u16) -> u16 {
-        // Save the carry flag as it is changed by sub
-        let carry = self.is_full_carry();
-        let result = self.add_16(s, 1);
-
-        // Restore the carry flag state after sub operation
-        match carry {
-            true => self.set_full_carry(),
-            false => self.unset_full_carry(),
-        };
-
-        result
-    }
-
     /*      Decrementing     */
 
     /// Decrement a given u8, handling overflow and the Z/N/H/C flags of the F register
@@ -256,21 +255,6 @@ impl LR35902 {
         // Save the carry flag as it is changed by sub
         let carry = self.is_full_carry();
         let result = self.sub_8(s, 1);
-
-        // Restore the carry flag state after sub operation
-        match carry {
-            true => self.set_full_carry(),
-            false => self.unset_full_carry(),
-        };
-
-        result
-    }
-
-    /// Decrement a given u16, handling overflow and the Z/N/H/C flags of the F register
-    pub fn dec_16(&mut self, s: u16) -> u16 {
-        // Save the carry flag as it is changed by sub
-        let carry = self.is_full_carry();
-        let result = s.wrapping_sub(1);
 
         // Restore the carry flag state after sub operation
         match carry {
@@ -370,6 +354,10 @@ impl LR35902 {
         result = (result & (!(1 << 7))) | carry_bit;
 
         result
+    }
+
+    pub fn stop(&mut self) {
+        // TODO
     }
 
     /// RRC - Rotate a number right, and copy the right-most bit shifted into the C register
@@ -720,3 +708,4 @@ impl fmt::Debug for LR35902 {
 
     }
 }
+
