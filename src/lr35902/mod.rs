@@ -33,6 +33,8 @@ pub struct LR35902 {
 
     // CB Flag : Will set whether to use the default table or the CB Prefix table
     pub use_cb_table: bool,
+
+    mooneye_testing: bool
 }
 
 #[allow(dead_code)]
@@ -48,6 +50,7 @@ impl LR35902 {
             ime: IME::Enabled,
             clock: 0,
             use_cb_table: false,
+            mooneye_testing: false
         }
     }
 
@@ -122,8 +125,7 @@ impl LR35902 {
 
         println!("fetched instruction: {:#02X}", opcode);
 
-        if opcode == 0x40 {
-            println!("{:?}", self.registers);
+        if self.mooneye_testing && opcode == 0x40 {
             self.status = Status::HALTED;
             return 0;
         }
@@ -635,90 +637,36 @@ impl LR35902 {
     }
 
     /*************************/
-    /*   Z/N/H/C Flags (F)   */
+    /*    Mooneye Testing    */
     /*************************/
 
-    /*     Zero (Z) Flag     */
+    /// Helper method to test with a Mooneye ROM
+    pub fn mooneye(path: String) {
 
-    /// Set the Zero (Z) flag of the F register
-    pub fn set_zero(&mut self) {
-        self.registers.f |= 0x80;
-    }
+        println!("testing path: {}", path);
 
-    /// Unset the Zero (Z) flag of the F register
-    pub fn unset_zero(&mut self) {
-        self.registers.f &= !0x80;
-    }
+        let data = std::fs::read(path).unwrap();
+        let cartridge = Cartridge::new(data);
 
-    /// Check the Zero(Z) flag of the F register
-    pub fn is_zero(&self) -> bool {
-        self.registers.f & 0x80 != 0
-    }
+        let mut cpu = LR35902 {
+            mmu: MMU::new(cartridge),
+            registers: Registers::new(),
+            status: Status::RUNNING,
+            ime: IME::Enabled,
+            clock: 0,
+            use_cb_table: false,
+            mooneye_testing: true
+        };
 
-    /*   Subtract (N) flag   */
+        cpu.run();
 
-    /// Set the Subtract (N) flag of the F register
-    pub fn set_subtraction(&mut self) {
-        self.registers.f |= 0x40;
-    }
-
-    /// Unset the Subtract (N) flag of the F register
-    pub fn unset_subtraction(&mut self) {
-        self.registers.f &= !0x40;
-    }
-
-    /// Check the Subtract (N) flag of the F register
-    pub fn is_subtraction(&self) -> bool {
-        self.registers.f & 0x40 != 0
-    }
-
-    /*  Half Carry (H)  Flag */
-
-    /// Set the Half Carry (H) flag of the F register
-    pub fn set_half_carry(&mut self) {
-        self.registers.f |= 0x20;
-    }
-
-    /// Unset the Half Carry (H) flag of the F register
-    pub fn unset_half_carry(&mut self) {
-        self.registers.f &= !0x20;
-    }
-
-    /// Check the Half Carry (H) flag of the F register
-    pub fn is_half_carry(&self) -> bool {
-        self.registers.f & 0x20 != 0
-    }
-
-    /*     Carry (C) Flag    */
-
-    /// Set the Carry (C) flag of the F register
-    pub fn set_full_carry(&mut self) {
-        self.registers.f |= 0x10;
-    }
-
-    /// Unset the Carry (C) flag of the F register
-    pub fn unset_full_carry(&mut self) {
-        self.registers.f &= !0x10;
-    }
-
-    /// Check the Carry (C) flag of the F register
-    pub fn is_full_carry(&self) -> bool {
-        self.registers.f & 0x10 != 0
-    }
-
-    /// Get the Interrupt Master Enable flag
-    pub fn is_ime(&self) -> bool {
-        self.ime == IME::Enabled
-    }
-
-    /// Set the Interrupt Master Enable flag
-    pub fn set_ime(&mut self) {
-        self.ime = IME::OneCycleDelay;
-    }
-
-    /// Unset the IME flag
-    pub fn unset_ime(&mut self) {
-        self.ime = IME::Disabled;
+        // Test success results in fibonacci sequence in registers
+        assert_eq!(cpu.registers.b, 3);
+        assert_eq!(cpu.registers.c, 5);
+        assert_eq!(cpu.registers.d, 8);
+        assert_eq!(cpu.registers.e, 13);
+        assert_eq!(cpu.registers.h, 21);
+        assert_eq!(cpu.registers.l, 34);
     }
 }
 
@@ -735,3 +683,28 @@ impl fmt::Debug for LR35902 {
     }
 }
 
+#[cfg(test)]
+mod test {
+
+    use super::*;
+    use std::path::Path;
+
+    const MOONEYE: &str = "./roms/testing/supported/mooneye";
+
+    #[test]
+    fn acceptance_root() {
+
+        let mut errors = false;
+
+        let acceptance_root = format!("{}/{}", MOONEYE, "acceptance");
+        for entry in std::fs::read_dir(acceptance_root).unwrap() {
+
+            let path = entry.unwrap().path();
+            let pathname = path.to_str().unwrap().to_string();
+
+            if path.is_file() && pathname.ends_with(".gb") {
+                LR35902::mooneye(pathname);
+            }
+        }
+    }
+}
