@@ -61,7 +61,7 @@ impl MMU {
                 0x0F ..= 0x13 => panic!("MBC3 not implemented!"), // MBC3::new(cartridge),
                 0x19 ..= 0x1E => panic!("MBC5 not implemented!"), // MBC5::new(cartridge)
 
-                _ => panic!("Unsupported cartridge type: {}!", cartridge.cartridge_type),
+                _ => panic!("Unsupported cartridge type: {:#4X}!", cartridge.cartridge_type),
             },
 
             ppu: PPU::new(),
@@ -222,8 +222,12 @@ impl MMU {
             0xFF40 ..= 0xFF4F => self.ppu.read(address),
             0xFF50 ..= 0xFF50 => if self.in_bios { 1 } else { 0 },
             0xFF51 ..= 0xFF55 => 0,        // Color GB Only - VRAM DMA
+            0xFF56 ..= 0xFF67 => 0xFF,                              // unmapped
             0xFF68 ..= 0xFF69 => 0,        // Color GB Only - BG / OBJ Palettes
+            0xFF6A ..= 0xFF6F => 0xFF,                              // unmapped
             0xFF70 ..= 0xFF70 => 0,        // Color GB Only - WRAM Bank Select
+            0xFF71 ..= 0xFF7F => 0xFF,                              // unmapped
+
             _ => panic!("Unmapped address {:#06X}", address)
         }
     }
@@ -246,8 +250,11 @@ impl MMU {
             0xFF40 ..= 0xFF4F => self.ppu.write(value, address),
             0xFF50 ..= 0xFF50 => self.in_bios = self.in_bios && value != 0,
             0xFF51 ..= 0xFF55 => (),        // Color GB Only - VRAM DMA
+            0xFF56 ..= 0xFF67 => (),                                        // unmapped
             0xFF68 ..= 0xFF69 => (),        // Color GB Only - BG / OBJ Palettes
+            0xFF6A ..= 0xFF6F => (),                                        // unmapped
             0xFF70 ..= 0xFF70 => (),        // Color GB Only - WRAM Bank Select
+            0xFF71 ..= 0xFF7F => (),                                        // unmapped
 
             _ => panic!("Unmapped address {:#06X}", address)
         }
