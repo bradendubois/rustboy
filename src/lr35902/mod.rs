@@ -209,8 +209,8 @@ impl LR35902 {
     }
 
     pub fn hl_add_16(&mut self, value: u16) {
-        let result = self.add_16(self.get_hl(), value);
-        self.set_hl(result);
+        let result = self.add_16(self.registers.get_hl(), value);
+        self.registers.set_hl(result);
     }
 
     /// ADC - Add the given value and the carry (C) flag to the accumulator (A) register
@@ -594,58 +594,6 @@ impl LR35902 {
     /// Convert a u16 into two u8s (given in the order of higher order, lower order)
     pub fn u8_pair(x: u16) -> (u8, u8) {
         ((x >> 8) as u8, x as u8)
-    }
-
-    /*************************/
-    /*     Register Pairs    */
-    /*************************/
-
-    /// Get the register pair AF as a u16
-    pub fn get_af(&self) -> u16 {
-        LR35902::u16_from_u8(self.registers.a, self.registers.f)
-    }
-
-    /// Set the register pair AF to the given u16
-    pub fn set_af(&mut self, x: u16) {
-        let u8_pair = LR35902::u8_pair(x);
-        self.registers.a = u8_pair.0;
-        self.registers.f = u8_pair.1;
-    }
-
-    /// Get the register pair BC as a u16
-    pub fn get_bc(&self) -> u16 {
-        LR35902::u16_from_u8(self.registers.b, self.registers.c)
-    }
-
-    /// Set the register pair BC to the given u16
-    pub fn set_bc(&mut self, x: u16) {
-        let u8_pair = LR35902::u8_pair(x);
-        self.registers.b = u8_pair.0;
-        self.registers.c = u8_pair.1;
-    }
-
-    /// Get the register pair DE as a u16
-    pub fn get_de(&self) -> u16 {
-        LR35902::u16_from_u8(self.registers.d, self.registers.e)
-    }
-
-    /// Set the register pair DE to the given u16
-    pub fn set_de(&mut self, x: u16) {
-        let u8_pair = LR35902::u8_pair(x);
-        self.registers.d = u8_pair.0;
-        self.registers.e = u8_pair.1;
-    }
-
-    /// Get the register pair HL as a u16
-    pub fn get_hl(&self) -> u16 {
-        LR35902::u16_from_u8(self.registers.h, self.registers.l)
-    }
-
-    /// Set the register pair HL to the given u16
-    pub fn set_hl(&mut self, x: u16) {
-        let u8_pair = LR35902::u8_pair(x);
-        self.registers.h = u8_pair.0;
-        self.registers.l = u8_pair.1;
     }
 
     /*************************/
