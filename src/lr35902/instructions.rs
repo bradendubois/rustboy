@@ -643,7 +643,7 @@ impl LR35902 {
     // 0x07 - RLCA
     fn rlca_0x07(&mut self) -> u64 {
         self.registers.a = self.rlc(self.registers.a);
-        self.unset_zero();
+        self.registers.unset_zero();
         4
     }
 
@@ -693,7 +693,7 @@ impl LR35902 {
     // 0x0F - RRCA
     fn rrca_0x0f(&mut self) -> u64 {
         self.registers.a = self.rrc(self.registers.a);
-        self.unset_subtraction();
+        self.registers.unset_subtraction();
         4
     }
 
@@ -749,7 +749,7 @@ impl LR35902 {
     ///0x17 - RLA : Rotate contents of register A to the left,
     fn rla_0x17(&mut self) -> u64 {
         self.registers.a = self.rl(self.registers.a);
-        self.unset_zero();
+        self.registers.unset_zero();
         4
     }
 
@@ -801,7 +801,7 @@ impl LR35902 {
     /// through the carry flag,
     fn rra_0x1f(&mut self) -> u64 {
         self.registers.a = self.rr(self.registers.a);
-        self.unset_zero();
+        self.registers.unset_zero();
         4
     }
 
@@ -811,7 +811,7 @@ impl LR35902 {
     fn jr_nz_s8_0x20(&mut self) -> u64 {
         let next = self.byte() as i8;
 
-        match self.is_zero() {
+        match self.registers.is_zero() {
             true => {
                 self.jr(next);
                 12
@@ -863,14 +863,14 @@ impl LR35902 {
 
         let mut adj = 0x00;
 
-        if self.is_full_carry() {
+        if self.registers.is_full_carry() {
             adj |= 0x60;
         }
-        if self.is_half_carry() {
+        if self.registers.is_half_carry() {
             adj |= 0x06;
         }
 
-        if !self.is_subtraction() {
+        if !self.registers.is_subtraction() {
             if self.registers.a & 0x0F > 0x09 {
                 adj |= 0x06;
             };
@@ -882,15 +882,15 @@ impl LR35902 {
         self.registers.a = self.registers.a.wrapping_add(adj);
 
         match adj >= 0x60 {
-            true  => self.set_full_carry(),
-            false => self.unset_full_carry(),
+            true  => self.registers.set_full_carry(),
+            false => self.registers.unset_full_carry(),
         };
 
-        self.unset_half_carry();
+        self.registers.unset_half_carry();
 
         match self.registers.a == 0 {
-            true  => self.set_zero(),
-            false => self.unset_zero(),
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
         };
 
         4
@@ -900,7 +900,7 @@ impl LR35902 {
     fn jr_z_s8_0x28(&mut self) -> u64 {
         let next = self.byte() as i8;
 
-        match self.is_zero() {
+        match self.registers.is_zero() {
             true => 8,
             false => {
                 self.jr(next);
@@ -949,8 +949,8 @@ impl LR35902 {
     // 0x2F - CPL
     fn cpl_0x2f(&mut self) -> u64 {
         self.registers.a = !self.registers.a;
-        self.set_half_carry();
-        self.set_subtraction();
+        self.registers.set_half_carry();
+        self.registers.set_subtraction();
         4
     }
 
@@ -960,7 +960,7 @@ impl LR35902 {
     fn jr_nc_s8_0x30(&mut self) -> u64 {
         let next = self.byte() as i8;
 
-        match !self.is_full_carry() {
+        match !self.registers.is_full_carry() {
             true => {
                 self.jr(next);
                 12
@@ -1012,16 +1012,16 @@ impl LR35902 {
 
     //0x37 - SCF
     fn scf_0x37(&mut self) -> u64 {
-        self.set_full_carry();
-        self.unset_half_carry();
-        self.unset_subtraction();
+        self.registers.set_full_carry();
+        self.registers.unset_half_carry();
+        self.registers.unset_subtraction();
         4
     }
 
     // 0x38 JR C, s8
     fn jr_c_s8_0x38(&mut self) -> u64 {
         let s8 = self.byte();
-        match self.is_full_carry() {
+        match self.registers.is_full_carry() {
             true => {
                 self.jr(s8 as i8);
                 12
@@ -1069,12 +1069,12 @@ impl LR35902 {
 
     // 0x3F - CCF
     fn ccf_0x3f(&mut self) -> u64 {
-        match self.is_full_carry() {
-            true => self.unset_full_carry(),
-            false => self.set_full_carry(),
+        match self.registers.is_full_carry() {
+            true => self.registers.unset_full_carry(),
+            false => self.registers.set_full_carry(),
         };
-        self.unset_subtraction();
-        self.unset_half_carry();
+    self.registers.unset_subtraction();
+        self.registers.unset_half_carry();
         4
     }
 
@@ -1867,7 +1867,7 @@ impl LR35902 {
 
     // 0xC0 - RET NZ
     fn ret_nz_0xc0(&mut self) -> u64 {
-        match self.is_zero() {
+        match self.registers.is_zero() {
             true => 8,
             false => {
                 self.ret();
@@ -1886,7 +1886,7 @@ impl LR35902 {
     // 0xC2 - JP NZ a16
     fn jp_nz_a16_0xc2(&mut self) -> u64 {
         let value = self.word();
-        match self.is_zero() {
+        match self.registers.is_zero() {
             true => 12,
             false => {
                 self.registers.pc = value;
@@ -1905,7 +1905,7 @@ impl LR35902 {
     // 0xC4 - CALL NZ a16
     fn call_nz_a16_0xc4(&mut self) -> u64 {
         let value = self.word();
-        match self.is_zero() {
+        match self.registers.is_zero() {
             true => 12,
             false => {
                 self.call(value);
@@ -1935,7 +1935,7 @@ impl LR35902 {
 
     // 0xC8 - RET Z
     fn ret_z_0xc8(&mut self) -> u64 {
-        match self.is_zero() {
+        match self.registers.is_zero() {
             true => {
                 self.ret();
                 20
@@ -1953,7 +1953,7 @@ impl LR35902 {
     // 0xCA - JP Z a16
     fn jp_z_a16_0xca(&mut self) -> u64 {
         let a16 = self.word();
-        match self.is_zero() {
+        match self.registers.is_zero() {
             true => {
                 self.registers.pc = a16;
                 16
@@ -1971,7 +1971,7 @@ impl LR35902 {
     // 0xCC - CALL Z a16
     fn call_z_a16_0xcc(&mut self) -> u64 {
         let a16 = self.word();
-        match self.is_zero() {
+        match self.registers.is_zero() {
             true => {
                 self.call(a16);
                 24
@@ -2004,7 +2004,7 @@ impl LR35902 {
 
     // 0xD0 - RET NC
     fn ret_nc_0xd0(&mut self) -> u64 {
-        match self.is_full_carry() {
+        match self.registers.is_full_carry() {
             true => 8,
             false => {
                 self.ret();
@@ -2023,7 +2023,7 @@ impl LR35902 {
     // 0xD2 - JP NC, a16
     fn jp_nc_a16_0xd2(&mut self) -> u64 {
         let value = self.word();
-        match self.is_full_carry() {
+        match self.registers.is_full_carry() {
             true => 12,
             false => {
                 self.registers.pc = value;
@@ -2035,7 +2035,7 @@ impl LR35902 {
     // 0xD4 - Call NC, a16
     fn call_nc_a16_0xd4(&mut self) -> u64 {
         let val = self.word();
-        match self.is_full_carry() {
+        match self.registers.is_full_carry() {
             true => 12,
             false => {
                 self.call(val);
@@ -2065,7 +2065,7 @@ impl LR35902 {
 
     // 0xD8 - RET C
     fn ret_c_0xd8(&mut self) -> u64 {
-        match self.is_full_carry() {
+        match self.registers.is_full_carry() {
             true => {
                 self.ret();
                 20
@@ -2084,7 +2084,7 @@ impl LR35902 {
     // 0xDA - JP C, a16
     fn jp_c_a16_0xda(&mut self) -> u64 {
         let a16 = self.word();
-        match self.is_full_carry() {
+        match self.registers.is_full_carry() {
             true => {
                 self.registers.pc = a16;
                 16
@@ -2096,7 +2096,7 @@ impl LR35902 {
     // 0xDC - CALL C, a16
     fn call_c_a16_0xdc(&mut self) -> u64 {
         let a16 = self.word();
-        match self.is_full_carry() {
+        match self.registers.is_full_carry() {
             true => {
                 self.call(a16);
                 24

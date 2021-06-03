@@ -91,6 +91,78 @@ impl Registers {
         self.h = u8_pair.0;
         self.l = u8_pair.1;
     }
+
+    /*************************/
+    /*   Z/N/H/C Flags (F)   */
+    /*************************/
+
+    /*     Zero (Z) Flag     */
+
+    /// Set the Zero (Z) flag of the F register
+    pub fn set_zero(&mut self) {
+        self.f |= 0x80;
+    }
+
+    /// Unset the Zero (Z) flag of the F register
+    pub fn unset_zero(&mut self) {
+        self.f &= !0x80;
+    }
+
+    /// Check the Zero(Z) flag of the F register
+    pub fn is_zero(&self) -> bool {
+        self.f & 0x80 != 0
+    }
+
+    /*   Subtract (N) flag   */
+
+    /// Set the Subtract (N) flag of the F register
+    pub fn set_subtraction(&mut self) {
+        self.f |= 0x40;
+    }
+
+    /// Unset the Subtract (N) flag of the F register
+    pub fn unset_subtraction(&mut self) {
+        self.f &= !0x40;
+    }
+
+    /// Check the Subtract (N) flag of the F register
+    pub fn is_subtraction(&self) -> bool {
+        self.f & 0x40 != 0
+    }
+
+    /*  Half Carry (H)  Flag */
+
+    /// Set the Half Carry (H) flag of the F register
+    pub fn set_half_carry(&mut self) {
+        self.f |= 0x20;
+    }
+
+    /// Unset the Half Carry (H) flag of the F register
+    pub fn unset_half_carry(&mut self) {
+        self.f &= !0x20;
+    }
+
+    /// Check the Half Carry (H) flag of the F register
+    pub fn is_half_carry(&self) -> bool {
+        self.f & 0x20 != 0
+    }
+
+    /*     Carry (C) Flag    */
+
+    /// Set the Carry (C) flag of the F register
+    pub fn set_full_carry(&mut self) {
+        self.f |= 0x10;
+    }
+
+    /// Unset the Carry (C) flag of the F register
+    pub fn unset_full_carry(&mut self) {
+        self.f &= !0x10;
+    }
+
+    /// Check the Carry (C) flag of the F register
+    pub fn is_full_carry(&self) -> bool {
+        self.f & 0x10 != 0
+    }
 }
 
 
@@ -167,5 +239,61 @@ mod tests {
         assert_eq!(registers.get_hl(), 0xABCD);
         assert_eq!(registers.h, 0xAB);
         assert_eq!(registers.l, 0xCD);
+    }
+
+    #[test]
+    fn zero() {
+        let mut registers = Registers::new();
+
+        registers.set_zero();
+        assert!(registers.is_zero());
+
+        registers.unset_zero();
+        assert!(!registers.is_zero());
+
+        registers.set_zero();
+        assert!(registers.is_zero());
+    }
+
+    #[test]
+    fn subtraction() {
+        let mut registers = Registers::new();
+
+        registers.set_subtraction();
+        assert!(registers.is_subtraction());
+
+        registers.unset_subtraction();
+        assert!(!registers.is_subtraction());
+
+        registers.set_subtraction();
+        assert!(registers.is_subtraction());
+    }
+
+    #[test]
+    fn half_carry() {
+        let mut registers = Registers::new();
+
+        registers.set_half_carry();
+        assert!(registers.is_half_carry());
+
+        registers.unset_half_carry();
+        assert!(!registers.is_half_carry());
+
+        registers.set_half_carry();
+        assert!(registers.is_half_carry());
+    }
+
+    #[test]
+    fn full_carry() {
+        let mut registers = Registers::new();
+
+        registers.set_full_carry();
+        assert!(registers.is_full_carry());
+
+        registers.unset_full_carry();
+        assert!(!registers.is_full_carry());
+
+        registers.set_full_carry();
+        assert!(registers.is_full_carry());
     }
 }

@@ -13,7 +13,6 @@ use crate::cartridge::Cartridge;
 use crate::lr35902::ime::IME;
 use std::process::exit;
 
-
 // Struct representing the LR35902 CPU
 pub struct LR35902 {
 
@@ -134,400 +133,8 @@ impl LR35902 {
     }
 
     /*************************/
-    /*          ALU          */
-    /*************************/
-
-    /*        Addition       */
-
-    /// Add two u8s together, handling overflow and the Z/N/H/C flags of the F register
-    fn alu_add_8(&mut self, s: u8, t: u8) -> u8 {
-
-        let result = s.wrapping_add(t);
-
-        match result == 0 {
-            true  => self.set_zero(),
-            false => self.unset_zero(),
-        };
-
-        self.unset_subtraction();
-
-        match (s & 0xF) + (t & 0xF) > 0xF {
-            true  => self.set_half_carry(),
-            false => self.unset_half_carry(),
-        };
-
-        match s < t {
-            true  => self.set_full_carry(),
-            false => self.unset_full_carry(),
-        };
-
-        result
-    }
-
-    pub fn a_add_8(&mut self, value: u8) {
-        self.registers.a = self.alu_add_8(self.registers.a, value);
-    }
-
-    /// Add two u16s together, handling overflow and the Z/N/H/C flags of the F register
-    pub fn add_16(&mut self, s: u16, t: u16) -> u16 {
-
-        let result = s.wrapping_add(t);
-
-        match (s & 0x07FF) + (t & 0x07FF) > 0x07FF {
-            true  => self.set_half_carry(),
-            false => self.unset_half_carry(),
-        };
-
-        self.unset_subtraction();
-
-        match s.checked_add(t) {
-            None    => self.set_full_carry(),
-            Some(_) => self.unset_full_carry(),
-        };
-
-        result
-    }
-
-    pub fn add_16_immediate(&mut self, s: u16, t: u8) -> u16 {
-
-        let i = t as i8 as i16 as u16;
-
-        self.unset_subtraction();
-        self.unset_zero();
-
-        match (s & 0x000F) + (i & 0x000F) > 0x000F {
-            true  => self.set_half_carry(),
-            false => self.unset_half_carry()
-        };
-
-        match (s & 0x00FF) + (i & 0x00FF) > 0x00FF {
-            true  => self.set_full_carry(),
-            false => self.unset_full_carry()
-        };
-
-        s.wrapping_add(i)
-    }
-
-    pub fn hl_add_16(&mut self, value: u16) {
-        let result = self.add_16(self.registers.get_hl(), value);
-        self.registers.set_hl(result);
-    }
-
-    /// ADC - Add the given value and the carry (C) flag to the accumulator (A) register
-    pub fn adc_8(&mut self, s: u8) {
-        self.a_add_8(s + if self.is_full_carry() { 1 } else { 0 });
-    }
-
-    /// SBC - Subtract given value and carry flag from the A register
-    pub fn sbc_8(&mut self, s: u8) {
-        self.a_sub_8(s + if self.is_full_carry() { 1 } else { 0 });
-    }
-
-    /*      Subtraction      */
-
-    /// Subtract t (u8) from s (u8), handling underflow and the Z/N/H/C flags of the F register
-    pub fn a_sub_8(&mut self, value: u8) -> u8 {
-
-        let result = self.registers.a.wrapping_sub(value);
-
-        match result == 0 {
-            true  => self.set_zero(),
-            false => self.unset_zero(),
-        };
-
-        self.set_subtraction();
-
-        match (self.registers.a & 0x0F) < (value & 0x0F) {
-            true  => self.set_half_carry(),
-            false => self.unset_half_carry(),
-        };
-
-        match (self.registers.a as u16) < (value as u16) {
-            true  => self.set_full_carry(),
-            false => self.unset_full_carry()
-        } ;
-
-        self.registers.a = result;
-
-        result
-    }
-
-    /*     Incrementation    */
-
-    /// Increment a given u8, handling overflow and the Z/N/H/C flags of the F register
-    pub fn inc_8(&mut self, s: u8) -> u8 {
-
-        let result = s.wrapping_add(1);
-
-        match result == 0 {
-            true  => self.set_zero(),
-            false => self.unset_zero()
-        };
-
-        match (result & 0x0F) + 1 > 0x0F {
-            true  => self.set_half_carry(),
-            false => self.unset_half_carry()
-        };
-
-        self.unset_subtraction();
-
-        result
-    }
-
-    /*      Decrementing     */
-
-    /// Decrement a given u8, handling overflow and the Z/N/H/C flags of the F register
-    pub fn dec_8(&mut self, s: u8) -> u8 {
-
-        let result = s.wrapping_sub(1);
-
-        match result == 0 {
-            true  => self.set_zero(),
-            false => self.unset_zero()
-        };
-
-        match (s & 0x0F) == 0 {
-            true  => self.set_half_carry(),
-            false => self.unset_half_carry()
-        };
-
-        self.set_subtraction();
-
-        result
-    }
-
-    /*   Bitwise Operations  */
-
-    /// AND - AND the given value with the accumulator register (A) and store the result in A
-    pub fn and(&mut self, t: u8) {
-        self.registers.a &= t;
-
-        match self.registers.a == 0 {
-            true  => self.set_zero(),
-            false => self.unset_zero(),
-        };
-
-        self.set_half_carry();
-        self.unset_full_carry();
-        self.unset_subtraction();
-    }
-
-    /// OR - OR the given value with register A. Store result in A.
-    pub fn or(&mut self, t: u8) {
-        self.registers.a |= t;
-
-        match self.registers.a == 0 {
-            true  => self.set_zero(),
-            false => self.unset_zero(),
-        };
-        self.unset_subtraction();
-        self.unset_half_carry();
-        self.unset_full_carry();
-    }
-
-    /// CP - Compare the given value with register A, setting the zero flag if they're equal
-    pub fn cp(&mut self, value: u8) {
-        let restore = self.registers.a;
-        if self.a_sub_8(value) == 0 {
-            self.set_zero()
-        }
-        self.registers.a = restore;
-    }
-
-    /// XOR - XOR the given value with the accumulator register (A) and store the result in A
-    pub fn xor(&mut self, v: u8) {
-        self.registers.a ^= v;
-
-        match self.registers.a == 0 {
-            true  => self.set_zero(),
-            false => self.unset_zero(),
-        };
-
-        self.unset_subtraction();
-        self.unset_half_carry();
-        self.unset_full_carry();
-    }
-
-    /// RLC - Rotate a number left, and copy the left-most bit shifted into the C register
-    pub fn rlc(&mut self, v: u8) -> u8 {
-        let result = (v << 1) | (v >> 7);
-
-        match result == 0 {
-            true  => self.set_zero(),
-            false => self.unset_zero(),
-        };
-
-        self.unset_subtraction();
-        self.unset_half_carry();
-
-        match result & 0x01 != 0 {
-            true  => self.set_full_carry(),
-            false => self.unset_full_carry(),
-        };
-
-        result
-    }
-
-    /// RL - Rotate a number left, copy the contents of carry into the result
-    pub fn rl(&mut self, v: u8) -> u8 {
-        let carry_bit = if self.is_full_carry() { 1 } else { 0 };
-        let result = v << 1 | carry_bit;
-
-        match result == 0 {
-            true  => self.set_zero(),
-            false => self.unset_zero(),
-        };
-
-        match result & 0x01 != 0 {
-            true  => self.set_full_carry(),
-            false => self.unset_full_carry(),
-        };
-
-        self.unset_subtraction();
-        self.unset_half_carry();
-
-        result | carry_bit
-    }
-
-    pub fn stop(&mut self) {
-        self.status = Status::STOPPED;
-    }
-
-    pub fn halt(&mut self) {
-        self.status = Status::HALTED;
-    }
-
-    /// RRC - Rotate a number right, and copy the right-most bit shifted into the C register
-    pub fn rrc(&mut self, v: u8) -> u8 {
-
-        let result = (v >> 1) | (v << 7);
-
-        match result == 0 {
-            true  => self.set_zero(),
-            false => self.unset_zero(),
-        };
-
-        self.unset_subtraction();
-        self.unset_half_carry();
-
-        match result & 0x80 != 0 {
-            true  => self.set_full_carry(),
-            false => self.unset_full_carry(),
-        };
-
-        result
-    }
-
-    /// RR - Rotate a number right, copy carry flag into right-most bit
-    pub fn rr(&mut self, v: u8) -> u8 {
-
-        let carry_bit = if self.is_full_carry() { 1 } else { 0 };
-        let result = v >> 7 | carry_bit;
-
-        match result == 0 {
-            true  => self.set_zero(),
-            false => self.unset_zero(),
-        };
-
-        match result & 0x80 != 0 {
-            true  => self.set_full_carry(),
-            false => self.unset_full_carry(),
-        };
-
-        self.unset_subtraction();
-        self.unset_half_carry();
-
-        result
-    }
-
-    /// SLA - Shift a number left, and copy the left-most bit shifted into the C register
-    pub fn sla(&mut self, v: u8) -> u8 {
-        let result = v << 1;
-
-        match result == 0 {
-            true  => self.set_zero(),
-            false => self.unset_zero(),
-        };
-
-        self.unset_subtraction();
-        self.unset_half_carry();
-
-        match v & 0x80 != 0 {
-            true  => self.set_full_carry(),
-            false => self.unset_full_carry(),
-        };
-
-        result
-    }
-
-    /// SRA - Shift a number right, and copy the right-most bit shifted into the C register
-    pub fn sra(&mut self, v: u8) -> u8 {
-        let result = v >> 1;
-
-        match result == 0 {
-            true  => self.set_zero(),
-            false => self.unset_zero(),
-        };
-
-        self.unset_subtraction();
-        self.unset_half_carry();
-
-        match v & 0x01 != 0 {
-            true  => self.set_full_carry(),
-            false => self.unset_full_carry(),
-        };
-
-        result
-    }
-
-    /// SWAP - return the value with higher order bits swapped with lower order bits
-    pub fn swap(&mut self, s: u8) -> u8 {
-
-        let result = (s << 4) | (s >> 4);
-        match result == 0 {
-            true => self.set_zero(),
-            false => self.unset_zero(),
-        };
-
-        self.unset_subtraction();
-        self.unset_half_carry();
-        self.unset_full_carry();
-        result
-    }
-
-    /// SRL - shift number right, copy bit 0 to CY and set bit 7 of number to 0
-    pub fn srl(&mut self, r: u8) -> u8 {
-
-        let result = r >> 1;
-
-        match result == 0 {
-            true  => self.set_zero(),
-            false => self.unset_zero(),
-        };
-
-        match r & 0x01 != 0 {
-            true  => self.set_full_carry(),
-            false => self.unset_full_carry(),
-        };
-
-        self.unset_subtraction();
-        self.unset_half_carry();
-
-        result
-    }
-
-    /// BIT - Store the complement of bit b of s in the Zero (Z) flag
-    pub fn bit(&mut self, s: u8, b: u8) {
-        match (s & (1 << b)) == 0 {
-            true  => self.set_zero(),
-            false => self.unset_zero(),
-        };
-
-        self.unset_subtraction();
-        self.set_half_carry();
-    }
-
     /*  Program Counter (PC) */
+    /*************************/
 
     pub fn byte(&mut self) -> u8 {
         let next_byte = self.mmu.read(self.registers.pc);
@@ -541,7 +148,9 @@ impl LR35902 {
         LR35902::u16_from_u8(upper, lower)
     }
 
+    /*************************/
     /*   Stack Pointer (SP)  */
+    /*************************/
 
     /// Push 16 bits to the stack (SP)
     pub fn push_sp(&mut self, v: u16) {
@@ -559,9 +168,11 @@ impl LR35902 {
         LR35902::u16_from_u8(upper, lower)
     }
 
-    /*        Control       */
+    /*************************/
+    /*        Control        */
+    /*************************/
 
-    // RST
+    /// RST - Pseudo-instruction to call a specific address depending on opcode
     pub fn rst(&mut self, rst: u16) {
         self.call(rst);
     }
@@ -580,6 +191,433 @@ impl LR35902 {
     /// JR - Adjust the PC by the given i8
     pub fn jr(&mut self, s: i8) {
         self.registers.pc = ((self.registers.pc as u32 as i32) + (s as i32)) as u16;
+    }
+
+    /*************************/
+    /*          IME          */
+    /*************************/
+
+    /// Get the Interrupt Master Enable flag
+    pub fn is_ime(&self) -> bool {
+        self.ime == IME::Enabled
+    }
+
+    /// Set the Interrupt Master Enable flag
+    pub fn set_ime(&mut self) {
+        self.ime = IME::OneCycleDelay;
+    }
+
+    /// Unset the IME flag
+    pub fn unset_ime(&mut self) {
+        self.ime = IME::Disabled;
+    }
+
+    /*************************/
+    /*         STATUS        */
+    /*************************/
+
+    pub fn stop(&mut self) {
+        self.status = Status::STOPPED;
+    }
+
+    pub fn halt(&mut self) {
+        self.status = Status::HALTED;
+    }
+
+    /*************************/
+    /*          ALU          */
+    /*************************/
+
+    /***      Addition     ***/
+
+    /// Add two u8s together, handling overflow and the Z/N/H/C flags of the F register
+    fn alu_add_8(&mut self, s: u8, t: u8) -> u8 {
+
+        let result = s.wrapping_add(t);
+
+        match result == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
+        };
+
+        self.registers.unset_subtraction();
+
+        match (s & 0xF) + (t & 0xF) > 0xF {
+            true  => self.registers.set_half_carry(),
+            false => self.registers.unset_full_carry(),
+        };
+
+        match s < t {
+            true  => self.registers.set_full_carry(),
+            false => self.registers.unset_full_carry(),
+        };
+
+        result
+    }
+
+    /// Add two u16s together, handling overflow and the Z/N/H/C flags of the F register
+    pub fn add_16(&mut self, s: u16, t: u16) -> u16 {
+
+        let result = s.wrapping_add(t);
+
+        match (s & 0x07FF) + (t & 0x07FF) > 0x07FF {
+            true  => self.registers.set_half_carry(),
+            false => self.registers.unset_full_carry(),
+        };
+
+        self.registers.unset_subtraction();
+
+        match s.checked_add(t) {
+            None    => self.registers.set_full_carry(),
+            Some(_) => self.registers.unset_full_carry(),
+        };
+
+        result
+    }
+
+    pub fn add_16_immediate(&mut self, s: u16, t: u8) -> u16 {
+
+        let i = t as i8 as i16 as u16;
+
+        self.registers.unset_subtraction();
+        self.registers.unset_zero();
+
+        match (s & 0x000F) + (i & 0x000F) > 0x000F {
+            true  => self.registers.set_half_carry(),
+            false => self.registers.unset_full_carry()
+        };
+
+        match (s & 0x00FF) + (i & 0x00FF) > 0x00FF {
+            true  => self.registers.set_full_carry(),
+            false => self.registers.unset_full_carry()
+        };
+
+        s.wrapping_add(i)
+    }
+
+    pub fn hl_add_16(&mut self, value: u16) {
+        let result = self.add_16(self.registers.get_hl(), value);
+        self.registers.set_hl(result);
+    }
+
+    pub fn a_add_8(&mut self, value: u8) {
+        self.registers.a = self.alu_add_8(self.registers.a, value);
+    }
+
+    /// ADC - Add the given value and the carry (C) flag to the accumulator (A) register
+    pub fn adc_8(&mut self, s: u8) {
+        self.a_add_8(s + if self.registers.is_full_carry() { 1 } else { 0 });
+    }
+
+    /***    Subtraction    ***/
+
+    /// Subtract t (u8) from s (u8), handling underflow and the Z/N/H/C flags of the F register
+    pub fn a_sub_8(&mut self, value: u8) -> u8 {
+
+        let result = self.registers.a.wrapping_sub(value);
+
+        match result == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
+        };
+
+        self.registers.set_subtraction();
+
+        match (self.registers.a & 0x0F) < (value & 0x0F) {
+            true  => self.registers.set_half_carry(),
+            false => self.registers.unset_full_carry(),
+        };
+
+        match (self.registers.a as u16) < (value as u16) {
+            true  => self.registers.set_full_carry(),
+            false => self.registers.unset_full_carry()
+        } ;
+
+        self.registers.a = result;
+
+        result
+    }
+
+    /// SBC - Subtract given value and carry flag from the A register
+    pub fn sbc_8(&mut self, s: u8) {
+        self.a_sub_8(s + if self.registers.is_full_carry() { 1 } else { 0 });
+    }
+
+    /***   Incrementation  ***/
+
+    /// Increment a given u8, handling overflow and the Z/N/H/C flags of the F register
+    pub fn inc_8(&mut self, s: u8) -> u8 {
+
+        let result = s.wrapping_add(1);
+
+        match result == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero()
+        };
+
+        match (result & 0x0F) + 1 > 0x0F {
+            true  => self.registers.set_half_carry(),
+            false => self.registers.unset_full_carry()
+        };
+
+        self.registers.unset_subtraction();
+
+        result
+    }
+
+    /***    Decrementing   ***/
+
+    /// Decrement a given u8, handling overflow and the Z/N/H/C flags of the F register
+    pub fn dec_8(&mut self, s: u8) -> u8 {
+
+        let result = s.wrapping_sub(1);
+
+        match result == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero()
+        };
+
+        match (s & 0x0F) == 0 {
+            true  => self.registers.set_half_carry(),
+            false => self.registers.unset_full_carry()
+        };
+
+        self.registers.set_subtraction();
+
+        result
+    }
+
+    /*************************/
+    /*   Bitwise Operations  */
+    /*************************/
+
+    /// AND - AND the given value with the accumulator register (A) and store the result in A
+    pub fn and(&mut self, t: u8) {
+        self.registers.a &= t;
+
+        match self.registers.a == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
+        };
+
+        self.registers.set_half_carry();
+        self.registers.unset_full_carry();
+        self.registers.unset_subtraction();
+    }
+
+    /// OR - OR the given value with register A. Store result in A.
+    pub fn or(&mut self, t: u8) {
+        self.registers.a |= t;
+
+        match self.registers.a == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
+        };
+        self.registers.unset_subtraction();
+        self.registers.unset_full_carry();
+        self.registers.unset_full_carry();
+    }
+
+    /// CP - Compare the given value with register A, setting the zero flag if they're equal
+    pub fn cp(&mut self, value: u8) {
+        let restore = self.registers.a;
+        if self.a_sub_8(value) == 0 {
+            self.registers.set_zero()
+        }
+        self.registers.a = restore;
+    }
+
+    /// XOR - XOR the given value with the accumulator register (A) and store the result in A
+    pub fn xor(&mut self, v: u8) {
+        self.registers.a ^= v;
+
+        match self.registers.a == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
+        };
+
+        self.registers.unset_subtraction();
+        self.registers.unset_full_carry();
+        self.registers.unset_full_carry();
+    }
+
+    /// SWAP - return the value with higher order bits swapped with lower order bits
+    pub fn swap(&mut self, s: u8) -> u8 {
+
+        let result = (s << 4) | (s >> 4);
+        match result == 0 {
+            true => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
+        };
+
+        self.registers.unset_subtraction();
+        self.registers.unset_full_carry();
+        self.registers.unset_full_carry();
+        result
+    }
+
+    /// BIT - Store the complement of bit b of s in the Zero (Z) flag
+    pub fn bit(&mut self, s: u8, b: u8) {
+        match (s & (1 << b)) == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
+        };
+
+        self.registers.unset_subtraction();
+        self.registers.set_half_carry();
+    }
+
+    /*************************/
+    /*         ROTATE        */
+    /*************************/
+
+    /// RRC - Rotate a number right, and copy the right-most bit shifted into the C register
+    pub fn rrc(&mut self, v: u8) -> u8 {
+
+        let result = (v >> 1) | (v << 7);
+
+        match result == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
+        };
+
+        self.registers.unset_subtraction();
+        self.registers.unset_full_carry();
+
+        match result & 0x80 != 0 {
+            true  => self.registers.set_full_carry(),
+            false => self.registers.unset_full_carry(),
+        };
+
+        result
+    }
+
+    /// RR - Rotate a number right, copy carry flag into right-most bit
+    pub fn rr(&mut self, v: u8) -> u8 {
+
+        let carry_bit = if self.registers.is_full_carry() { 1 } else { 0 };
+        let result = v >> 7 | carry_bit;
+
+        match result == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
+        };
+
+        match result & 0x80 != 0 {
+            true  => self.registers.set_full_carry(),
+            false => self.registers.unset_full_carry(),
+        };
+
+        self.registers.unset_subtraction();
+        self.registers.unset_full_carry();
+
+        result
+    }
+
+    /// RLC - Rotate a number left, and copy the left-most bit shifted into the C register
+    pub fn rlc(&mut self, v: u8) -> u8 {
+        let result = (v << 1) | (v >> 7);
+
+        match result == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
+        };
+
+        self.registers.unset_subtraction();
+        self.registers.unset_full_carry();
+
+        match result & 0x01 != 0 {
+            true  => self.registers.set_full_carry(),
+            false => self.registers.unset_full_carry(),
+        };
+
+        result
+    }
+
+    /// RL - Rotate a number left, copy the contents of carry into the result
+    pub fn rl(&mut self, v: u8) -> u8 {
+        let carry_bit = if self.registers.is_full_carry() { 1 } else { 0 };
+        let result = v << 1 | carry_bit;
+
+        match result == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
+        };
+
+        match result & 0x01 != 0 {
+            true  => self.registers.set_full_carry(),
+            false => self.registers.unset_full_carry(),
+        };
+
+        self.registers.unset_subtraction();
+        self.registers.unset_full_carry();
+
+        result
+    }
+
+    /*************************/
+    /*         SHIFT         */
+    /*************************/
+
+    /// SLA - Shift a number left, and copy the left-most bit shifted into the C register
+    pub fn sla(&mut self, v: u8) -> u8 {
+        let result = v << 1;
+
+        match result == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
+        };
+
+        self.registers.unset_subtraction();
+        self.registers.unset_full_carry();
+
+        match v & 0x80 != 0 {
+            true  => self.registers.set_full_carry(),
+            false => self.registers.unset_full_carry(),
+        };
+
+        result
+    }
+
+    /// SRA - Shift a number right, and copy the right-most bit shifted into the C register
+    pub fn sra(&mut self, v: u8) -> u8 {
+        let result = v >> 1;
+
+        match result == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
+        };
+
+        self.registers.unset_subtraction();
+        self.registers.unset_full_carry();
+
+        match v & 0x01 != 0 {
+            true  => self.registers.set_full_carry(),
+            false => self.registers.unset_full_carry(),
+        };
+
+        result
+    }
+
+    /// SRL - shift number right, copy bit 0 to CY and set bit 7 of number to 0
+    pub fn srl(&mut self, r: u8) -> u8 {
+
+        let result = r >> 1;
+
+        match result == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
+        };
+
+        match r & 0x01 != 0 {
+            true  => self.registers.set_full_carry(),
+            false => self.registers.unset_full_carry(),
+        };
+
+        self.registers.unset_subtraction();
+        self.registers.unset_full_carry();
+
+        result
     }
 
     /*************************/
