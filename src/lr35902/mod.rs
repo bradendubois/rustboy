@@ -8,8 +8,7 @@ use std::fmt;
 use status::Status;
 use registers::Registers;
 
-use super::mmu;
-
+use super::mmu::MMU;
 use crate::cartridge::Cartridge;
 use crate::lr35902::ime::IME;
 use std::process::exit;
@@ -19,7 +18,7 @@ use std::process::exit;
 pub struct LR35902 {
 
     // Struct representing the memory unit
-    pub mmu: mmu::MMU,
+    pub mmu: MMU,
 
     // Struct of all registers in the LR35902
     pub registers: Registers,
@@ -44,7 +43,7 @@ impl LR35902 {
     pub fn new(cartridge: Cartridge) -> LR35902 {
 
         LR35902 {
-            mmu: mmu::MMU::new(cartridge),
+            mmu: MMU::new(cartridge),
             registers: Registers::new(),
             status: Status::RUNNING,
             ime: IME::Enabled,
@@ -62,10 +61,6 @@ impl LR35902 {
             self.step();
 
             let cycles = self.step();
-            if cycles == 0 {
-                println!("done");
-                return;
-            }
             // println!("cycles taken: {}", cycles);
 
             // Adjust clock and program counter (PC)

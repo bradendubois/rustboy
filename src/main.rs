@@ -64,7 +64,7 @@ mod tests {
 
         // std::env::current_dir().unwrap()?;
 
-        let test_rom = "./roms/mooneye-gb_hwtests/acceptance/instr/daa.gb";
+        let test_rom = "./roms/mooneye-gb_hwtests/acceptance/call_cc_timing.gb";
 
         match std::fs::read(test_rom) {
             Ok(b) => {
