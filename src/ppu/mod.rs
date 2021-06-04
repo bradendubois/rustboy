@@ -409,15 +409,12 @@ impl PPU {
             println!("{:?}", dump);
         }
 
-<<<<<<< Updated upstream
          */
 
         // self.display.draw(dump);
 
         // 3 - H-Blank
-=======
-        self.display.draw(dump);
->>>>>>> Stashed changes
+        // self.display.draw(dump);
     }
 
 
@@ -425,11 +422,8 @@ impl PPU {
 
         let mut pixels = Vec::new();
 
-<<<<<<< Updated upstream
-        // return pixels;
+        return pixels;
 
-=======
->>>>>>> Stashed changes
         if visible.len() > 0 {
             println!("******************************** active sprites");
         }
