@@ -135,11 +135,12 @@ impl MMU {
         self.write(upper, address+1);
     }
 
-    // PPU
 
-    pub fn run_ppu(&mut self, cycles: u64) {
-        self.ppu.run_for(cycles);
+    pub fn run(&mut self, cpu_cycles: u64) {
+        self.ppu.run_for(cpu_cycles);
+        self.timer.run(cpu_cycles as usize);
     }
+
 
     // RAM
 

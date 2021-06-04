@@ -70,7 +70,7 @@ impl LR35902 {
 
             // The PPU runs at a clock rate of 4.2 MHz, while the LR35902 runs at 1.05 MHz
             //  Each cycle run by the CPU corresponds to 4 PPU cycles
-            self.mmu.run_ppu(cycles * 4);
+            self.mmu.run(cycles * 4);
         }
 
         println!("cpu halted with status: {:?}", self.status);
@@ -102,6 +102,10 @@ impl LR35902 {
                 let handle = interrupts.trailing_zeros() as u8;
                 self.mmu.write(ff0f & !(1<< handle), 0xFF0F);
 
+                if handle == 2 {
+                    println!("TIMER");
+                }
+
                 let interrupt_vector: u16 = match handle {
                     0 => 0x0040,
                     1 => 0x0048,
@@ -118,12 +122,12 @@ impl LR35902 {
         }
 
         // Interrupts disabled, or none to handle
-        println!("program counter: {:#06X}", self.registers.pc);
+        //println!("program counter: {:#06X}", self.registers.pc);
 
         // Get the opcode number to execute
         let opcode = self.byte();
 
-        println!("fetched instruction: {:#02X}", opcode);
+        //println!("fetched instruction: {:#02X}", opcode);
 
         if self.mooneye_testing && opcode == 0x40 {
             self.status = Status::HALTED;
@@ -157,7 +161,7 @@ impl LR35902 {
     /// Push 16 bits to the stack (SP)
     pub fn push_sp(&mut self, v: u16) {
         let value = LR35902::u8_pair(v);
-        self.registers.sp -= 2;
+        self.registers.sp = self.registers.sp.wrapping_sub(2);
         self.mmu.write(value.1, self.registers.sp);
         self.mmu.write(value.0, self.registers.sp + 1);
     }
@@ -166,7 +170,7 @@ impl LR35902 {
     pub fn pop_sp(&mut self) -> u16 {
         let lower = self.mmu.read(self.registers.sp);
         let upper = self.mmu.read(self.registers.sp + 1);
-        self.registers.sp += 2;
+        self.registers.sp = self.registers.sp.wrapping_add(2);
         LR35902::u16_from_u8(upper, lower)
     }
 

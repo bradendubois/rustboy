@@ -137,7 +137,25 @@ impl PPU {
             0xFF4A => self.wy,
             0xFF4B => self.wx,
 
-            _ => panic!("unmapped address: {}", address)
+            0xFF4C => 0xFF,     // unmapped
+            0xFF4D => 0x00,     // CGB Mode Only - KEY1 - Prepare Speed Switch
+            0xFF4E => 0xFF,     // unmapped
+            0xFF4F => 0x00,     // CGB Mode Only - VBK - VRAM Bank
+
+            // LCD VRAM DMA Transfers (CGB Mode Only)
+            0xFF51 => 0x00,     // HDMA1 - New DMA Source, High
+            0xFF52 => 0x00,     // HDMA2 - New DMA Source, Low
+            0xFF53 => 0x00,     // HDMA3 - New DMA Destination, High
+            0xFF54 => 0x00,     // HDMA4 - New DMA Destination, Low
+            0xFF55 => 0x00,     // HDMA5 - New DMA Length/Mode/Sort
+
+            // LCD Color Palettes (CGB Mode Only)
+            0xFF68 => 0x00,     // BCPS/BGPI - Background Palette Index
+            0xFF69 => 0x00,     // BCPD/BGPD - Background Palette Data
+            0xFF6A => 0x00,     // OCPS/OBPI - Sprite Palette Index
+            0xFF6B => 0x00,     // OCPD/OBPD - Sprite Palette Data
+
+            _ => panic!("unmapped address: {:#06X}", address)
         }
     }
 
@@ -186,7 +204,25 @@ impl PPU {
             0xFF4A => self.wy = value,
             0xFF4B => self.wx = value,
 
-            _ => panic!("unmapped address: {}", address)
+            0xFF4C => (),       // unmapped
+            0xFF4D => (),       // CGB Mode Only - KEY1 - Prepare Speed Switch
+            0xFF4E => (),       // unmapped
+            0xFF4F => (),       // CGB Mode Only - VBK - VRAM Bank
+
+            // LCD VRAM DMA Transfers (CGB Mode Only)
+            0xFF51 => (),       // HDMA1 - New DMA Source, High
+            0xFF52 => (),       // HDMA2 - New DMA Source, Low
+            0xFF53 => (),       // HDMA3 - New DMA Destination, High
+            0xFF54 => (),       // HDMA4 - New DMA Destination, Low
+            0xFF55 => (),       // HDMA5 - New DMA Length/Mode/Sort
+
+            // LCD Color Palettes (CGB Mode Only)
+            0xFF68 => (),       // BCPS/BGPI - Background Palette Index
+            0xFF69 => (),       // BCPD/BGPD - Background Palette Data
+            0xFF6A => (),       // OCPS/OBPI - Sprite Palette Index
+            0xFF6B => (),       // OCPD/OBPD - Sprite Palette Data
+
+            _ => panic!("unmapped address: {:#06X}", address)
         }
     }
 
@@ -353,11 +389,11 @@ impl PPU {
         //self.display.draw(clear_bg);
 
         // 2.b - Background
-        let background_pixels = self.background_pixels();
+        // let background_pixels = self.background_pixels();
         // self.display.draw(background_pixels);
 
         // 2.c - Objects
-        let object_pixels = self.object_pixels(visible);
+        // let object_pixels = self.object_pixels(visible);
         // self.display.draw(object_pixels);
 
 
@@ -404,9 +440,9 @@ impl PPU {
             }
         }
 
-        if dump.len() > 0 {
-            println!("{:?}", dump);
-        }
+        // if dump.len() > 0 {
+        //    println!("{:?}", dump);
+        //}
 
         self.display.draw(dump);
 
