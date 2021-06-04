@@ -37,6 +37,7 @@ impl Screen {
             .build()
             .unwrap();
 
+        canvas.clear();     // comment out this one for some fun (and weird) canvases
         canvas.present();
 */
         Screen {

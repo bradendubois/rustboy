@@ -353,11 +353,11 @@ impl PPU {
         //self.display.draw(clear_bg);
 
         // 2.b - Background
-        //let background_pixels = self.background_pixels();
+        // let background_pixels = self.background_pixels();
         // self.display.draw(background_pixels);
 
         // 2.c - Objects
-        //let object_pixels = self.object_pixels(visible);
+        // let object_pixels = self.object_pixels(visible);
         // self.display.draw(object_pixels);
 
 
@@ -409,11 +409,15 @@ impl PPU {
             println!("{:?}", dump);
         }
 
+<<<<<<< Updated upstream
          */
 
         // self.display.draw(dump);
 
         // 3 - H-Blank
+=======
+        self.display.draw(dump);
+>>>>>>> Stashed changes
     }
 
 
@@ -421,8 +425,11 @@ impl PPU {
 
         let mut pixels = Vec::new();
 
+<<<<<<< Updated upstream
         // return pixels;
 
+=======
+>>>>>>> Stashed changes
         if visible.len() > 0 {
             println!("******************************** active sprites");
         }
