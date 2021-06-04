@@ -207,7 +207,7 @@ impl PPU {
 
 
     /// 'Main' Execution - run the PPU for a given number of cycles
-    pub fn run_for(&mut self, cycles: u64) {
+    pub fn run(&mut self, cycles: u64) {
 
         // Display is turned off
         if !self.lcdc.lcd_display_enable() {
@@ -353,11 +353,11 @@ impl PPU {
         //self.display.draw(clear_bg);
 
         // 2.b - Background
-        let background_pixels = self.background_pixels();
+        //let background_pixels = self.background_pixels();
         // self.display.draw(background_pixels);
 
         // 2.c - Objects
-        let object_pixels = self.object_pixels(visible);
+        //let object_pixels = self.object_pixels(visible);
         // self.display.draw(object_pixels);
 
 
@@ -404,11 +404,14 @@ impl PPU {
             }
         }
 
+        /*
         if dump.len() > 0 {
             println!("{:?}", dump);
         }
 
-        self.display.draw(dump);
+         */
+
+        // self.display.draw(dump);
 
         // 3 - H-Blank
     }
@@ -418,7 +421,7 @@ impl PPU {
 
         let mut pixels = Vec::new();
 
-        return pixels;
+        // return pixels;
 
         if visible.len() > 0 {
             println!("******************************** active sprites");

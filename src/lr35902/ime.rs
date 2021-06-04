@@ -1,7 +1,12 @@
 #[derive(PartialEq)]
 pub enum IME {
     Enabled,
-    OneCycleDelay,
-    ReadyToEnable,
     Disabled
+}
+
+#[derive(PartialEq)]
+pub enum DelayEffect {
+    Delay,
+    Ready,
+    Done
 }

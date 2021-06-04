@@ -10,8 +10,10 @@ use registers::Registers;
 
 use super::mmu::MMU;
 use crate::cartridge::Cartridge;
-use crate::lr35902::ime::IME;
+use crate::lr35902::ime::{IME, DelayEffect};
 use std::process::exit;
+use crate::lr35902::ime::DelayEffect::Delay;
+use crate::lr35902::ime::IME::{Disabled, Enabled};
 
 // Struct representing the LR35902 CPU
 pub struct LR35902 {
@@ -27,6 +29,8 @@ pub struct LR35902 {
 
     // IME - Interrupt Master Enable Flag
     ime: IME,
+    ime_enable: DelayEffect,
+    ime_disable: DelayEffect,
 
     // Struct representing the clock of the LR35902 for purposes of timing
     pub clock: u64,
@@ -48,6 +52,8 @@ impl LR35902 {
             registers: Registers::new(),
             status: Status::RUNNING,
             ime: IME::Enabled,
+            ime_enable: DelayEffect::Done,
+            ime_disable: DelayEffect::Done,
             clock: 0,
             use_cb_table: false,
             mooneye_testing: false
@@ -59,10 +65,14 @@ impl LR35902 {
 
         println!("cpu beginning run");
 
-        while self.status == Status::RUNNING {
+        loop {
+
             self.step();
 
             let cycles = self.step();
+            if cycles == 0 {
+                break;
+            }
             // println!("cycles taken: {}", cycles);
 
             // Adjust clock and program counter (PC)
@@ -70,7 +80,7 @@ impl LR35902 {
 
             // The PPU runs at a clock rate of 4.2 MHz, while the LR35902 runs at 1.05 MHz
             //  Each cycle run by the CPU corresponds to 4 PPU cycles
-            self.mmu.run_ppu(cycles * 4);
+            self.mmu.run(cycles * 4);
         }
 
         println!("cpu halted with status: {:?}", self.status);
@@ -82,14 +92,17 @@ impl LR35902 {
 
         // The IME has a delay of one cycle, so when 're-enabled' there must be a delay
         //  before actually re-enabling it.
-        self.ime = match self.ime {
-            IME::OneCycleDelay => IME::ReadyToEnable,
-            IME::ReadyToEnable => IME::Enabled,
+        match self.ime_enable {
+            DelayEffect::Delay =>   self.ime_enable = DelayEffect::Ready,
+            DelayEffect::Ready => { self.ime_enable = DelayEffect::Done; self.ime = Enabled; }
+            DelayEffect::Done => ()
+        }
 
-            // No Change
-            IME::Enabled => IME::Enabled,
-            IME::Disabled => IME::Disabled
-        };
+        match self.ime_disable {
+            DelayEffect::Delay =>   self.ime_disable = DelayEffect::Ready,
+            DelayEffect::Ready => { self.ime_disable = DelayEffect::Done; self.ime = Disabled; }
+            DelayEffect::Done => ()
+        }
 
         // Handle any interrupts
         if self.ime == IME::Enabled {
@@ -100,7 +113,7 @@ impl LR35902 {
             let interrupts = ff0f & ffff;
             if interrupts != 0 {
                 let handle = interrupts.trailing_zeros() as u8;
-                self.mmu.write(ff0f & !(1<< handle), 0xFF0F);
+                self.mmu.write(ff0f & !(1 << handle), 0xFF0F);
 
                 let interrupt_vector: u16 = match handle {
                     0 => 0x0040,
@@ -112,18 +125,23 @@ impl LR35902 {
                     _ => panic!("invalid interrupt bit: {}", handle)
                 };
 
+                if handle == 2 {
+                    println!("TIMER");
+                }
+
                 self.call(interrupt_vector);
-                return 4;
+                return 16;
             }
+
         }
 
         // Interrupts disabled, or none to handle
-        println!("program counter: {:#06X}", self.registers.pc);
+        // println!("program counter: {:#06X}", self.registers.pc);
 
         // Get the opcode number to execute
         let opcode = self.byte();
 
-        println!("fetched instruction: {:#02X}", opcode);
+        // println!("fetched instruction: {:#02X}", opcode);
 
         if self.mooneye_testing && opcode == 0x40 {
             self.status = Status::HALTED;
@@ -206,12 +224,17 @@ impl LR35902 {
 
     /// Set the Interrupt Master Enable flag
     pub fn set_ime(&mut self) {
-        self.ime = IME::OneCycleDelay;
+        self.ime_enable = DelayEffect::Delay;
     }
 
     /// Unset the IME flag
     pub fn unset_ime(&mut self) {
-        self.ime = IME::Disabled;
+        self.ime_disable = DelayEffect::Delay;
+    }
+
+    // Set the Interrupt Master Enable flag from a RETI
+    pub fn set_ime_ret(&mut self) {
+        self.ime_enable = DelayEffect::Ready;
     }
 
     /*************************/
@@ -219,10 +242,12 @@ impl LR35902 {
     /*************************/
 
     pub fn stop(&mut self) {
+        println!("OK");
         self.status = Status::STOPPED;
     }
 
     pub fn halt(&mut self) {
+        println!("WOAH");
         self.status = Status::HALTED;
     }
 
@@ -653,6 +678,8 @@ impl LR35902 {
             registers: Registers::new(),
             status: Status::RUNNING,
             ime: IME::Enabled,
+            ime_enable: DelayEffect::Done,
+            ime_disable: DelayEffect::Done,
             clock: 0,
             use_cb_table: false,
             mooneye_testing: true

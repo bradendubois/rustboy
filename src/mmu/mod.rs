@@ -78,6 +78,11 @@ impl MMU {
         mmu
     }
 
+    pub fn run(&mut self, cpu_cycles: u64) {
+        self.ppu.run(cpu_cycles * 4);
+        self.timer.run(cpu_cycles as u8);
+    }
+
     pub fn read(&mut self, address: u16) -> u8 {
 
         // println!("reading: {:#06X}", address);
@@ -138,7 +143,7 @@ impl MMU {
     // PPU
 
     pub fn run_ppu(&mut self, cycles: u64) {
-        self.ppu.run_for(cycles);
+        self.ppu.run(cycles);
     }
 
     // RAM

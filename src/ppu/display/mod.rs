@@ -9,15 +9,15 @@ const SCREEN_WIDTH: u32 = 800;
 const SCREEN_HEIGHT: u32 = 600;
 
 pub struct Screen {
-    context: Sdl,
-    canvas: WindowCanvas,
+//    context: Sdl,
+//    canvas: WindowCanvas,
     i: i16
 }
 
 impl Screen {
 
     pub fn new() -> Screen {
-
+/*
         let context = sdl2::init().unwrap();
         let subsystem = context.video().unwrap();
 
@@ -38,30 +38,25 @@ impl Screen {
             .unwrap();
 
         canvas.present();
-
+*/
         Screen {
-            context,
-            canvas,
+            // context,
+            // canvas,
             i: 0
         }
     }
 
-    pub fn run(&mut self) {
-        self.canvas.draw_rect(Rect::new(20, 20,  100, 100));
-        self.canvas.set_draw_color(sdl2::pixels::Color::RGB(255, 255, 255));
-        self.canvas.clear();
-        self.canvas.draw_point(Point::new(10, 10));
-        self.canvas.present();
-    }
-
     pub fn draw(&mut self, pixels: Vec<(Point, Color)>) {
 
+        /*
         for (point, color) in pixels.iter() {
             self.canvas.set_draw_color(*color);
             self.canvas.draw_point(*point);
         }
 
         self.canvas.present();
+
+         */
     }
 }
 
