@@ -12,6 +12,7 @@ use super::mmu::MMU;
 use crate::cartridge::Cartridge;
 use crate::lr35902::ime::IME;
 use std::process::exit;
+use crate::lr35902::status::Status::{HALTED, RUNNING};
 
 // Struct representing the LR35902 CPU
 pub struct LR35902 {
@@ -47,7 +48,7 @@ impl LR35902 {
             mmu: MMU::new(cartridge),
             registers: Registers::new(),
             status: Status::RUNNING,
-            ime: IME::Enabled,
+            ime: IME::Disabled,
             clock: 0,
             use_cb_table: false,
             mooneye_testing: false
@@ -59,10 +60,14 @@ impl LR35902 {
 
         // println!("cpu beginning run");
 
-        while self.status == Status::RUNNING {
+        loop {
             self.step();
 
             let cycles = self.step();
+            if cycles == 0 {
+                break;
+            }
+
             // println!("cycles taken: {}", cycles);
 
             // Adjust clock and program counter (PC)
@@ -115,6 +120,9 @@ impl LR35902 {
                 self.call(interrupt_vector);
                 return 4;
             }
+        } else if self.status == HALTED {
+            self.status = RUNNING;
+            return self.nop_0x00();
         }
 
         // Interrupts disabled, or none to handle

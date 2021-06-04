@@ -207,7 +207,7 @@ impl MMU {
 
     fn read_io_registers(&mut self, address: u16) -> u8 {
         match address {
-            0xFF00 ..= 0xFF00=> self.joypad.read(),
+            0xFF00 ..= 0xFF00 => self.joypad.read(),
             0xFF01 ..= 0xFF02 => self.serial.read(address),
             0xFF03 ..= 0xFF03 => 0xFF,                              //unmapped
             0xFF04 ..= 0xFF07 => self.timer.read(address),
@@ -220,13 +220,18 @@ impl MMU {
             0xFF20 ..= 0xFF26 => self.apu.read(address),
             0xFF27 ..= 0xFF2F => 0xFF,                              // unmapped
             0xFF30 ..= 0xFF3F => self.apu.read(address),
-            0xFF40 ..= 0xFF4F => self.ppu.read(address),
+            0xFF40 ..= 0xFF4B => self.ppu.read(address),
+            0xFF4C ..= 0xFF4C => 0xFF,                              // unmapped
+            0xFF4D ..= 0xFF4D => self.ppu.read(address),
+            0xFF4E ..= 0xFF4E => 0xFF,                              // unmapped
+            0xFF4F ..= 0xFF4F => self.ppu.read(address),
             0xFF50 ..= 0xFF50 => if self.in_bios { 1 } else { 0 },
-            0xFF51 ..= 0xFF55 => 0,        // Color GB Only - VRAM DMA
-            0xFF56 ..= 0xFF67 => 0xFF,                              // unmapped
-            0xFF68 ..= 0xFF69 => 0,        // Color GB Only - BG / OBJ Palettes
-            0xFF6A ..= 0xFF6F => 0xFF,                              // unmapped
-            0xFF70 ..= 0xFF70 => 0,        // Color GB Only - WRAM Bank Select
+            0xFF51 ..= 0xFF55 => self.ppu.read(address),
+            0xFF56 ..= 0xFF56 => 0xFF,    // CGB Only - RP - Infrared Comm. Port
+            0xFF57 ..= 0xFF67 => 0xFF,                              // unmapped
+            0xFF68 ..= 0xFF6B => self.ppu.read(address),
+            0xFF6C ..= 0xFF6F => 0xFF,                              // unmapped
+            0xFF70 ..= 0xFF70 => self.ppu.read(address),
             0xFF71 ..= 0xFF7F => 0xFF,                              // unmapped
 
             _ => panic!("Unmapped address {:#06X}", address)
@@ -248,13 +253,18 @@ impl MMU {
             0xFF20 ..= 0xFF26 => self.apu.write(value, address),
             0xFF27 ..= 0xFF2F => (),                                        // unmapped
             0xFF30 ..= 0xFF3F => self.apu.write(value, address),
-            0xFF40 ..= 0xFF4F => self.ppu.write(value, address),
+            0xFF40 ..= 0xFF4B => self.ppu.write(value, address),
+            0xFF4C ..= 0xFF4C => (),                                        // unmapped
+            0xFF4D ..= 0xFF4D => self.ppu.write(value, address),
+            0xFF4E ..= 0xFF4E => (),                                        // unmapped
+            0xFF4F ..= 0xFF4F => self.ppu.write(value, address),
             0xFF50 ..= 0xFF50 => self.in_bios = self.in_bios && value != 0,
-            0xFF51 ..= 0xFF55 => (),        // Color GB Only - VRAM DMA
-            0xFF56 ..= 0xFF67 => (),                                        // unmapped
-            0xFF68 ..= 0xFF69 => (),        // Color GB Only - BG / OBJ Palettes
-            0xFF6A ..= 0xFF6F => (),                                        // unmapped
-            0xFF70 ..= 0xFF70 => (),        // Color GB Only - WRAM Bank Select
+            0xFF51 ..= 0xFF55 => self.ppu.write(value, address),
+            0xFF56 ..= 0xFF56 => (),    // CGB Only - RP - Infrared Comm. Port
+            0xFF57 ..= 0xFF67 => (),                                        // unmapped
+            0xFF68 ..= 0xFF6B => self.ppu.write(value, address),
+            0xFF6C ..= 0xFF6F => (),                                        // unmapped
+            0xFF70 ..= 0xFF70 => self.ppu.write(value, address),
             0xFF71 ..= 0xFF7F => (),                                        // unmapped
 
             _ => panic!("Unmapped address {:#06X}", address)

@@ -136,10 +136,7 @@ impl PPU {
             0xFF49 => self.obp1,
             0xFF4A => self.wy,
             0xFF4B => self.wx,
-
-            0xFF4C => 0xFF,     // unmapped
             0xFF4D => 0x00,     // CGB Mode Only - KEY1 - Prepare Speed Switch
-            0xFF4E => 0xFF,     // unmapped
             0xFF4F => 0x00,     // CGB Mode Only - VBK - VRAM Bank
 
             // LCD VRAM DMA Transfers (CGB Mode Only)
