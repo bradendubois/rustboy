@@ -36,36 +36,34 @@ impl Timer {
 
     pub fn run(&mut self, cpu_ticks: usize) {
 
+        // Divider timer always runs
         self.divi_tank += cpu_ticks;
-
         while self.divi_tank >= TIMER_TO_CPU_TICKS {
             self.divider_register = self.divider_register.wrapping_add(1);
             self.divi_tank -= TIMER_TO_CPU_TICKS;
         }
 
-        self.divider_register = self.divider_register.wrapping_add(1);
-
-
+        // Only run timer counter if enabled
         if self.timer_enabled {
 
             self.tima_tank += cpu_ticks;
 
+            // Conversion of 'tanked' CPU cycles into appropriate timer clock select cycles
             while self.tima_tank >= self.timer_clock_select {
                 let (result, overflow) = self.timer_counter.overflowing_add(1);
 
-                if overflow {
-                    self.timer_counter = self.timer_modulo;
-                    self.interrupt = true;
-                }
+                // Interrupt and reset on overflow
+                self.timer_counter = match overflow {
+                    true  => { self.interrupt = true; self.timer_modulo }
+                    false => result
+                };
 
-                self.timer_counter = result;
                 self.tima_tank -= self.timer_clock_select;
             }
         }
     }
 
     pub fn read(&mut self, address: u16) -> u8 {
-        println!("ADDRESS: {:#06X}", address);
         match address {
             0xFF04 => self.divider_register,
             0xFF05 => self.timer_control,
@@ -77,19 +75,18 @@ impl Timer {
     }
 
     pub fn write(&mut self, value: u8, address: u16) {
-        println!("ADDRESS: {:#06X} : {:#010b}", address, value);
         match address {
             0xFF04 => self.divider_register = 0,
             0xFF05 => self.timer_control = value,
             0xFF06 => self.timer_modulo = value,
             0xFF07 => {
-                self.timer_control = value;
+                self.timer_control = value & 0x07;
                 self.timer_enabled = value & 0x04 != 0;
-                self.timer_clock_select = match value & 0b11 {
-                    0b00 => 1024,       // CPU Clock / 1024 =   4096 Hz
-                    0b01 => 16,         // CPU Clock / 16   = 262144 Hz
-                    0b10 => 64,         // CPU Clock / 64   =  65536 Hz
-                    0b11 => 256,        // CPU Clock / 256  =  16384 Hz
+                self.timer_clock_select = match value & 0x3 {
+                    0b00 => 1024,   // CPU Clock / 1024 =   4096 Hz = 1024 CPU ticks per Timer tick
+                    0b01 => 16,     // CPU Clock / 16   = 262144 Hz =   16 CPU ticks per Timer tick
+                    0b10 => 64,     // CPU Clock / 64   =  65536 Hz =   64 CPU ticks per Timer tick
+                    0b11 => 256,    // CPU Clock / 256  =  16384 Hz =  256 CPU ticks per Timer tick
 
                     _ => panic!("impossible timer clock value: {:#010b}", value)
                 };
