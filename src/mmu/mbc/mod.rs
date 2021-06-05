@@ -7,4 +7,7 @@ pub trait MBC {
     fn read_rom(&mut self, address: u16) -> u8;
     fn write_ram(&mut self, value: u8, address: u16);
     fn write_rom(&mut self, value: u8, address: u16);
+
+    fn read(&mut self, address: u16) -> u8;
+    fn write(&mut self, address: u16, value: u8);
 }

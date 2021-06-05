@@ -56,6 +56,7 @@ pub struct PPU {
      scx: u8,       // 0xFF43 : Scroll X
       ly: u8,       // 0xFF44 : LY  (LCD Y)
      lyc: u8,       // 0xFF45 : LYC (LY Compare)
+     dma: u8,       // 0xFF46 : DMA (DMA Transfer and Start Address)
      bgp: u8,       // 0xFF47 : BGP Palette Data (Non-CGB)
     obp0: u8,       // 0xFF48 : Object Palette 0 (Non-CGB)
     obp1: u8,       // 0xFF49 : Object Palette 1 (Non-CGB)
@@ -88,6 +89,7 @@ impl PPU {
              scx: 0,
               ly: 0,
              lyc: 0,
+             dma: 0,
              bgp: 0,
             obp0: 0,
             obp1: 0,
@@ -130,7 +132,7 @@ impl PPU {
             0xFF43 => self.scx,
             0xFF44 => self.ly,
             0xFF45 => self.lyc,
-            0xFF46 => panic!("cannot read DMA register"),
+            0xFF46 => self.dma,
             0xFF47 => self.bgp,
             0xFF48 => self.obp0,
             0xFF49 => self.obp1,
@@ -225,6 +227,8 @@ impl PPU {
 
 
     pub fn dma_transfer(&mut self, value: u8) {
+
+        self.dma = value;
 
         return;
 

@@ -27,4 +27,7 @@ impl MBC for MBC0 {
     fn write_ram(&mut self, _value: u8, _address: u16) { }
 
     fn write_rom(&mut self, _value: u8, _address: u16) { }
+
+    fn read(&mut self, address: u16) -> u8 { 0 }
+    fn write(&mut self, address: u16, value: u8) { }
 }

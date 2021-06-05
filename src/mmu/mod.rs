@@ -54,14 +54,14 @@ impl MMU {
 
             h_ram: [0; H_RAM_SIZE],
 
-            mbc: match cartridge.cartridge_type {
+            mbc: match cartridge.cartridge_type() {
                 0x00 ..= 0x00 => Box::new(MBC0::new(cartridge)),
                 0x01 ..= 0x03 => Box::new(MBC1::new(cartridge)),
                 0x05 ..= 0x06 => panic!("MBC2 not implemented!"), // MBC2::new(cartridge),
                 0x0F ..= 0x13 => panic!("MBC3 not implemented!"), // MBC3::new(cartridge),
                 0x19 ..= 0x1E => panic!("MBC5 not implemented!"), // MBC5::new(cartridge)
 
-                _ => panic!("Unsupported cartridge type: {:#4X}!", cartridge.cartridge_type),
+                _ => panic!("Unsupported cartridge type: {:#4X}!", cartridge.cartridge_type()),
             },
 
             ppu: PPU::new(),
@@ -83,10 +83,10 @@ impl MMU {
         // println!("reading: {:#06X}", address);
 
         match address {
-            0x0000 ..= 0x3FFF => self.mbc.read_rom(address),                // ROM
-            0x4000 ..= 0x7FFF => self.mbc.read_rom(address),                // Switchable ROM Bank
+            0x0000 ..= 0x3FFF => self.mbc.read(address),                    // ROM
+            0x4000 ..= 0x7FFF => self.mbc.read(address),                    // Switchable ROM Bank
             0x8000 ..= 0x9FFF => self.ppu.read(address),                    // Video RAM
-            0xA000 ..= 0xBFFF => self.mbc.read_ram(address),                // Switchable RAM Bank
+            0xA000 ..= 0xBFFF => self.mbc.read(address),                    // Switchable RAM Bank
             0xC000 ..= 0xCFFF => self.read_ram(address),                    // Internal RAM
             0xD000 ..= 0xDFFF => self.read_rambank(address),                // Internal RAM
             0xE000 ..= 0xEFFF => self.read_ram(address),                    // Internal RAM
@@ -104,10 +104,10 @@ impl MMU {
     pub fn write(&mut self, value: u8, address: u16) {
 
         match address {
-            0x0000 ..= 0x3FFF => self.mbc.write_rom(value, address),        // ROM
-            0x4000 ..= 0x7FFF => self.mbc.write_rom(value, address),        // Switchable ROM Bank
+            0x0000 ..= 0x3FFF => self.mbc.write(address, value),            // ROM
+            0x4000 ..= 0x7FFF => self.mbc.write(address, value),            // Switchable ROM Bank
             0x8000 ..= 0x9FFF => self.ppu.write(value, address),            // Video RAM
-            0xA000 ..= 0xBFFF => self.mbc.write_ram(value, address),        // Switchable RAM Bank
+            0xA000 ..= 0xBFFF => self.mbc.write(address, value),            // Switchable RAM Bank
             0xC000 ..= 0xCFFF => self.write_ram(value, address),            // Internal RAM
             0xD000 ..= 0xDFFF => self.write_rambank(value, address),        // Internal RAM
             0xE000 ..= 0xEFFF => self.write_ram(value, address),            // Internal RAM
@@ -138,7 +138,7 @@ impl MMU {
 
     pub fn run(&mut self, cpu_cycles: u64) {
         self.ppu.run_for(cpu_cycles);
-        self.timer.run(cpu_cycles as usize);
+        self.timer.run((cpu_cycles / 4) as usize);
     }
 
 
@@ -231,7 +231,7 @@ impl MMU {
             0xFF57 ..= 0xFF67 => 0xFF,                              // unmapped
             0xFF68 ..= 0xFF6B => self.ppu.read(address),
             0xFF6C ..= 0xFF6F => 0xFF,                              // unmapped
-            0xFF70 ..= 0xFF70 => self.ppu.read(address),
+            0xFF70 ..= 0xFF70 => 0xFF,    // CGB Only - SVBK - WRAM Bank
             0xFF71 ..= 0xFF7F => 0xFF,                              // unmapped
 
             _ => panic!("Unmapped address {:#06X}", address)
@@ -264,7 +264,7 @@ impl MMU {
             0xFF57 ..= 0xFF67 => (),                                        // unmapped
             0xFF68 ..= 0xFF6B => self.ppu.write(value, address),
             0xFF6C ..= 0xFF6F => (),                                        // unmapped
-            0xFF70 ..= 0xFF70 => self.ppu.write(value, address),
+            0xFF70 ..= 0xFF70 => (),    // CGB Only - SVBK - WRAM Bank
             0xFF71 ..= 0xFF7F => (),                                        // unmapped
 
             _ => panic!("Unmapped address {:#06X}", address)
