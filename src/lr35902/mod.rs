@@ -704,12 +704,14 @@ mod test {
         format!("{}/{}", MOONEYE, subdirectory)
     }
 
-    fn mooneye_all(dir: &String) {
+    fn mooneye_all(dir: &str) {
 
         let mut successful: Vec<String> = Vec::new();
         let mut errors: Vec<String> = Vec::new();
 
-        for entry in std::fs::read_dir(dir).unwrap() {
+        let full_dir = &format!("{}/{}", MOONEYE, dir);
+
+        for entry in std::fs::read_dir(full_dir).unwrap() {
 
             let path = entry.unwrap().path();
             let pathname = path.to_str().unwrap().to_string();
@@ -734,39 +736,43 @@ mod test {
             for error in errors.iter() {
                 println!("  {}", error);
             }
+
+            panic!("errors in {}", dir)
         }
     }
 
-    /*
     #[test]
     fn acceptance_root() {
-        mooneye_all(&format!("{}/{}", MOONEYE, "acceptance"));
+        mooneye_all("acceptance");
     }
 
     #[test]
     fn acceptance_bits() {
-        mooneye_all(&format!("{}/{}", MOONEYE, "acceptance/bits"));
+        mooneye_all("acceptance/bits");
     }
 
     #[test]
     fn acceptance_instr() {
-        mooneye_all(&format!("{}/{}", MOONEYE, "acceptance/instr"));
+        mooneye_all("acceptance/instr");
     }
 
     #[test]
     fn acceptance_interrupts() {
-        mooneye_all(&format!("{}/{}", MOONEYE, "acceptance/interrupts"));
+        mooneye_all("acceptance/interrupts");
     }
+    /*
 
     #[test]
     fn acceptance_oam_dma() {
         mooneye_all(&format!("{}/{}", MOONEYE, "acceptance/oam_dma"));
     }
+     */
 
     #[test]
     fn acceptance_ppu() {
-        mooneye_all(&format!("{}/{}", MOONEYE, "acceptance/ppu"));
+        mooneye_all("acceptance/ppu");
     }
+    /*
 
     #[test]
     fn acceptance_serial() {
@@ -775,16 +781,16 @@ mod test {
 
 
      */
-/*
+
     #[test]
     fn acceptance_timer() {
-        mooneye_all(&format!("{}/{}", MOONEYE, "acceptance/timer"));
+        mooneye_all("acceptance/timer");
     }
 
-     */
 
     #[test]
     fn acceptance_mbc1() {
-        mooneye_all(&format!("{}/{}", MOONEYE, "emulator-only/mbc1"));
+        mooneye_all("emulator-only/mbc1");
     }
+
 }
