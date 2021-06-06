@@ -44,7 +44,7 @@ impl MemoryMap for Timer {
     fn read(&mut self, address: u16) -> u8 {
         match address {
             0xFF04 => self.divider_register,
-            0xFF05 => self.timer_control,
+            0xFF05 => self.timer_counter,
             0xFF06 => self.timer_modulo,
             0xFF07 => self.timer_control,
 
@@ -54,10 +54,10 @@ impl MemoryMap for Timer {
     fn write(&mut self, address: u16, value: u8) {
         match address {
             0xFF04 => self.divider_register = 0,
-            0xFF05 => self.timer_control = value,
+            0xFF05 => self.timer_counter = value,
             0xFF06 => self.timer_modulo = value,
             0xFF07 => {
-                self.timer_control = value & 0x07;
+                self.timer_control = value;
                 self.timer_enabled = value & 0x04 != 0;
                 self.timer_clock_select = match value & 0x3 {
                     0b00 => 1024,   // CPU Clock / 1024 =   4096 Hz = 1024 CPU ticks per Timer tick
@@ -106,4 +106,5 @@ impl RunComponent for Timer {
                 self.tima_tank -= self.timer_clock_select;
             }
         }
-    }}
+    }
+}
