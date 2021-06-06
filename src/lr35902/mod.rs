@@ -116,11 +116,11 @@ impl LR35902 {
             return self.nop_0x00();
         }
 
-        // println!("program counter: {:#06X}", self.registers.pc);
+        println!("program counter: {:#06X}", self.registers.pc);
 
         let opcode = self.byte();        // Get the opcode number to execute
 
-        // println!("fetched instruction: {:#02X}", opcode);
+        println!("fetched instruction: {:#02X}", opcode);
 
         // Special 'exit condition' on testing a "mooneye" testing ROM; accessing instruction 0x40
         //  (which is LD B B) indicates that the test is done. A successful test places the
@@ -729,6 +729,7 @@ mod test {
         }
     }
 
+    /*
     #[test]
     fn acceptance_root() {
         mooneye_all("acceptance");
@@ -749,6 +750,8 @@ mod test {
         mooneye_all("acceptance/interrupts");
     }
 
+
+     */
     /* TODO
     #[test]
     fn acceptance_oam_dma() {
@@ -770,11 +773,13 @@ mod test {
     }
      */
 
+    /*
     #[test]
     fn acceptance_timer() {
         mooneye_all("acceptance/timer");
     }
 
+    */
 
     #[test]
     fn acceptance_mbc1() {

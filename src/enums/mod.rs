@@ -5,6 +5,7 @@ pub enum Status {
     RUNNING,
 }
 
+
 #[derive(PartialEq)]
 pub enum IME {
     Enabled,
