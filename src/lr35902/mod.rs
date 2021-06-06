@@ -8,7 +8,7 @@ use std::fmt;
 use status::Status;
 use registers::Registers;
 
-use super::mmu::MMU;
+use super::mmu::{MMU, MemoryMap};
 use crate::cartridge::Cartridge;
 use crate::lr35902::ime::IME;
 use std::process::exit;
@@ -106,7 +106,7 @@ impl LR35902 {
             let interrupts = ff0f & ffff;
             if interrupts != 0 {
                 let handle = interrupts.trailing_zeros() as u8;
-                self.mmu.write(ff0f & !(1<< handle), 0xFF0F);
+                self.mmu.write(0xFF0F, ff0f & !(1<< handle));
 
                 let interrupt_vector: u16 = match handle {
                     0 => 0x0040,
@@ -166,7 +166,7 @@ impl LR35902 {
     /// Push 16 bits to the stack (SP)
     pub fn push_sp(&mut self, value: u16) {
         self.registers.sp = self.registers.sp.wrapping_sub(2);
-        self.mmu.write_word(value, self.registers.sp);
+        self.mmu.write_word( self.registers.sp, value);
     }
 
     /// Pop and return 16 bits from the stack (SP)
@@ -186,9 +186,9 @@ impl LR35902 {
     }
 
     /// CALL - Store the current PC address on the stack and move PC to the given address
-    pub fn call(&mut self, addr: u16) {
+    pub fn call(&mut self, address: u16) {
         self.push_sp(self.registers.pc);
-        self.registers.pc = addr;
+        self.registers.pc = address;
     }
 
     /// RET - Pop the stack by 16 bits and set the PC to the result
@@ -225,7 +225,7 @@ impl LR35902 {
     /*************************/
 
     pub fn stop(&mut self) {
-        self.mmu.write(0, 0xFF04);  // A STOP clears the timer
+        self.mmu.write(0xFF04, 0);  // A STOP clears the timer
         self.status = Status::STOPPED;
     }
 
@@ -760,8 +760,8 @@ mod test {
     fn acceptance_interrupts() {
         mooneye_all("acceptance/interrupts");
     }
-    /*
 
+    /* TODO
     #[test]
     fn acceptance_oam_dma() {
         mooneye_all(&format!("{}/{}", MOONEYE, "acceptance/oam_dma"));
@@ -772,14 +772,12 @@ mod test {
     fn acceptance_ppu() {
         mooneye_all("acceptance/ppu");
     }
-    /*
 
+    /* TODO
     #[test]
     fn acceptance_serial() {
         mooneye_all(&format!("{}/{}", MOONEYE, "acceptance/serial"));
     }
-
-
      */
 
     #[test]
