@@ -23,3 +23,7 @@ pub trait MBC {
     fn write(&mut self, address: u16, value: u8);
 }
 
+
+pub trait RunComponent {
+    fn run(&mut self, cpu_clock_cycles: u64);
+}

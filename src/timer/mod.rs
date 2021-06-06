@@ -1,4 +1,4 @@
-use crate::traits::MemoryMap;
+use crate::traits::{MemoryMap, RunComponent};
 
 
 const TIMER_TO_CPU_TICKS: usize = 256;
@@ -34,35 +34,6 @@ impl Timer {
             divi_tank: 0,
             tima_tank: 0,
             interrupt: false,
-        }
-    }
-
-    pub fn run(&mut self, cpu_ticks: usize) {
-
-        // Divider timer always runs
-        self.divi_tank += cpu_ticks;
-        while self.divi_tank >= TIMER_TO_CPU_TICKS {
-            self.divider_register = self.divider_register.wrapping_add(1);
-            self.divi_tank -= TIMER_TO_CPU_TICKS;
-        }
-
-        // Only run timer counter if enabled
-        if self.timer_enabled {
-
-            self.tima_tank += cpu_ticks;
-
-            // Conversion of 'tanked' CPU cycles into appropriate timer clock select cycles
-            while self.tima_tank >= self.timer_clock_select {
-                let (result, overflow) = self.timer_counter.overflowing_add(1);
-
-                // Interrupt and reset on overflow
-                self.timer_counter = match overflow {
-                    true  => { self.interrupt = true; self.timer_modulo }
-                    false => result
-                };
-
-                self.tima_tank -= self.timer_clock_select;
-            }
         }
     }
 }
@@ -102,3 +73,35 @@ impl MemoryMap for Timer {
         }
     }
 }
+
+
+impl RunComponent for Timer {
+
+    fn run(&mut self, cpu_clock_cycles: usize) {
+
+        // Divider timer always runs
+        self.divi_tank += cpu_clock_cycles;
+        while self.divi_tank >= TIMER_TO_CPU_TICKS {
+            self.divider_register = self.divider_register.wrapping_add(1);
+            self.divi_tank -= TIMER_TO_CPU_TICKS;
+        }
+
+        // Only run timer counter if enabled
+        if self.timer_enabled {
+
+            self.tima_tank += cpu_clock_cycles;
+
+            // Conversion of 'tanked' CPU cycles into appropriate timer clock select cycles
+            while self.tima_tank >= self.timer_clock_select {
+                let (result, overflow) = self.timer_counter.overflowing_add(1);
+
+                // Interrupt and reset on overflow
+                self.timer_counter = match overflow {
+                    true  => { self.interrupt = true; self.timer_modulo }
+                    false => result
+                };
+
+                self.tima_tank -= self.timer_clock_select;
+            }
+        }
+    }}
