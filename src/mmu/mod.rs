@@ -75,20 +75,9 @@ impl MMU {
             bios: vec![],
 
             w_ram: [0; W_RAM_SIZE],
-            w_ram_bank: 1,
-
             h_ram: [0; H_RAM_SIZE],
 
-            mbc: match cartridge.cartridge_type() {
-                0x00 ..= 0x00 => Box::new(MBC0::new(cartridge)),
-                0x01 ..= 0x03 => Box::new(MBC1::new(cartridge)),
-                0x05 ..= 0x06 => panic!("MBC2 not implemented!"), // MBC2::new(cartridge),
-                0x0F ..= 0x13 => panic!("MBC3 not implemented!"), // MBC3::new(cartridge),
-                0x19 ..= 0x1E => panic!("MBC5 not implemented!"), // MBC5::new(cartridge)
-
-                _ => panic!("Unsupported cartridge type: {:#4X}!", cartridge.cartridge_type()),
-            },
-
+            mbc: mbc::from(cartridge),
             ppu: PPU::new(),
             apu: Sound::new(),
             timer: Timer::new(),
