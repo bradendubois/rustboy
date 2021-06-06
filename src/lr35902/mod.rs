@@ -1,20 +1,14 @@
 mod instructions;
-mod status;
 mod registers;
-mod ime;
 
 use std::fmt;
 
-use status::Status;
-use registers::Registers;
-
-use super::mmu::{MMU};
-use crate::cartridge::Cartridge;
-use crate::lr35902::ime::IME;
+use crate::enums::{IME, Status, Status::*};
 use crate::traits::MemoryMap;
-use std::process::exit;
-use crate::lr35902::status::Status::{HALTED, RUNNING};
-use std::ptr::eq;
+
+use super::cartridge::Cartridge;
+use super::mmu::MMU;
+use registers::Registers;
 
 // Struct representing the LR35902 CPU
 pub struct LR35902 {
@@ -32,10 +26,10 @@ pub struct LR35902 {
     ime: IME,
 
     // Struct representing the clock of the LR35902 for purposes of timing
-    pub clock: u64,
+    clock: u64,
 
     // CB Flag : Will set whether to use the default table or the CB Prefix table
-    pub use_cb_table: bool,
+    use_cb_table: bool,
 
     mooneye_testing: bool
 }
@@ -696,14 +690,9 @@ impl fmt::Debug for LR35902 {
 mod test {
 
     use super::*;
-    use std::path::Path;
 
     // Root
     const MOONEYE: &str = "./roms/testing/mooneye";
-
-    fn full_path(subdirectory: &str) -> String {
-        format!("{}/{}", MOONEYE, subdirectory)
-    }
 
     fn mooneye_all(dir: &str) {
 

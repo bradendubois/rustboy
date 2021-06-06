@@ -1,22 +1,19 @@
 extern crate sdl2;
 
-use self::sdl2::Sdl;
-use self::sdl2::render::WindowCanvas;
-use self::sdl2::rect::{Point, Rect};
+// use self::sdl2::Sdl;
+// use self::sdl2::render::WindowCanvas;
+use self::sdl2::rect::{Point};
 use self::sdl2::pixels::Color;
 
-const SCREEN_WIDTH: u32 = 800;
-const SCREEN_HEIGHT: u32 = 600;
+// use super::{HEIGHT, WIDTH};
 
+#[allow(unused)]
 pub struct Screen {
-    /*
-    context: Sdl,
-    canvas: WindowCanvas,
-     */
-
-    i: i16
+    // context: Sdl,
+    // canvas: WindowCanvas,
 }
 
+#[allow(unused)]
 impl Screen {
 
     pub fn new() -> Screen {
@@ -28,8 +25,8 @@ impl Screen {
         let window = subsystem
             .window(
                 "RustBoy",
-                SCREEN_WIDTH,
-                SCREEN_HEIGHT,
+                WIDTH as u32,
+                HEIGHT as u32,
             )
             .position_centered()
             .opengl()
@@ -41,19 +38,18 @@ impl Screen {
             .build()
             .unwrap();
 
-        canvas.present();
+        // canvas.present();
 
 
          */
         Screen {
             // context,
             // canvas,
-            i: 0
         }
     }
 
     pub fn draw(&mut self, pixels: Vec<(Point, Color)>) {
-/*
+        /*
         for (point, color) in pixels.iter() {
             self.canvas.set_draw_color(*color);
             self.canvas.draw_point(*point);
@@ -61,7 +57,7 @@ impl Screen {
 
         self.canvas.present();
 
- */
+         */
     }
 }
 

@@ -23,6 +23,7 @@ pub struct Cartridge {
     global_checksum: u16            // 0x014E - 0x014F
 }
 
+
 impl Cartridge {
     pub fn new(data: Vec<u8>) -> Cartridge {
         Cartridge {
@@ -52,12 +53,8 @@ impl Cartridge {
     pub fn rom_size(&self) -> u8 {
         self.rom_size
     }
-
-    pub fn ram_size(&self) -> u8 {
-        self.ram_size
-    }
-
 }
+
 
 impl fmt::Debug for Cartridge {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

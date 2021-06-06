@@ -1,6 +1,9 @@
 use crate::traits::MemoryMap;
 
-#[allow(dead_code)]
+
+const TIMER_TO_CPU_TICKS: usize = 256;
+
+
 pub struct Timer {
 
     divider_register: u8,       // 0xFF04 - DIV
@@ -17,7 +20,6 @@ pub struct Timer {
     pub interrupt: bool,    // This corresponds to bit 2 of the IF register at 0xFF0F
 }
 
-const TIMER_TO_CPU_TICKS: usize = 256;
 
 impl Timer {
 
@@ -65,7 +67,9 @@ impl Timer {
     }
 }
 
+
 impl MemoryMap for Timer {
+
     fn read(&mut self, address: u16) -> u8 {
         match address {
             0xFF04 => self.divider_register,
@@ -95,5 +99,6 @@ impl MemoryMap for Timer {
             },
 
             _ => panic!("unmapped timer address: {:#06X}", address)
-        }    }
+        }
+    }
 }

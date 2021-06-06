@@ -16,6 +16,7 @@ pub fn create_ram(ram_size: u8) -> Vec<u8> {
         3 => 4,
         4 => 16,
         5 => 8,
+
         _ => panic!("impossible ram size: {}", ram_size)
     } * (RAM_BANK_SIZE as usize)).collect()
 }

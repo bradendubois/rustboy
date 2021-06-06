@@ -1,10 +1,8 @@
+mod mbc;
+
 use std::fmt;
 
-mod mbc;
-mod memory_map;
-
-// Make MemoryMap public to expose to other modules
-use crate::traits::{Byte, MemoryMap, MBC};
+use crate::traits::{MemoryMap, MBC};
 
 use super::cartridge::Cartridge;
 use super::ppu::PPU;
@@ -13,8 +11,10 @@ use super::timer::Timer;
 use super::joypad::Joypad;
 use super::serial::Serial;
 
+
 const W_RAM_SIZE: usize = 0x2000;
 const H_RAM_SIZE: usize = 0x7F;
+
 
 const INITIAL_MEMORY_CONTENTS: &'static [(u16, u8); 31] = &[
 
@@ -37,11 +37,10 @@ const INITIAL_MEMORY_CONTENTS: &'static [(u16, u8); 31] = &[
     (0xFFFF, 0x00)
 ];
 
-#[allow(unreachable_patterns)]
-#[allow(dead_code)]
+
 pub struct MMU {
+
     in_bios: bool,
-    bios: Vec<u8>,
 
     w_ram: [u8; W_RAM_SIZE],
     h_ram: [u8; H_RAM_SIZE],
@@ -58,15 +57,12 @@ pub struct MMU {
 }
 
 
-#[allow(unreachable_patterns)]
-#[allow(dead_code)]
 impl MMU {
 
     pub fn new(cartridge: Cartridge) -> MMU {
 
         let mut mmu = MMU {
             in_bios: false,
-            bios: vec![],
 
             w_ram: [0; W_RAM_SIZE],
             h_ram: [0; H_RAM_SIZE],
@@ -137,11 +133,11 @@ impl MMU {
     /*************************/
 
     fn read_hram(&mut self, address: u16) -> u8 {
-        self.h_ram[(address % 0xFF80) as usize]
+        self.h_ram[address as usize & H_RAM_SIZE]
     }
 
     fn write_hram(&mut self, address: u16, value: u8) {
-        self.h_ram[(address % 0xFF80) as usize] = value;
+        self.h_ram[address as usize & H_RAM_SIZE] = value;
     }
 
     /*************************/
@@ -172,6 +168,7 @@ impl MMU {
 
 impl MemoryMap for MMU {
 
+    #[allow(unreachable_patterns)]
     fn read(&mut self, address: u16) -> u8 {
         match address {
             0x0000 ..= 0x3FFF => self.mbc.read(address),                    // ROM
@@ -183,8 +180,7 @@ impl MemoryMap for MMU {
             0xFE00 ..= 0xFE9F => self.ppu.read(address),                    // Sprite Attributes
             0xFEA0 ..= 0xFEFF => 0xFF,                                      // Unusable
 
-            // IO Registers
-            0xFF00 ..= 0xFF7F => match address {
+            0xFF00 ..= 0xFF7F => match address {                            // IO Registers
                 0xFF00 ..= 0xFF00 => self.joypad.read(),
                 0xFF01 ..= 0xFF02 => self.serial.read(address),
                 0xFF03 ..= 0xFF03 => 0xFF,                                  // unmapped
@@ -222,6 +218,7 @@ impl MemoryMap for MMU {
         }
     }
 
+    #[allow(unreachable_patterns)]
     fn write(&mut self, address: u16, value: u8) {
         match address {
             0x0000 ..= 0x3FFF => self.mbc.write(address, value),            // ROM
@@ -233,9 +230,8 @@ impl MemoryMap for MMU {
             0xFE00 ..= 0xFE9F => self.ppu.write(address, value),            // Sprite Attributes
             0xFEA0 ..= 0xFEFF => (),                                        // Unusable
 
-            // IO Registers
-            0xFF00 ..= 0xFF7F => match address {
-                0xFF00 ..= 0xFF01 => self.joypad.write(value),
+            0xFF00 ..= 0xFF7F => match address {                            // IO Registers
+                0xFF00 ..= 0xFF00 => self.joypad.write(value),
                 0xFF01 ..= 0xFF02 => self.serial.write(address, value),
                 0xFF03 ..= 0xFF03 => (),    // unmapped
                 0xFF04 ..= 0xFF07 => self.timer.write(address, value),

@@ -1,9 +1,8 @@
-use crate::lr35902::{LR35902, Status};
 use crate::traits::MemoryMap;
+use crate::lr35902::LR35902;
 
 
 impl LR35902 {
-
 
     #[allow(unreachable_patterns)]
     /// Call the instruction corresponding the given opcode, and return the number of cycles taken
@@ -588,7 +587,7 @@ impl LR35902 {
                     0xFF => self.set_7_a_0xcbff(),
 
                     // Unmapped code in CB table
-                    _ => panic!("Unmapped default table opcode {}", code)
+                    _ => panic!("Unmapped CB table opcode {}", code)
                 }
             }
         }
@@ -1075,7 +1074,7 @@ impl LR35902 {
             true => self.registers.unset_full_carry(),
             false => self.registers.set_full_carry(),
         };
-    self.registers.unset_subtraction();
+        self.registers.unset_subtraction();
         self.registers.unset_half_carry();
         4
     }
@@ -2163,7 +2162,7 @@ impl LR35902 {
 
     // 0xE8 - ADD SP, r8
     fn add_sp_r8_0xe8(&mut self) -> u64 {
-        let r8 = self.byte();;
+        let r8 = self.byte();
         self.registers.sp = self.add_16_immediate(self.registers.sp, r8);
         16
     }

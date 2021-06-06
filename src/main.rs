@@ -6,7 +6,9 @@ mod sound;
 mod timer;
 mod joypad;
 mod serial;
+
 mod traits;
+mod enums;
 
 use std::{fs::read, env::args};
 use std::process::exit;

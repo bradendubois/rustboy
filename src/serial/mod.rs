@@ -1,11 +1,13 @@
 use crate::traits::MemoryMap;
 
+
 pub struct Serial {
     serial_transfer_data: u8,       // 0xFF01
     serial_transfer_control: u8,    // 0xFF02
 
     pub interrupt: bool,            // This corresponds to bit 3 of the IF register at 0xFF0F
 }
+
 
 impl Serial {
 
@@ -19,6 +21,7 @@ impl Serial {
 
     // TODO - Actual transfer method rotates bits along 0xFF01
 }
+
 
 impl MemoryMap for Serial {
 

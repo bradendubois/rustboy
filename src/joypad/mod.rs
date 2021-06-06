@@ -1,11 +1,10 @@
-
-#[allow(dead_code)]
 pub struct Joypad {
     joypad: u8,             // 0xFF00
     pub interrupt: bool     // This corresponds to bit 4 of the IF register at 0xFF0F
 }
 
 impl Joypad {
+
     pub fn new() -> Joypad {
         Joypad {
             joypad: 0,

@@ -12,15 +12,12 @@ const BG_WINDOW_TILE_DATA_SELECT_1: (u16, u16) = (0x8000, 0x8FFF);
 const BG_TILE_MAP_DISPLAY_SELECT_0: (u16, u16) = (0x9800, 0x9BFF);
 const BG_TILE_MAP_DISPLAY_SELECT_1: (u16, u16) = (0x9C00, 0x9FFF);
 
-
 // Valid Object (Sprite) dimensions
 const OBJ_8_8: (u8, u8) = (8, 8);
 const OBJ_8_16: (u8, u8) = (8, 16);
 
 
-
 // Fields taken from: http://bgb.bircd.org/pandocs.htm#lcdcontrolregister
-#[allow(dead_code)]
 pub struct LCDC {
 
     /// LCD Display Enable
@@ -113,7 +110,7 @@ impl LCDC {
 
 }
 
-#[allow(dead_code)]
+
 impl Byte for LCDC {
 
     fn read(&self) -> u8 {

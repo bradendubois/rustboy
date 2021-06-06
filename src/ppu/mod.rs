@@ -1,20 +1,17 @@
-use crate::traits::Byte;
-
-mod mode;
-use mode::{Mode, Mode::*};
-
-mod oam;
-use oam::{OAMEntry, OAMFlags};
-
-mod registers;
 mod display;
+mod registers;
+mod oam;
 
-use registers::lcdc::LCDC;
-use registers::lcds::LCDS;
-use std::ops::Range;
 use sdl2::rect::Point;
 use sdl2::pixels::Color;
-use crate::traits::MemoryMap;
+
+use crate::enums::{Mode, Mode::*};
+use crate::traits::{Byte, MemoryMap};
+
+use oam::{OAMEntry, OAMFlags};
+use registers::lcdc::LCDC;
+use registers::lcds::LCDS;
+
 
 const V_RAM_SIZE: usize = 0x2000;
 const   OAM_SIZE: usize = 0x0100;
@@ -23,17 +20,14 @@ const   OAM_SIZE: usize = 0x0100;
 const  TILE_SIZE: usize = 128;
 
 /// GameBoy Screen Height
-#[allow(dead_code)]
 pub const HEIGHT: u8 = 144;
 pub const MAX_SCREEN_Y: u8 = HEIGHT - 1;
 
 /// GameBoy Screen Width
-#[allow(dead_code)]
 pub const WIDTH: usize = 160;
 
 
 const   CYCLES_PER_LINE: u8 = 114;
-// const OAM_SEARCH_CYCLES: u64 = 20;
 const     V_BLANK_LINES: u8 = 10;
 
 const TOTAL_LINES: u8 = HEIGHT + V_BLANK_LINES;
@@ -73,6 +67,7 @@ pub struct PPU {
 
 
 #[allow(dead_code)]
+#[allow(unused)]
 impl PPU {
 
     pub fn new() -> PPU {
@@ -348,11 +343,9 @@ impl PPU {
                 false => self.ly - object.y
             };
 
-            assert!(obj_y >= 0 && obj_y < 16);
-
             for x in 0..8 {
 
-                if object.x + x < 0 || object.x + x >= WIDTH as u8 {
+                if (object.x as i8) + (x as i8) < 0 || object.x + x >= WIDTH as u8 {
                     continue;
                 }
 

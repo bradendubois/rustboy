@@ -1,6 +1,7 @@
-use std::cmp::{max, min};
-use crate::mmu::mbc::{MBC, create_ram, ROM_BANK_SIZE, RAM_BANK_SIZE};
+use std::cmp::max;
 use crate::cartridge::Cartridge;
+use super::{MBC, create_ram, ROM_BANK_SIZE, RAM_BANK_SIZE};
+
 
 pub struct MBC1 {
     mode: u8,
@@ -17,6 +18,7 @@ pub struct MBC1 {
     bank2: u8,
     bank1: u8
 }
+
 
 impl MBC1 {
     pub fn new(cartridge: Cartridge) -> MBC1 {
@@ -44,6 +46,7 @@ impl MBC1 {
     }
 }
 
+
 /// Implementation of traits for the basic mbc with no additional banks or ram writes
 impl MBC for MBC1 {
 
@@ -52,7 +55,7 @@ impl MBC for MBC1 {
             0x0000..=0x3FFF => match self.mode {
                 0 => self.cartridge.rom[address as usize],
                 1 => {
-                    let bank_number = (((self.bank2 as u16) << 5) | (self.bank1 as u16));
+                    let bank_number = ((self.bank2 as u16) << 5) | (self.bank1 as u16);
                     let address = ((bank_number.wrapping_mul(ROM_BANK_SIZE)) | (address & (ROM_BANK_SIZE - 1))) as usize;
                     assert!(address < self.cartridge.rom.len());
                     self.cartridge.rom[address]

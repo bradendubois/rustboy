@@ -1,6 +1,7 @@
 use crate::traits::Byte;
 use crate::ppu::Mode;
 
+
 // Fields taken from: http://bgb.bircd.org/pandocs.htm#lcdstatusregister
 pub struct LCDS {
 
@@ -34,6 +35,7 @@ pub struct LCDS {
     value: u8
 }
 
+
 #[allow(dead_code)]
 impl LCDS {
     pub fn new() -> LCDS {
@@ -66,6 +68,7 @@ impl LCDS {
     /// Mode Flag
     pub fn mode_flag(&self) -> Mode { self.mode_flag }
 }
+
 
 impl Byte for LCDS {
 
