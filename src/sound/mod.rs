@@ -1,4 +1,4 @@
-use crate::traits::MemoryMap;
+use crate::traits::{MemoryMap, RunComponent};
 
 #[allow(dead_code)]
 pub struct Sound {
@@ -71,10 +71,6 @@ impl Sound {
             sound_on_off: 0
         }
     }
-
-
-
-
 }
 
 
@@ -88,5 +84,13 @@ impl MemoryMap for Sound {
     fn write(&mut self, value: u8, address: u16) {
         let _value = value;
         let _address = address;
+    }
+}
+
+
+impl RunComponent for Sound {
+
+    fn run(&mut self, _cpu_clock_cycles: u64) {
+        // TODO
     }
 }
