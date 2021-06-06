@@ -1,4 +1,5 @@
 use crate::cartridge::Cartridge;
+use crate::traits::MBC;
 
 pub mod mbc0;
 pub mod mbc1;
@@ -17,12 +18,6 @@ pub fn create_ram(ram_size: u8) -> Vec<u8> {
         5 => 8,
         _ => panic!("impossible ram size: {}", ram_size)
     } * (RAM_BANK_SIZE as usize)).collect()
-}
-
-/// The traits that any memory bank controller (MBC) must implement
-pub trait MBC {
-    fn read(&mut self, address: u16) -> u8;
-    fn write(&mut self, address: u16, value: u8);
 }
 
 pub fn from(cartridge: Cartridge) -> Box<dyn MBC> {

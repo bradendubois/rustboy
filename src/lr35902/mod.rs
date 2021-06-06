@@ -8,9 +8,10 @@ use std::fmt;
 use status::Status;
 use registers::Registers;
 
-use super::mmu::{MMU, MemoryMap};
+use super::mmu::{MMU};
 use crate::cartridge::Cartridge;
 use crate::lr35902::ime::IME;
+use crate::traits::MemoryMap;
 use std::process::exit;
 use crate::lr35902::status::Status::{HALTED, RUNNING};
 use std::ptr::eq;

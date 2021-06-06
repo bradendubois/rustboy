@@ -1,4 +1,4 @@
-use crate::mmu::MemoryMap;
+use crate::traits::MemoryMap;
 
 #[allow(dead_code)]
 pub struct Timer {

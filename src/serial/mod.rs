@@ -1,4 +1,4 @@
-use crate::mmu::MemoryMap;
+use crate::traits::MemoryMap;
 
 pub struct Serial {
     serial_transfer_data: u8,       // 0xFF01

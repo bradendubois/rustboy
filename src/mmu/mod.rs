@@ -1,16 +1,10 @@
 use std::fmt;
 
-pub mod byte;
-
 mod mbc;
 mod memory_map;
-mod interrupts;
 
 // Make MemoryMap public to expose to other modules
-pub use super::mmu::memory_map::MemoryMap;
-
-use interrupts::{interrupt_flag, interrupt_enable};
-use mbc::{MBC, mbc0::{MBC0}, mbc1::MBC1};
+use crate::traits::{Byte, MemoryMap, MBC};
 
 use super::cartridge::Cartridge;
 use super::ppu::PPU;

@@ -1,4 +1,4 @@
-use crate::mmu::byte::Byte;
+use crate::traits::Byte;
 
 // Ranges for the window tile map
 const WINDOW_TILE_MAP_DISPLAY_SELECT_0: (u16, u16) = (0x9800, 0x9BFF);

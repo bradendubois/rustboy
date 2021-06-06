@@ -1,4 +1,4 @@
-use crate::mmu::byte::Byte;
+use crate::traits::Byte;
 
 mod mode;
 use mode::{Mode, Mode::*};
@@ -14,7 +14,7 @@ use registers::lcds::LCDS;
 use std::ops::Range;
 use sdl2::rect::Point;
 use sdl2::pixels::Color;
-use crate::mmu::MemoryMap;
+use crate::traits::MemoryMap;
 
 const V_RAM_SIZE: usize = 0x2000;
 const   OAM_SIZE: usize = 0x0100;

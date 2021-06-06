@@ -1,5 +1,5 @@
 use crate::lr35902::{LR35902, Status};
-use crate::mmu::MemoryMap;
+use crate::traits::MemoryMap;
 
 
 impl LR35902 {
