@@ -1,6 +1,8 @@
 use std::cmp::max;
 use crate::cartridge::Cartridge;
 use super::{MBC, create_ram, ROM_BANK_SIZE, RAM_BANK_SIZE};
+use sdl2::gfx::imagefilter::add;
+
 const RAM_SIZE: usize = 0x200;
 pub struct MBC2 {
     mode: u8,
@@ -54,7 +56,7 @@ impl MBC for MBC2 {
             0x4000..=0x7FFF => {
                 self.cartridge.rom[(address & (ROM_BANK_SIZE - 1)) as usize]
             },
-            0xA000..=0xBFFF => self.ram[address & 0x0f]
+            0xA000..=0xBFFF => self.ram[(address & ((1<<9) - 1) & (RAM_SIZE-1))],
 
             _ => panic!("unmapped mbc2 address {:#06X}", address)
         }
@@ -79,7 +81,7 @@ impl MBC for MBC2 {
 
             // RAM Bank 00-03
             0xA000..=0xBFFF => if self.ram_enabled {
-                self.ram[((self.ram_bank as u16 * RAM_BANK_SIZE) | (address & (RAM_BANK_SIZE - 1))) as usize] = value;
+                self.ram[(address & ((1<<9) - 1) & (RAM_SIZE-1))] = value;
             }
 
             _ => panic!("unmapped mbc2 address {:#06X}", address)
