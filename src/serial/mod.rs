@@ -1,4 +1,7 @@
-use crate::traits::MemoryMap;
+use crate::traits::{MemoryMap, RunComponent};
+
+
+const CPU_CYCLES_TO_SERIAL_RATIO: u64 = 512;
 
 
 pub struct Serial {
@@ -6,6 +9,8 @@ pub struct Serial {
     serial_transfer_control: u8,    // 0xFF02
 
     pub interrupt: bool,            // This corresponds to bit 3 of the IF register at 0xFF0F
+    tick_tank: u64                  // A "tank" of cycles run to synchronize and run the Serial
+                                    // transfer at an appropriate rate
 }
 
 
@@ -15,11 +20,27 @@ impl Serial {
         Serial {
             serial_transfer_data: 0,
             serial_transfer_control: 0,
-            interrupt: false
+            interrupt: false,
+            tick_tank: 0
         }
     }
 
     // TODO - Actual transfer method rotates bits along 0xFF01
+}
+
+
+impl RunComponent for Serial {
+
+    fn run(&mut self, cpu_clock_cycles: u64) {
+        self.tick_tank += cpu_clock_cycles;
+
+        while self.tick_tank >= CPU_CYCLES_TO_SERIAL_RATIO {
+
+            // TODO - actual transfer code here ...
+
+            self.tick_tank -= CPU_CYCLES_TO_SERIAL_RATIO;
+        }
+    }
 }
 
 
