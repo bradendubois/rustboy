@@ -2,7 +2,7 @@ mod mbc;
 
 use std::fmt;
 
-use crate::traits::{MemoryMap, MBC, RunComponent};
+use crate::traits::{MBC, MemoryMap, RunComponent};
 
 use super::cartridge::Cartridge;
 use super::ppu::PPU;
@@ -85,12 +85,6 @@ impl MMU {
         mmu
     }
 
-
-    pub fn run(&mut self, cpu_cycles: u64) {
-        self.ppu.run_for(cpu_cycles);
-        self.timer.run(cpu_cycles / 4);
-    }
-
     /*************************/
     /*    Read/Write Words   */
     /*************************/
@@ -165,6 +159,16 @@ impl MMU {
         self.joypad.interrupt     = value & 0x10 != 0;
     }
 }
+
+
+impl RunComponent for MMU {
+
+    fn run(&mut self, cpu_cycles: u64) {
+        self.ppu.run_for(cpu_cycles);
+        self.timer.run(cpu_cycles / 4);
+    }
+}
+
 
 impl MemoryMap for MMU {
 

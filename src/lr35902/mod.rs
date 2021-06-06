@@ -4,7 +4,7 @@ mod registers;
 use std::fmt;
 
 use crate::enums::{IME, Status, Status::*};
-use crate::traits::MemoryMap;
+use crate::traits::{MemoryMap, RunComponent};
 
 use super::cartridge::Cartridge;
 use super::mmu::MMU;
@@ -39,11 +39,10 @@ impl LR35902 {
 
     /// Initializer for a LR35902 CPU
     pub fn new(cartridge: Cartridge) -> LR35902 {
-
         LR35902 {
             mmu: MMU::new(cartridge),
             registers: Registers::new(),
-            status: Status::RUNNING,
+            status: RUNNING,
             ime: IME::Disabled,
             clock: 0,
             use_cb_table: false,
@@ -53,14 +52,11 @@ impl LR35902 {
 
     /// Run the cycle until otherwise halted / interrupted by an interrupt / exception
     pub fn run(&mut self) {
-
-        // println!("cpu beginning run");
-
         loop {
             self.step();
 
             let cycles = self.step();
-            if cycles == 0 {
+            if cycles == 0 {   // 0 is returned from Mooneye tests when complete
                 break;
             }
 
@@ -73,10 +69,7 @@ impl LR35902 {
             //  Each cycle run by the CPU corresponds to 4 PPU cycles
             self.mmu.run(cycles * 4);
         }
-
-        // println!("cpu halted with status: {:?}", self.status);
     }
-
 
     /// Run one step the CPU, fetching/decoding/executing at the PC
     pub fn step(&mut self) -> u64 {
@@ -116,30 +109,32 @@ impl LR35902 {
                 self.call(interrupt_vector);
                 return 4;
             }
+
+        // Resume execution with one-cycle delay if halted
         } else if self.status == HALTED {
             self.status = RUNNING;
             return self.nop_0x00();
         }
 
-        // Interrupts disabled, or none to handle
-        //println!("program counter: {:#06X}", self.registers.pc);
+        // println!("program counter: {:#06X}", self.registers.pc);
 
-        // Get the opcode number to execute
-        let opcode = self.byte();
+        let opcode = self.byte();        // Get the opcode number to execute
 
-        //println!("fetched instruction: {:#02X}", opcode);
+        // println!("fetched instruction: {:#02X}", opcode);
 
+        // Special 'exit condition' on testing a "mooneye" testing ROM; accessing instruction 0x40
+        //  (which is LD B B) indicates that the test is done. A successful test places the
+        //  Fibonacci sequence (starting at 3) across the B-L registers.
         if self.mooneye_testing && opcode == 0x40 {
-            self.status = Status::HALTED;
+            self.status = HALTED;
             return 0;
         }
 
-        // Execute from standard table
-        self.call_instruction(opcode)
+        self.call_instruction(opcode)        // Execute from standard table
     }
 
     /*************************/
-    /*  Program Counter (PC) */
+    /*        Program        */
     /*************************/
 
     pub fn byte(&mut self) -> u8 {
@@ -221,11 +216,12 @@ impl LR35902 {
 
     pub fn stop(&mut self) {
         self.mmu.write(0xFF04, 0);  // A STOP clears the timer
-        self.status = Status::STOPPED;
+        // TODO - this should actually halt the timer until resumed (maybe?)
+        self.status = STOPPED;
     }
 
     pub fn halt(&mut self) {
-        self.status = Status::HALTED;
+        self.status = HALTED;
     }
 
     /*************************/
@@ -653,7 +649,7 @@ impl LR35902 {
         let mut cpu = LR35902 {
             mmu: MMU::new(cartridge),
             registers: Registers::new(),
-            status: Status::RUNNING,
+            status: RUNNING,
             ime: IME::Enabled,
             clock: 0,
             use_cb_table: false,
@@ -673,6 +669,7 @@ impl LR35902 {
     }
 }
 
+
 impl fmt::Debug for LR35902 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "\
@@ -685,6 +682,7 @@ impl fmt::Debug for LR35902 {
 
     }
 }
+
 
 #[cfg(test)]
 mod test {
