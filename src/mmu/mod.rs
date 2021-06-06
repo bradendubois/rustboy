@@ -191,14 +191,14 @@ impl MMU {
             0xFF70 ..= 0xFF70 => 0xFF,    // CGB Only - SVBK - WRAM Bank
             0xFF71 ..= 0xFF7F => 0xFF,                              // unmapped
 
-            _ => panic!("Unmapped address {:#06X}", address)
+            _ => panic!("unmapped io register address {:#06X}", address)
         }
     }
 
     fn write_io_registers(&mut self, value: u8, address: u16) {
         match address {
             0xFF00 ..= 0xFF01 => self.joypad.write(value),
-            0xFF01 ..= 0xFF02 => self.serial.write(value, address),
+            0xFF01 ..= 0xFF02 => self.serial.write(address, value),
             0xFF03 ..= 0xFF03 => (),                                        // unmapped
             0xFF04 ..= 0xFF07 => self.timer.write(value, address),
             0xFF08 ..= 0xFF0E => (),                                        // unmapped
