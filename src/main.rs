@@ -9,6 +9,7 @@ mod serial;
 
 mod traits;
 mod enums;
+mod testing;
 
 use std::{fs::read, env::args};
 use std::process::exit;

@@ -62,3 +62,18 @@ impl MemoryMap for Serial {
         }
     }
 }
+
+
+#[cfg(test)]
+mod test {
+
+    #[allow(unused_imports)]
+    use crate::testing::mooneye_all;
+
+    /* TODO - Enable when ready
+    #[test]
+    fn acceptance_serial() {
+        mooneye_all(&format!("{}/{}", MOONEYE, "acceptance/serial"));
+    }
+     */
+}

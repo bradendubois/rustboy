@@ -50,6 +50,18 @@ impl LR35902 {
         }
     }
 
+    pub fn testing(cartridge: Cartridge) -> LR35902 {
+        LR35902 {
+            mmu: MMU::new(cartridge),
+            registers: Registers::new(),
+            status: RUNNING,
+            ime: IME::Disabled,
+            clock: 0,
+            use_cb_table: false,
+            mooneye_testing: true
+        }
+    }
+
     /// Run the cycle until otherwise halted / interrupted by an interrupt / exception
     pub fn run(&mut self) {
         loop {
@@ -116,11 +128,11 @@ impl LR35902 {
             return self.nop_0x00();
         }
 
-        println!("program counter: {:#06X}", self.registers.pc);
+        // println!("program counter: {:#06X}", self.registers.pc);
 
         let opcode = self.byte();        // Get the opcode number to execute
 
-        println!("fetched instruction: {:#02X}", opcode);
+        // println!("fetched instruction: {:#02X}", opcode);
 
         // Special 'exit condition' on testing a "mooneye" testing ROM; accessing instruction 0x40
         //  (which is LD B B) indicates that the test is done. A successful test places the
@@ -633,40 +645,6 @@ impl LR35902 {
     pub fn u8_pair(x: u16) -> (u8, u8) {
         ((x >> 8) as u8, x as u8)
     }
-
-    /*************************/
-    /*    Mooneye Testing    */
-    /*************************/
-
-    /// Helper method to test with a Mooneye ROM
-    pub fn mooneye(path: &String) -> bool {
-
-        println!("testing path: {}", path);
-
-        let data = std::fs::read(path).unwrap();
-        let cartridge = Cartridge::new(data);
-
-        let mut cpu = LR35902 {
-            mmu: MMU::new(cartridge),
-            registers: Registers::new(),
-            status: RUNNING,
-            ime: IME::Enabled,
-            clock: 0,
-            use_cb_table: false,
-            mooneye_testing: true
-        };
-
-        cpu.run();
-
-        // Test success results in fibonacci sequence in registers
-        return
-            cpu.registers.b ==  3 &&
-            cpu.registers.c ==  5 &&
-            cpu.registers.d ==  8 &&
-            cpu.registers.e == 13 &&
-            cpu.registers.h == 21 &&
-            cpu.registers.l == 34
-    }
 }
 
 
@@ -687,49 +665,8 @@ impl fmt::Debug for LR35902 {
 #[cfg(test)]
 mod test {
 
-    use super::*;
+    use crate::testing::mooneye_all;
 
-    // Root
-    const MOONEYE: &str = "./roms/testing/mooneye";
-
-    fn mooneye_all(dir: &str) {
-
-        let mut successful: Vec<String> = Vec::new();
-        let mut errors: Vec<String> = Vec::new();
-
-        let full_dir = &format!("{}/{}", MOONEYE, dir);
-
-        for entry in std::fs::read_dir(full_dir).unwrap() {
-
-            let path = entry.unwrap().path();
-            let pathname = path.to_str().unwrap().to_string();
-
-            if path.is_file() && pathname.ends_with(".gb") {
-                match LR35902::mooneye(&pathname) {
-                    true  => successful.push(pathname),
-                    false => errors.push(pathname)
-                }
-            }
-        }
-
-        if errors.len() == 0 {
-            println!("{} : {} tests : all successful", dir, successful.len());
-        } else {
-            println!("{} - successful", dir);
-            for success in successful.iter() {
-                println!("  {}", success);
-            }
-
-            println!("{} - errors", dir);
-            for error in errors.iter() {
-                println!("  {}", error);
-            }
-
-            panic!("errors in {}", dir)
-        }
-    }
-
-    /*
     #[test]
     fn acceptance_root() {
         mooneye_all("acceptance");
@@ -751,18 +688,10 @@ mod test {
     }
 
 
-     */
-    /* TODO
+    /* TODO - Enable when ready
     #[test]
     fn acceptance_oam_dma() {
         mooneye_all(&format!("{}/{}", MOONEYE, "acceptance/oam_dma"));
-    }
-     */
-
-    /* TODO
-    #[test]
-    fn acceptance_ppu() {
-        mooneye_all("acceptance/ppu");
     }
      */
 
@@ -772,18 +701,4 @@ mod test {
         mooneye_all(&format!("{}/{}", MOONEYE, "acceptance/serial"));
     }
      */
-
-    /*
-    #[test]
-    fn acceptance_timer() {
-        mooneye_all("acceptance/timer");
-    }
-
-    */
-
-    #[test]
-    fn acceptance_mbc1() {
-        mooneye_all("emulator-only/mbc1");
-    }
-
 }

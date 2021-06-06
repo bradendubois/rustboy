@@ -13,7 +13,6 @@ pub struct MBC1 {
 
     ram: Vec<u8>,
     ram_enabled: bool,
-    ram_bank: u8,
     ram_size: u8,
 }
 
@@ -34,14 +33,9 @@ impl MBC1 {
             bank2: 0,
 
             ram,
-            ram_bank: 0,
             ram_enabled: false,
             ram_size
         }
-    }
-
-    fn banks_as_u8(&self) -> u8 {
-        (self.bank2 << 5) | self.bank1
     }
 }
 
@@ -50,19 +44,22 @@ impl MBC1 {
 impl MBC for MBC1 {
 
     fn read(&mut self, address: u16) -> u8 {
+        match address {
 
-        let res = match address {
+            // ROM Read - Mode 0 -> Bank 0, Mode 1 -> Bank2 << 5
             0x0000..=0x3FFF => match self.mode {
                 0 => self.cartridge.rom[address as usize],
                 1 => {
-                    let add = (ROM_BANK_SIZE * ((self.bank2 << 5) as usize)) | (address as usize);
-                    self.cartridge.rom[(add & (ROM_BANK_SIZE - 1)) % self.cartridge.rom.len()]
+                    let address = (ROM_BANK_SIZE * ((self.bank2 << 5) as usize)) | ((address as usize) & ROM_BANK_SIZE - 1);
+                    self.cartridge.rom[address % self.cartridge.rom.len()]
                 },
                 _ => panic!("impossible mode: {}", self.mode)
             }
+
+            // ROM Read - Banked
             0x4000..=0x7FFF => {
-                let address = (ROM_BANK_SIZE * (self.banks_as_u8() as usize)) | ((address as usize) & (ROM_BANK_SIZE - 1));
-                self.cartridge.rom[(address) % self.cartridge.rom.len()]
+                let address = (ROM_BANK_SIZE * (((self.bank2 << 5) | self.bank1) as usize)) | ((address as usize) & ROM_BANK_SIZE - 1);
+                self.cartridge.rom[address % self.cartridge.rom.len()]
             },
 
             // RAM Read
@@ -79,11 +76,7 @@ impl MBC for MBC1 {
                 }
             }
             _ => panic!("unmapped mbc1 address {:#06X}", address)
-        };
-
-        println!("res: {:04X}", res);
-
-        res
+        }
     }
 
     fn write(&mut self, address: u16, value: u8) {
@@ -95,9 +88,9 @@ impl MBC for MBC1 {
             // ROM Bank Number
             0x2000..=0x3FFF => self.bank1 = {
                 let mut masked = (value & 0x1F) as u16;
-                //if masked >= (1 << (self.rom_size + 1)) {
-                  //  masked &= (1 << (self.rom_size + 1)) - 1;
-                //}/
+                if masked >= (1 << (self.rom_size + 1)) {
+                    masked &= (1 << (self.rom_size + 1)) - 1;
+                }
 
                 max(1, masked as u8)
             },
@@ -123,29 +116,13 @@ impl MBC for MBC1 {
 }
 
 
-
 #[cfg(test)]
 mod test {
 
-    use crate::mmu::mbc::mbc1::MBC1;
-    use crate::cartridge::Cartridge;
-    use crate::mmu::mbc::create_ram;
+    use crate::testing::mooneye_all;
 
     #[test]
-    fn bank_combination()  {
-
-        let mbc1 = MBC1 {
-            mode: 0,
-            cartridge: Cartridge::new(create_ram(4)),
-            rom_size: 0,
-            bank1: 0x12,
-            bank2: 0x01,
-            ram: vec![],
-            ram_enabled: false,
-            ram_bank: 0,
-            ram_size: 0
-        };
-
-        assert_eq!(mbc1.banks_as_u8(), 0x32);
+    fn acceptance_mbc1() {
+        mooneye_all("emulator-only/mbc1");
     }
 }

@@ -621,3 +621,25 @@ impl MemoryMap for PPU {
             _ => panic!("unmapped address: {:#06X}", address)
         }    }
 }
+
+
+#[cfg(test)]
+mod test {
+
+    #[allow(unused_imports)]
+    use crate::testing::mooneye_all;
+
+    /* TODO
+    #[test]
+    fn acceptance_oam_dma() {
+        mooneye_all(&format!("{}/{}", MOONEYE, "acceptance/oam_dma"));
+    }
+     */
+
+    /* TODO
+    #[test]
+    fn acceptance_ppu() {
+        mooneye_all("acceptance/ppu");
+    }
+     */
+}

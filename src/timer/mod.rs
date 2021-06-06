@@ -108,3 +108,15 @@ impl RunComponent for Timer {
         }
     }
 }
+
+
+#[cfg(test)]
+mod test {
+
+    use crate::testing::mooneye_all;
+
+    #[test]
+    fn acceptance_timer() {
+        mooneye_all("acceptance/timer");
+    }
+}
