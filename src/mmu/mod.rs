@@ -200,7 +200,7 @@ impl MMU {
             0xFF00 ..= 0xFF01 => self.joypad.write(value),
             0xFF01 ..= 0xFF02 => self.serial.write(address, value),
             0xFF03 ..= 0xFF03 => (),                                        // unmapped
-            0xFF04 ..= 0xFF07 => self.timer.write(value, address),
+            0xFF04 ..= 0xFF07 => self.timer.write(address, value),
             0xFF08 ..= 0xFF0E => (),                                        // unmapped
             0xFF0F ..= 0xFF0F => self.interrupt_flag_write(value),
             0xFF10 ..= 0xFF14 => self.apu.write(value, address),

@@ -1,3 +1,4 @@
+use crate::mmu::MemoryMap;
 
 #[allow(dead_code)]
 pub struct Timer {
@@ -62,8 +63,10 @@ impl Timer {
             }
         }
     }
+}
 
-    pub fn read(&mut self, address: u16) -> u8 {
+impl MemoryMap for Timer {
+    fn read(&mut self, address: u16) -> u8 {
         match address {
             0xFF04 => self.divider_register,
             0xFF05 => self.timer_control,
@@ -71,10 +74,9 @@ impl Timer {
             0xFF07 => self.timer_control,
 
             _ => panic!("unmapped timer address: {:#06X}", address)
-        }
-    }
+        }    }
 
-    pub fn write(&mut self, value: u8, address: u16) {
+    fn write(&mut self, address: u16, value: u8) {
         match address {
             0xFF04 => self.divider_register = 0,
             0xFF05 => self.timer_control = value,
@@ -93,6 +95,5 @@ impl Timer {
             },
 
             _ => panic!("unmapped timer address: {:#06X}", address)
-        }
-    }
+        }    }
 }
