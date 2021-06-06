@@ -14,6 +14,7 @@ use registers::lcds::LCDS;
 use std::ops::Range;
 use sdl2::rect::Point;
 use sdl2::pixels::Color;
+use crate::mmu::MemoryMap;
 
 const V_RAM_SIZE: usize = 0x2000;
 const   OAM_SIZE: usize = 0x0100;
@@ -102,130 +103,6 @@ impl PPU {
     }
 
 
-    pub fn read(&mut self, address: u16) -> u8 {
-
-        match address {
-
-            // VRAM Space
-            0x8000 ..= 0x9FFF => match self.lcds.mode_flag()  {
-
-                // Mode 0 / 1 / 2 allow VRAM access
-                Mode0 | Mode1 | Mode2 => self.vram[PPU::addr_into_vram_space(address)],
-
-                // Cannot access VRAM / OAM in Mode 3
-                Mode3 => 0xFF,
-            },
-
-            // OAM Space
-            0xFE00 ..= 0xFE9F => match self.lcds.mode_flag() {
-
-                // Mode 0 / 1 allow OAM access
-                Mode0 | Mode1 => self.oam[PPU::addr_into_oam_space(address)],
-
-                // Cannot access OAM in Mode 2 / 3
-                Mode2 | Mode3 => 0xFF
-            },
-
-            0xFF40 => self.lcdc.read(),
-            0xFF41 => self.lcds.read(),
-            0xFF42 => self.scy,
-            0xFF43 => self.scx,
-            0xFF44 => self.ly,
-            0xFF45 => self.lyc,
-            0xFF46 => self.dma,
-            0xFF47 => self.bgp,
-            0xFF48 => self.obp0,
-            0xFF49 => self.obp1,
-            0xFF4A => self.wy,
-            0xFF4B => self.wx,
-            0xFF4D => 0x00,     // CGB Mode Only - KEY1 - Prepare Speed Switch
-            0xFF4F => 0x00,     // CGB Mode Only - VBK - VRAM Bank
-
-            // LCD VRAM DMA Transfers (CGB Mode Only)
-            0xFF51 => 0x00,     // HDMA1 - New DMA Source, High
-            0xFF52 => 0x00,     // HDMA2 - New DMA Source, Low
-            0xFF53 => 0x00,     // HDMA3 - New DMA Destination, High
-            0xFF54 => 0x00,     // HDMA4 - New DMA Destination, Low
-            0xFF55 => 0x00,     // HDMA5 - New DMA Length/Mode/Sort
-
-            // LCD Color Palettes (CGB Mode Only)
-            0xFF68 => 0x00,     // BCPS/BGPI - Background Palette Index
-            0xFF69 => 0x00,     // BCPD/BGPD - Background Palette Data
-            0xFF6A => 0x00,     // OCPS/OBPI - Sprite Palette Index
-            0xFF6B => 0x00,     // OCPD/OBPD - Sprite Palette Data
-
-            _ => panic!("unmapped address: {:#06X}", address)
-        }
-    }
-
-    pub fn write(&mut self, value: u8, address: u16) {
-
-        // println!("address: {:#06X}", address);
-
-        if address == 0xFF00 || address == 0xFF01 {
-            println!("address: {:#06X} {:010b}", address, value);
-        }
-
-        // TODO - Add checks on VRAM / OAM against MODE to ensure access is possible
-        match address {
-
-            // VRAM Space
-            0x8000 ..= 0x9FFF => match self.lcds.mode_flag()  {
-
-                // Mode 0 / 1 / 2 allow VRAM access
-                Mode0 | Mode1 | Mode2 => self.vram[PPU::addr_into_vram_space(address)] = value,
-
-                // Cannot access VRAM / OAM in Mode 3
-                Mode3 => (),
-            },
-
-            // OAM Space
-            0xFE00 ..= 0xFE9F => match self.lcds.mode_flag() {
-
-                // Mode 0 / 1 allow OAM access
-                Mode0 | Mode1 => self.oam[PPU::addr_into_oam_space(address)] = value,
-
-                // Cannot access OAM in Mode 2 / 3
-                Mode2 | Mode3 => ()
-            },
-
-            // I/O Registers
-            0xFF40 => self.lcdc.write(value),
-            0xFF41 => self.lcds.write(value),
-            0xFF42 => self.scy = value,
-            0xFF43 => self.scx = value,
-            0xFF44 => (),   // read-only
-            0xFF45 => self.lyc = value,
-            0xFF46 => self.dma_transfer(value),
-            0xFF47 => self.bgp = value,
-            0xFF48 => self.obp0 = value,
-            0xFF49 => self.obp1 = value,
-            0xFF4A => self.wy = value,
-            0xFF4B => self.wx = value,
-
-            0xFF4C => (),       // unmapped
-            0xFF4D => (),       // CGB Mode Only - KEY1 - Prepare Speed Switch
-            0xFF4E => (),       // unmapped
-            0xFF4F => (),       // CGB Mode Only - VBK - VRAM Bank
-
-            // LCD VRAM DMA Transfers (CGB Mode Only)
-            0xFF51 => (),       // HDMA1 - New DMA Source, High
-            0xFF52 => (),       // HDMA2 - New DMA Source, Low
-            0xFF53 => (),       // HDMA3 - New DMA Destination, High
-            0xFF54 => (),       // HDMA4 - New DMA Destination, Low
-            0xFF55 => (),       // HDMA5 - New DMA Length/Mode/Sort
-
-            // LCD Color Palettes (CGB Mode Only)
-            0xFF68 => (),       // BCPS/BGPI - Background Palette Index
-            0xFF69 => (),       // BCPD/BGPD - Background Palette Data
-            0xFF6A => (),       // OCPS/OBPI - Sprite Palette Index
-            0xFF6B => (),       // OCPD/OBPD - Sprite Palette Data
-
-            _ => panic!("unmapped address: {:#06X}", address)
-        }
-    }
-
-
     pub fn dma_transfer(&mut self, value: u8) {
 
         self.dma = value;
@@ -236,7 +113,7 @@ impl PPU {
 
         for i in 0x00..=0x9F {
             let read = self.read(source + i as u16);
-            self.write(read, 0xFE00 + i as u16);
+            self.write(0xFE00 + i as u16, read);
         }
 
         self.clock += 80;
@@ -627,4 +504,127 @@ impl PPU {
     pub fn get_tile_map_1(&self) -> Vec<u8> {
         self.vram[0x1c00..0x1FFF].to_vec()
     }
+}
+
+impl MemoryMap for PPU {
+    fn read(&mut self, address: u16) -> u8 {
+
+        match address {
+
+            // VRAM Space
+            0x8000 ..= 0x9FFF => match self.lcds.mode_flag()  {
+
+                // Mode 0 / 1 / 2 allow VRAM access
+                Mode0 | Mode1 | Mode2 => self.vram[PPU::addr_into_vram_space(address)],
+
+                // Cannot access VRAM / OAM in Mode 3
+                Mode3 => 0xFF,
+            },
+
+            // OAM Space
+            0xFE00 ..= 0xFE9F => match self.lcds.mode_flag() {
+
+                // Mode 0 / 1 allow OAM access
+                Mode0 | Mode1 => self.oam[PPU::addr_into_oam_space(address)],
+
+                // Cannot access OAM in Mode 2 / 3
+                Mode2 | Mode3 => 0xFF
+            },
+
+            0xFF40 => self.lcdc.read(),
+            0xFF41 => self.lcds.read(),
+            0xFF42 => self.scy,
+            0xFF43 => self.scx,
+            0xFF44 => self.ly,
+            0xFF45 => self.lyc,
+            0xFF46 => self.dma,
+            0xFF47 => self.bgp,
+            0xFF48 => self.obp0,
+            0xFF49 => self.obp1,
+            0xFF4A => self.wy,
+            0xFF4B => self.wx,
+            0xFF4D => 0x00,     // CGB Mode Only - KEY1 - Prepare Speed Switch
+            0xFF4F => 0x00,     // CGB Mode Only - VBK - VRAM Bank
+
+            // LCD VRAM DMA Transfers (CGB Mode Only)
+            0xFF51 => 0x00,     // HDMA1 - New DMA Source, High
+            0xFF52 => 0x00,     // HDMA2 - New DMA Source, Low
+            0xFF53 => 0x00,     // HDMA3 - New DMA Destination, High
+            0xFF54 => 0x00,     // HDMA4 - New DMA Destination, Low
+            0xFF55 => 0x00,     // HDMA5 - New DMA Length/Mode/Sort
+
+            // LCD Color Palettes (CGB Mode Only)
+            0xFF68 => 0x00,     // BCPS/BGPI - Background Palette Index
+            0xFF69 => 0x00,     // BCPD/BGPD - Background Palette Data
+            0xFF6A => 0x00,     // OCPS/OBPI - Sprite Palette Index
+            0xFF6B => 0x00,     // OCPD/OBPD - Sprite Palette Data
+
+            _ => panic!("unmapped address: {:#06X}", address)
+        }    }
+
+    fn write(&mut self, address: u16, value: u8) {
+
+        // println!("address: {:#06X}", address);
+
+        if address == 0xFF00 || address == 0xFF01 {
+            println!("address: {:#06X} {:010b}", address, value);
+        }
+
+        // TODO - Add checks on VRAM / OAM against MODE to ensure access is possible
+        match address {
+
+            // VRAM Space
+            0x8000 ..= 0x9FFF => match self.lcds.mode_flag()  {
+
+                // Mode 0 / 1 / 2 allow VRAM access
+                Mode0 | Mode1 | Mode2 => self.vram[PPU::addr_into_vram_space(address)] = value,
+
+                // Cannot access VRAM / OAM in Mode 3
+                Mode3 => (),
+            },
+
+            // OAM Space
+            0xFE00 ..= 0xFE9F => match self.lcds.mode_flag() {
+
+                // Mode 0 / 1 allow OAM access
+                Mode0 | Mode1 => self.oam[PPU::addr_into_oam_space(address)] = value,
+
+                // Cannot access OAM in Mode 2 / 3
+                Mode2 | Mode3 => ()
+            },
+
+            // I/O Registers
+            0xFF40 => self.lcdc.write(value),
+            0xFF41 => self.lcds.write(value),
+            0xFF42 => self.scy = value,
+            0xFF43 => self.scx = value,
+            0xFF44 => (),   // read-only
+            0xFF45 => self.lyc = value,
+            0xFF46 => self.dma_transfer(value),
+            0xFF47 => self.bgp = value,
+            0xFF48 => self.obp0 = value,
+            0xFF49 => self.obp1 = value,
+            0xFF4A => self.wy = value,
+            0xFF4B => self.wx = value,
+
+            0xFF4C => (),       // unmapped
+            0xFF4D => (),       // CGB Mode Only - KEY1 - Prepare Speed Switch
+            0xFF4E => (),       // unmapped
+            0xFF4F => (),       // CGB Mode Only - VBK - VRAM Bank
+
+            // LCD VRAM DMA Transfers (CGB Mode Only)
+            0xFF51 => (),       // HDMA1 - New DMA Source, High
+            0xFF52 => (),       // HDMA2 - New DMA Source, Low
+            0xFF53 => (),       // HDMA3 - New DMA Destination, High
+            0xFF54 => (),       // HDMA4 - New DMA Destination, Low
+            0xFF55 => (),       // HDMA5 - New DMA Length/Mode/Sort
+
+            // LCD Color Palettes (CGB Mode Only)
+            0xFF68 => (),       // BCPS/BGPI - Background Palette Index
+            0xFF69 => (),       // BCPD/BGPD - Background Palette Data
+            0xFF6A => (),       // OCPS/OBPI - Sprite Palette Index
+            0xFF6B => (),       // OCPD/OBPD - Sprite Palette Data
+
+            _ => panic!("unmapped address: {:#06X}", address)
+        }    }
 }

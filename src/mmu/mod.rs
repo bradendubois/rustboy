@@ -210,16 +210,16 @@ impl MMU {
             0xFF20 ..= 0xFF26 => self.apu.write(value, address),
             0xFF27 ..= 0xFF2F => (),                                        // unmapped
             0xFF30 ..= 0xFF3F => self.apu.write(value, address),
-            0xFF40 ..= 0xFF4B => self.ppu.write(value, address),
+            0xFF40 ..= 0xFF4B => self.ppu.write(address, value),
             0xFF4C ..= 0xFF4C => (),                                        // unmapped
-            0xFF4D ..= 0xFF4D => self.ppu.write(value, address),
+            0xFF4D ..= 0xFF4D => self.ppu.write(address, value),
             0xFF4E ..= 0xFF4E => (),                                        // unmapped
-            0xFF4F ..= 0xFF4F => self.ppu.write(value, address),
+            0xFF4F ..= 0xFF4F => self.ppu.write(address, value),
             0xFF50 ..= 0xFF50 => self.in_bios = self.in_bios && value != 0,
-            0xFF51 ..= 0xFF55 => self.ppu.write(value, address),
+            0xFF51 ..= 0xFF55 => self.ppu.write(address, value),
             0xFF56 ..= 0xFF56 => (),    // CGB Only - RP - Infrared Comm. Port
             0xFF57 ..= 0xFF67 => (),                                        // unmapped
-            0xFF68 ..= 0xFF6B => self.ppu.write(value, address),
+            0xFF68 ..= 0xFF6B => self.ppu.write(address, value),
             0xFF6C ..= 0xFF6F => (),                                        // unmapped
             0xFF70 ..= 0xFF70 => (),    // CGB Only - SVBK - WRAM Bank
             0xFF71 ..= 0xFF7F => (),                                        // unmapped
@@ -294,13 +294,13 @@ impl MemoryMap for MMU {
         match address {
             0x0000 ..= 0x3FFF => self.mbc.write(address, value),            // ROM
             0x4000 ..= 0x7FFF => self.mbc.write(address, value),            // Switchable ROM Bank
-            0x8000 ..= 0x9FFF => self.ppu.write(value, address),            // Video RAM
+            0x8000 ..= 0x9FFF => self.ppu.write(address, value),            // Video RAM
             0xA000 ..= 0xBFFF => self.mbc.write(address, value),            // Switchable RAM Bank
             0xC000 ..= 0xCFFF => self.write_ram(value, address),            // Internal RAM
             0xD000 ..= 0xDFFF => self.write_rambank(value, address),        // Internal RAM
             0xE000 ..= 0xEFFF => self.write_ram(value, address),            // Internal RAM
             0xF000 ..= 0xFDFF => self.write_rambank(value, address),        // Echo RAM
-            0xFE00 ..= 0xFE9F => self.ppu.write(value, address),            // Sprite Attributes
+            0xFE00 ..= 0xFE9F => self.ppu.write(address, value),            // Sprite Attributes
             0xFEA0 ..= 0xFEFF => (),                                        // Unusable
             0xFF00 ..= 0xFF7F => self.write_io_registers(value, address),   // I/O Registers
             0xFF80 ..= 0xFFFE => self.write_hram(value, address),           // High RAM
