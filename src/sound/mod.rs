@@ -1,3 +1,5 @@
+use crate::traits::MemoryMap;
+
 #[allow(dead_code)]
 pub struct Sound {
 
@@ -70,12 +72,20 @@ impl Sound {
         }
     }
 
-    pub fn read(&self, address: u16) -> u8 {
+
+
+
+}
+
+
+impl MemoryMap for Sound {
+
+    fn read(&self, address: u16) -> u8 {
         let _address = address;
         0
     }
 
-    pub fn write(&mut self, value: u8, address: u16) {
+    fn write(&mut self, value: u8, address: u16) {
         let _value = value;
         let _address = address;
     }
