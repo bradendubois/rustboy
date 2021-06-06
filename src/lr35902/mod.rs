@@ -758,10 +758,12 @@ mod test {
     }
      */
 
+    /* TODO
     #[test]
     fn acceptance_ppu() {
         mooneye_all("acceptance/ppu");
     }
+     */
 
     /* TODO
     #[test]

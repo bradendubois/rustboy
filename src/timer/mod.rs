@@ -77,10 +77,12 @@ impl MemoryMap for Timer {
 
 impl RunComponent for Timer {
 
-    fn run(&mut self, cpu_clock_cycles: usize) {
+    fn run(&mut self, cpu_clock_cycles: u64) {
+
+        let cycles = cpu_clock_cycles as usize;
 
         // Divider timer always runs
-        self.divi_tank += cpu_clock_cycles;
+        self.divi_tank += cycles;
         while self.divi_tank >= TIMER_TO_CPU_TICKS {
             self.divider_register = self.divider_register.wrapping_add(1);
             self.divi_tank -= TIMER_TO_CPU_TICKS;
@@ -89,7 +91,7 @@ impl RunComponent for Timer {
         // Only run timer counter if enabled
         if self.timer_enabled {
 
-            self.tima_tank += cpu_clock_cycles;
+            self.tima_tank += cycles;
 
             // Conversion of 'tanked' CPU cycles into appropriate timer clock select cycles
             while self.tima_tank >= self.timer_clock_select {

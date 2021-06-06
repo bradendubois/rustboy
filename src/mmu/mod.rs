@@ -2,7 +2,7 @@ mod mbc;
 
 use std::fmt;
 
-use crate::traits::{MemoryMap, MBC};
+use crate::traits::{MemoryMap, MBC, RunComponent};
 
 use super::cartridge::Cartridge;
 use super::ppu::PPU;
@@ -88,7 +88,7 @@ impl MMU {
 
     pub fn run(&mut self, cpu_cycles: u64) {
         self.ppu.run_for(cpu_cycles);
-        self.timer.run((cpu_cycles / 4) as usize);
+        self.timer.run(cpu_cycles / 4);
     }
 
     /*************************/
@@ -237,13 +237,13 @@ impl MemoryMap for MMU {
                 0xFF04 ..= 0xFF07 => self.timer.write(address, value),
                 0xFF08 ..= 0xFF0E => (),                                            // unmapped
                 0xFF0F ..= 0xFF0F => self.interrupt_flag_write(value),
-                0xFF10 ..= 0xFF14 => self.apu.write(value, address),
+                0xFF10 ..= 0xFF14 => self.apu.write(address, value),
                 0xFF15 ..= 0xFF15 => (),                                            // unmapped
-                0xFF16 ..= 0xFF1E => self.apu.write(value, address),
+                0xFF16 ..= 0xFF1E => self.apu.write(address, value),
                 0xFF1F ..= 0xFF1F => (),                                            // unmapped
-                0xFF20 ..= 0xFF26 => self.apu.write(value, address),
+                0xFF20 ..= 0xFF26 => self.apu.write(address, value),
                 0xFF27 ..= 0xFF2F => (),                                            // unmapped
-                0xFF30 ..= 0xFF3F => self.apu.write(value, address),
+                0xFF30 ..= 0xFF3F => self.apu.write(address, value),
                 0xFF40 ..= 0xFF4B => self.ppu.write(address, value),
                 0xFF4C ..= 0xFF4C => (),                                            // unmapped
                 0xFF4D ..= 0xFF4D => self.ppu.write(address, value),
