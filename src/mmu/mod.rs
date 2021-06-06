@@ -139,76 +139,6 @@ impl MMU {
     }
 
     /*************************/
-    /*    IO (0xFF00-FF7F)   */
-    /*************************/
-
-    fn read_io_registers(&mut self, address: u16) -> u8 {
-        match address {
-            0xFF00 ..= 0xFF00 => self.joypad.read(),
-            0xFF01 ..= 0xFF02 => self.serial.read(address),
-            0xFF03 ..= 0xFF03 => 0xFF,                              //unmapped
-            0xFF04 ..= 0xFF07 => self.timer.read(address),
-            0xFF08 ..= 0xFF0E => 0xFF,                              // unmapped
-            0xFF0F ..= 0xFF0F => self.interrupt_flag_read(),
-            0xFF10 ..= 0xFF14 => self.apu.read(address),
-            0xFF15 ..= 0xFF15 => 0xFF,                              // unmapped
-            0xFF16 ..= 0xFF1E => self.apu.read(address),
-            0xFF1F ..= 0xFF1F => 0xFF,                              // unmapped
-            0xFF20 ..= 0xFF26 => self.apu.read(address),
-            0xFF27 ..= 0xFF2F => 0xFF,                              // unmapped
-            0xFF30 ..= 0xFF3F => self.apu.read(address),
-            0xFF40 ..= 0xFF4B => self.ppu.read(address),
-            0xFF4C ..= 0xFF4C => 0xFF,                              // unmapped
-            0xFF4D ..= 0xFF4D => self.ppu.read(address),
-            0xFF4E ..= 0xFF4E => 0xFF,                              // unmapped
-            0xFF4F ..= 0xFF4F => self.ppu.read(address),
-            0xFF50 ..= 0xFF50 => if self.in_bios { 1 } else { 0 },
-            0xFF51 ..= 0xFF55 => self.ppu.read(address),
-            0xFF56 ..= 0xFF56 => 0xFF,    // CGB Only - RP - Infrared Comm. Port
-            0xFF57 ..= 0xFF67 => 0xFF,                              // unmapped
-            0xFF68 ..= 0xFF6B => self.ppu.read(address),
-            0xFF6C ..= 0xFF6F => 0xFF,                              // unmapped
-            0xFF70 ..= 0xFF70 => 0xFF,    // CGB Only - SVBK - WRAM Bank
-            0xFF71 ..= 0xFF7F => 0xFF,                              // unmapped
-
-            _ => panic!("unmapped io register address {:#06X}", address)
-        }
-    }
-
-    fn write_io_registers(&mut self, value: u8, address: u16) {
-        match address {
-            0xFF00 ..= 0xFF01 => self.joypad.write(value),
-            0xFF01 ..= 0xFF02 => self.serial.write(address, value),
-            0xFF03 ..= 0xFF03 => (),                                        // unmapped
-            0xFF04 ..= 0xFF07 => self.timer.write(address, value),
-            0xFF08 ..= 0xFF0E => (),                                        // unmapped
-            0xFF0F ..= 0xFF0F => self.interrupt_flag_write(value),
-            0xFF10 ..= 0xFF14 => self.apu.write(value, address),
-            0xFF15 ..= 0xFF15 => (),                                        // unmapped
-            0xFF16 ..= 0xFF1E => self.apu.write(value, address),
-            0xFF1F ..= 0xFF1F => (),                                        // unmapped
-            0xFF20 ..= 0xFF26 => self.apu.write(value, address),
-            0xFF27 ..= 0xFF2F => (),                                        // unmapped
-            0xFF30 ..= 0xFF3F => self.apu.write(value, address),
-            0xFF40 ..= 0xFF4B => self.ppu.write(address, value),
-            0xFF4C ..= 0xFF4C => (),                                        // unmapped
-            0xFF4D ..= 0xFF4D => self.ppu.write(address, value),
-            0xFF4E ..= 0xFF4E => (),                                        // unmapped
-            0xFF4F ..= 0xFF4F => self.ppu.write(address, value),
-            0xFF50 ..= 0xFF50 => self.in_bios = self.in_bios && value != 0,
-            0xFF51 ..= 0xFF55 => self.ppu.write(address, value),
-            0xFF56 ..= 0xFF56 => (),    // CGB Only - RP - Infrared Comm. Port
-            0xFF57 ..= 0xFF67 => (),                                        // unmapped
-            0xFF68 ..= 0xFF6B => self.ppu.write(address, value),
-            0xFF6C ..= 0xFF6F => (),                                        // unmapped
-            0xFF70 ..= 0xFF70 => (),    // CGB Only - SVBK - WRAM Bank
-            0xFF71 ..= 0xFF7F => (),                                        // unmapped
-
-            _ => panic!("Unmapped address {:#06X}", address)
-        }
-    }
-
-    /*************************/
     /*  HRAM (0xFF80-0xFFFE) */
     /*************************/
 
@@ -258,7 +188,39 @@ impl MemoryMap for MMU {
             0xE000 ..= 0xFDFF => self.read_echo(address),                   // Echo RAM
             0xFE00 ..= 0xFE9F => self.ppu.read(address),                    // Sprite Attributes
             0xFEA0 ..= 0xFEFF => 0xFF,                                      // Unusable
-            0xFF00 ..= 0xFF7F => self.read_io_registers(address),           // I/O Registers
+
+            // IO Registers
+            0xFF00 ..= 0xFF7F => match address {
+                0xFF00 ..= 0xFF00 => self.joypad.read(),
+                0xFF01 ..= 0xFF02 => self.serial.read(address),
+                0xFF03 ..= 0xFF03 => 0xFF,                                  // unmapped
+                0xFF04 ..= 0xFF07 => self.timer.read(address),
+                0xFF08 ..= 0xFF0E => 0xFF,                                  // unmapped
+                0xFF0F ..= 0xFF0F => self.interrupt_flag_read(),
+                0xFF10 ..= 0xFF14 => self.apu.read(address),
+                0xFF15 ..= 0xFF15 => 0xFF,                                  // unmapped
+                0xFF16 ..= 0xFF1E => self.apu.read(address),
+                0xFF1F ..= 0xFF1F => 0xFF,                                  // unmapped
+                0xFF20 ..= 0xFF26 => self.apu.read(address),
+                0xFF27 ..= 0xFF2F => 0xFF,                                  // unmapped
+                0xFF30 ..= 0xFF3F => self.apu.read(address),
+                0xFF40 ..= 0xFF4B => self.ppu.read(address),
+                0xFF4C ..= 0xFF4C => 0xFF,                                  // unmapped
+                0xFF4D ..= 0xFF4D => self.ppu.read(address),
+                0xFF4E ..= 0xFF4E => 0xFF,                                  // unmapped
+                0xFF4F ..= 0xFF4F => self.ppu.read(address),
+                0xFF50 ..= 0xFF50 => if self.in_bios { 1 } else { 0 },
+                0xFF51 ..= 0xFF55 => self.ppu.read(address),
+                0xFF56 ..= 0xFF56 => 0xFF,    // CGB Only - RP - Infrared Comm. Port
+                0xFF57 ..= 0xFF67 => 0xFF,                                  // unmapped
+                0xFF68 ..= 0xFF6B => self.ppu.read(address),
+                0xFF6C ..= 0xFF6F => 0xFF,                                  // unmapped
+                0xFF70 ..= 0xFF70 => 0xFF,    // CGB Only - SVBK - WRAM Bank
+                0xFF71 ..= 0xFF7F => 0xFF,                                  // unmapped
+
+                _ => panic!("unmapped io register address {:#06X}", address)
+            },
+
             0xFF80 ..= 0xFFFE => self.read_hram(address),                   // High RAM
             0xFFFF ..= 0xFFFF => self.interrupt_enable,                     // Interrupt Register
 
@@ -276,7 +238,39 @@ impl MemoryMap for MMU {
             0xE000 ..= 0xFDFF => self.write_echo(address, value),           // Echo RAM
             0xFE00 ..= 0xFE9F => self.ppu.write(address, value),            // Sprite Attributes
             0xFEA0 ..= 0xFEFF => (),                                        // Unusable
-            0xFF00 ..= 0xFF7F => self.write_io_registers(value, address),   // I/O Registers
+
+            // IO Registers
+            0xFF00 ..= 0xFF7F => match address {
+                0xFF00 ..= 0xFF01 => self.joypad.write(value),
+                0xFF01 ..= 0xFF02 => self.serial.write(address, value),
+                0xFF03 ..= 0xFF03 => (),    // unmapped
+                0xFF04 ..= 0xFF07 => self.timer.write(address, value),
+                0xFF08 ..= 0xFF0E => (),                                            // unmapped
+                0xFF0F ..= 0xFF0F => self.interrupt_flag_write(value),
+                0xFF10 ..= 0xFF14 => self.apu.write(value, address),
+                0xFF15 ..= 0xFF15 => (),                                            // unmapped
+                0xFF16 ..= 0xFF1E => self.apu.write(value, address),
+                0xFF1F ..= 0xFF1F => (),                                            // unmapped
+                0xFF20 ..= 0xFF26 => self.apu.write(value, address),
+                0xFF27 ..= 0xFF2F => (),                                            // unmapped
+                0xFF30 ..= 0xFF3F => self.apu.write(value, address),
+                0xFF40 ..= 0xFF4B => self.ppu.write(address, value),
+                0xFF4C ..= 0xFF4C => (),                                            // unmapped
+                0xFF4D ..= 0xFF4D => self.ppu.write(address, value),
+                0xFF4E ..= 0xFF4E => (),                                            // unmapped
+                0xFF4F ..= 0xFF4F => self.ppu.write(address, value),
+                0xFF50 ..= 0xFF50 => self.in_bios = self.in_bios && value != 0,
+                0xFF51 ..= 0xFF55 => self.ppu.write(address, value),
+                0xFF56 ..= 0xFF56 => (),    // CGB Only - RP - Infrared Comm. Port
+                0xFF57 ..= 0xFF67 => (),                                            // unmapped
+                0xFF68 ..= 0xFF6B => self.ppu.write(address, value),
+                0xFF6C ..= 0xFF6F => (),                                            // unmapped
+                0xFF70 ..= 0xFF70 => (),    // CGB Only - SVBK - WRAM Bank
+                0xFF71 ..= 0xFF7F => (),                                            // unmapped
+
+                _ => panic!("Unmapped address {:#06X}", address)
+            },
+
             0xFF80 ..= 0xFFFE => self.write_hram(address, value),           // High RAM
             0xFFFF ..= 0xFFFF => self.interrupt_enable = value,             // Interrupt Register
 
