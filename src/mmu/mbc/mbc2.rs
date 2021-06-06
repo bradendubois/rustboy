@@ -1,7 +1,7 @@
 use std::cmp::max;
 use crate::cartridge::Cartridge;
 use super::{MBC, create_ram, ROM_BANK_SIZE, RAM_BANK_SIZE};
-
+const RAM_SIZE: usize = 0x200;
 pub struct MBC2 {
     mode: u8,
 
@@ -9,7 +9,7 @@ pub struct MBC2 {
     rom_bank: u8,
     rom_size: u8,
 
-    ram: Vec<u8>,
+    ram: [u8; RAM_SIZE],
     ram_enabled: bool,
     ram_bank: u8,
     ram_size: u8,
@@ -25,7 +25,7 @@ impl MBC2 {
         let ram_size = cartridge.rom[0x149];
         let rom_size = cartridge.rom_size();
 
-        let ram = create_ram(ram_size);
+        let ram = [0;RAM_SIZE];
 
 
         MBC2 {
@@ -54,13 +54,9 @@ impl MBC for MBC2 {
             0x4000..=0x7FFF => {
                 self.cartridge.rom[(address & (ROM_BANK_SIZE - 1)) as usize]
             },
-            0xA000..=0xBFFF => match self.mode {
-                0 => self.ram[(address & (RAM_BANK_SIZE - 1)) as usize],
-                1 => self.ram[((self.ram_bank as u16 * RAM_BANK_SIZE) | (address & (RAM_BANK_SIZE - 1))) as usize],
-                _ => panic!("impossible mode: {}", self.mode)
-            },
+            0xA000..=0xBFFF => self.ram[address & 0x0f]
 
-            _ => panic!("unmapped mbc1 address {:#06X}", address)
+            _ => panic!("unmapped mbc2 address {:#06X}", address)
         }
     }
 
@@ -68,16 +64,11 @@ impl MBC for MBC2 {
         match address {
 
             // RAM Enable
-            0x0000..=0x1FFF => if self.ram_size != 0 { self.ram_enabled = value & 0x0F == 0x0A; },
+            0x0000..=0x3FFF => if self.ram_size != 0 { self.ram_enabled = value & 0x0F == 0x0A; },
 
             // ROM Bank Number
-            0x2000..=0x3FFF => self.bank1 = {
-                let mut masked = value & 0x1F;
-                if masked >= (1 << (self.rom_size + 1)) {
-                    masked &= (1 << (self.rom_size + 1)) - 1;
-                }
-
-                max(1, masked)
+            0xA000..=0xA1FF => if self.ram_enabled{
+                self.ram[(address & (RAM_BANK_SIZE -1)) as usize]
             },
 
             // RAM Bank Number / Upper Bits of ROM Bank Number
@@ -91,7 +82,7 @@ impl MBC for MBC2 {
                 self.ram[((self.ram_bank as u16 * RAM_BANK_SIZE) | (address & (RAM_BANK_SIZE - 1))) as usize] = value;
             }
 
-            _ => panic!("unmapped mbc1 address {:#06X}", address)
+            _ => panic!("unmapped mbc2 address {:#06X}", address)
         }
     }
 }

@@ -3,6 +3,7 @@ use crate::traits::MBC;
 
 pub mod mbc0;
 pub mod mbc1;
+pub mod mbc2;
 
 const ROM_BANK_SIZE: usize = 0x4000;
 const RAM_BANK_SIZE: usize = 0x2000;
