@@ -1,42 +1,35 @@
-use std::cmp::max;
 use crate::cartridge::Cartridge;
 use super::{MBC, create_ram, ROM_BANK_SIZE, RAM_BANK_SIZE};
 
 
 pub struct MBC5 {
-    mode: u8,
-
     cartridge: Cartridge,
-    rom_size: u8,
     bank1: u8,
     bank2: u8,
 
     ram: Vec<u8>,
     ram_enabled: bool,
-    ram_size: u8,
     ram_bank: usize,
+
+    rumble: bool
 }
 
 
 impl MBC5 {
     pub fn new(cartridge: Cartridge) -> MBC5 {
 
-        let ram_size = cartridge.rom[0x149];
-        let rom_size = cartridge.rom_size();
-
-        let ram = create_ram(ram_size);
+        let ram = create_ram(cartridge.rom[0x149]);
 
         MBC5 {
-            mode: 0,
             cartridge,
-            rom_size,
             bank1: 1,
             bank2: 0,
 
             ram,
             ram_enabled: false,
-            ram_size,
-            ram_bank: 0
+            ram_bank: 0,
+
+            rumble: false
         }
     }
 }
@@ -52,7 +45,7 @@ impl MBC for MBC5 {
 
             // ROM Read - Banked
             0x4000..=0x7FFF => {
-                let bank_number = ((((self.bank2 as u16) << 8) | self.bank1 as u16) as usize);
+                let bank_number = (((self.bank2 as u16) << 8) | self.bank1 as u16) as usize;
                 self.cartridge.rom[ROM_BANK_SIZE * bank_number | (address as usize & (ROM_BANK_SIZE - 1))]
             },
 
@@ -82,7 +75,10 @@ impl MBC for MBC5 {
             0x3000..=0x3FFF => self.bank2 = value & 0x01,
 
             // RAM Bank Number
-            0x4000..=0x5FFF => self.ram_bank = (value & 0x03) as usize,
+            0x4000..=0x5FFF => {
+                self.rumble = (value & 0x04) != 0;
+                self.ram_bank = (value & 0x03) as usize
+            },
 
             // RAM Bank 00-03
             0xA000..=0xBFFF => if self.ram_enabled {
