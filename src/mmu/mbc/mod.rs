@@ -3,6 +3,7 @@ use crate::traits::MBC;
 
 pub mod mbc0;
 pub mod mbc1;
+pub mod mbc5;
 
 const ROM_BANK_SIZE: usize = 0x4000;
 const RAM_BANK_SIZE: usize = 0x2000;
@@ -27,7 +28,7 @@ pub fn from(cartridge: Cartridge) -> Box<dyn MBC> {
         0x01 ..= 0x03 => Box::new(mbc1::MBC1::new(cartridge)),
         0x05 ..= 0x06 => panic!("MBC2 not implemented!"), // MBC2::new(cartridge),
         0x0F ..= 0x13 => panic!("MBC3 not implemented!"), // MBC3::new(cartridge),
-        0x19 ..= 0x1E => panic!("MBC5 not implemented!"), // MBC5::new(cartridge)
+        0x19 ..= 0x1E => Box::new(mbc5::MBC5::new(cartridge)),
 
         _ => panic!("Unsupported cartridge type: {:#4X}!", cartridge.cartridge_type()),
     }

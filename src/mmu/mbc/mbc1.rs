@@ -40,12 +40,10 @@ impl MBC1 {
 }
 
 
-/// Implementation of traits for the basic mbc with no additional banks or ram writes
 impl MBC for MBC1 {
 
     fn read(&mut self, address: u16) -> u8 {
         match address {
-
             // ROM Read - Mode 0 -> Bank 0, Mode 1 -> Bank2 << 5
             0x0000..=0x3FFF => match self.mode {
                 0 => self.cartridge.rom[address as usize],
@@ -85,7 +83,7 @@ impl MBC for MBC1 {
             // RAM Enable
             0x0000..=0x1FFF => if self.ram_size != 0 { self.ram_enabled = value & 0x0F == 0x0A; },
 
-            // ROM Bank Number
+            // ROM Bank Number / Lower bits
             0x2000..=0x3FFF => self.bank1 = {
                 let mut masked = (value & 0x1F) as u16;
                 if masked >= (1 << (self.rom_size + 1)) {
