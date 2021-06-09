@@ -2,10 +2,18 @@ use crate::cartridge::Cartridge;
 use crate::lr35902::LR35902;
 
 
+/* The [allow(dead_code)] flags are misleading; the code here is used in testing, which can be
+ *  done with either `cargo test` or `cargo test -- --nocapture`, but a basic `cargo check` would
+ *  suggest that the contents are not used.
+ */
+
+
+#[allow(dead_code)]
 const MOONEYE: &str = "./roms/testing/mooneye";
 
 
 /// Helper method to test with a Mooneye ROM
+#[allow(dead_code)]
 pub fn mooneye(path: &String) -> bool {
 
     println!("testing path: {}", path);
@@ -28,6 +36,7 @@ pub fn mooneye(path: &String) -> bool {
 }
 
 
+#[allow(dead_code)]
 pub fn mooneye_all(dir: &str) {
 
     let mut successful: Vec<String> = Vec::new();
