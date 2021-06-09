@@ -11,6 +11,12 @@ use super::timer::Timer;
 use super::joypad::Joypad;
 use super::serial::Serial;
 
+extern crate sdl2;
+
+use sdl2::pixels::Color;
+use sdl2::event::Event;
+use sdl2::keyboard::Keycode;
+use std::time::Duration;
 
 const W_RAM_SIZE: usize = 0x2000;
 const H_RAM_SIZE: usize = 0x7F;
@@ -61,6 +67,11 @@ impl MMU {
 
     pub fn new(cartridge: Cartridge) -> MMU {
 
+        let sdl_context = sdl2::init().unwrap();
+        let video_subsystem = sdl_context.video().unwrap();
+
+        let mut event_pump = sdl_context.event_pump().unwrap();
+
         let mut mmu = MMU {
             in_bios: false,
 
@@ -68,10 +79,10 @@ impl MMU {
             h_ram: [0; H_RAM_SIZE],
 
             mbc: mbc::from(cartridge),
-            ppu: PPU::new(),
+            ppu: PPU::new(video_subsystem),
             apu: Sound::new(),
             timer: Timer::new(),
-            joypad: Joypad::new(),
+            joypad: Joypad::new(event_pump),
             serial: Serial::new(),
 
             interrupt_enable: 0
@@ -166,6 +177,7 @@ impl RunComponent for MMU {
     fn run(&mut self, cpu_cycles: u64) {
         self.ppu.run_for(cpu_cycles);
         self.timer.run(cpu_cycles / 4);
+        self.joypad.run(cpu_cycles);
     }
 }
 

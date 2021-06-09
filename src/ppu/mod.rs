@@ -11,6 +11,7 @@ use crate::traits::{Byte, MemoryMap};
 use oam::{OAMEntry, OAMFlags};
 use registers::lcdc::LCDC;
 use registers::lcds::LCDS;
+use sdl2::VideoSubsystem;
 
 
 const V_RAM_SIZE: usize = 0x2000;
@@ -70,10 +71,10 @@ pub struct PPU {
 #[allow(unused)]
 impl PPU {
 
-    pub fn new() -> PPU {
+    pub fn new(video_context: VideoSubsystem) -> PPU {
         PPU {
             clock: 0,
-            display: display::Screen::new(),
+            display: display::Screen::new(video_context),
 
             mode: Mode0,
             vram: [0; V_RAM_SIZE],
