@@ -1,21 +1,20 @@
 mod instructions;
-mod status;
 mod registers;
 
 use std::fmt;
 
-use status::Status;
+use crate::enums::{IME, Status, Status::*};
+use crate::traits::{MemoryMap, RunComponent};
+
+use super::cartridge::Cartridge;
+use super::mmu::MMU;
 use registers::Registers;
-
-use super::mmu;
-use crate::cartridge::Cartridge;
-
 
 // Struct representing the LR35902 CPU
 pub struct LR35902 {
 
     // Struct representing the memory unit
-    pub mmu: mmu::MMU,
+    pub mmu: MMU,
 
     // Struct of all registers in the LR35902
     pub registers: Registers,
@@ -23,443 +22,136 @@ pub struct LR35902 {
     // Enum representing the LR35902's current running status
     pub status: Status,
 
+    // IME - Interrupt Master Enable Flag
+    ime: IME,
+
     // Struct representing the clock of the LR35902 for purposes of timing
-    pub clock: u64,
+    clock: u64,
 
     // CB Flag : Will set whether to use the default table or the CB Prefix table
-    pub use_cb_table: bool,
+    use_cb_table: bool,
+
+    mooneye_testing: bool
 }
 
 #[allow(dead_code)]
 impl LR35902 {
 
     /// Initializer for a LR35902 CPU
-    pub fn new(cartridge: Cartridge, skip_bios: bool) -> LR35902 {
+    pub fn new(cartridge: Cartridge) -> LR35902 {
         LR35902 {
-
-            // MMU Unit
-            mmu: mmu::MMU::new(cartridge),
-
-            registers: Registers::new(skip_bios),
-
-            // status enum starts as running.
-            status: Status::RUNNING,
-
-            // Clock begins at 0
+            mmu: MMU::new(cartridge),
+            registers: Registers::new(),
+            status: RUNNING,
+            ime: IME::Disabled,
             clock: 0,
-
             use_cb_table: false,
-
+            mooneye_testing: false
         }
+    }
 
+    pub fn testing(cartridge: Cartridge) -> LR35902 {
+        LR35902 {
+            mmu: MMU::new(cartridge),
+            registers: Registers::new(),
+            status: RUNNING,
+            ime: IME::Disabled,
+            clock: 0,
+            use_cb_table: false,
+            mooneye_testing: true
+        }
     }
 
     /// Run the cycle until otherwise halted / interrupted by an interrupt / exception
     pub fn run(&mut self) {
-
-        println!("cpu beginning run");
-
-        while let Status::RUNNING = self.status {
+        loop {
             self.step();
+
+            let cycles = self.step();
+            if cycles == 0 {   // 0 is returned from Mooneye tests when complete
+                break;
+            }
+
+            // println!("cycles taken: {}", cycles);
+
+            // Adjust clock and program counter (PC)
+            self.clock += cycles as u64;
+
+            // The PPU runs at a clock rate of 4.2 MHz, while the LR35902 runs at 1.05 MHz
+            //  Each cycle run by the CPU corresponds to 4 PPU cycles
+            self.mmu.run(cycles * 4);
         }
-
-        println!("cpu halted with status: {:?}", self.status);
     }
-
 
     /// Run one step the CPU, fetching/decoding/executing at the PC
-    pub fn step(&mut self) {
+    pub fn step(&mut self) -> u64 {
 
-        println!("program counter: {}", self.registers.pc);
+        // The IME has a delay of one cycle, so when 're-enabled' there must be a delay
+        //  before actually re-enabling it.
+        self.ime = match self.ime {
+            IME::OneCycleDelay => IME::ReadyToEnable,
+            IME::ReadyToEnable => IME::Enabled,
 
-        // Get the opcode number to execute
-        let opcode = self.byte();
-
-        println!("fetched instruction: {:#02X}", opcode);
-
-        // Execute from standard table
-        let cycles = self.call_instruction(opcode);
-
-        println!("cycles taken: {}", cycles);
-
-        // Adjust clock and program counter (PC)
-        self.clock += cycles as u64;
-    }
-
-    /*************************/
-    /*          ALU          */
-    /*************************/
-
-    /*        Addition       */
-
-    /// Add two u8s together, handling overflow and the Z/N/H/C flags of the F register
-    pub fn add_8(&mut self, s: u8, t: u8) -> u8 {
-        let result = s.wrapping_add(t);
-
-        match result {
-            0 => self.set_zero(),
-            _ => self.unset_zero(),
+            // No Change
+            IME::Enabled => IME::Enabled,
+            IME::Disabled => IME::Disabled
         };
 
-        self.unset_subtraction();
+        // Handle any interrupts
+        if self.ime == IME::Enabled {
 
-        match (s & 0xF).wrapping_add(t & 0xF) > 0xF {
-            true => self.set_half_carry(),
-            false => self.unset_half_carry(),
-        };
+            let ff0f = self.mmu.read(0xFF0F);
+            let ffff = self.mmu.read(0xFFFF);
 
-        match s.checked_add(t) {
-            None => self.set_full_carry(),
-            Some(_) => self.unset_full_carry(),
-        };
+            let interrupts = ff0f & ffff;
+            if interrupts != 0 {
+                let handle = interrupts.trailing_zeros() as u8;
+                self.mmu.write(0xFF0F, ff0f & !(1<< handle));
 
-        result
-    }
+                let interrupt_vector: u16 = match handle {
+                    0 => 0x0040,
+                    1 => 0x0048,
+                    2 => 0x0050,
+                    3 => 0x0058,
+                    4 => 0x0060,
 
-    /// Add two u16s together, handling overflow and the Z/N/H/C flags of the F register
-    pub fn add_16(&mut self, s: u16, t: u16) -> u16 {
-        let result = s.wrapping_add(t);
+                    _ => panic!("invalid interrupt bit: {}", handle)
+                };
 
-        self.unset_subtraction();
+                self.call(interrupt_vector);
+                return 4;
+            }
 
-        match (s & 0x07FF).wrapping_add(t & 0x07FF) > 0x07FF {
-            true => self.set_half_carry(),
-            false => self.unset_half_carry(),
-        };
-
-        match s.checked_add(t) {
-            None => self.set_full_carry(),
-            Some(_) => self.unset_full_carry(),
-        };
-
-        result
-    }
-
-    /// ADC - Add the given value and the carry (C) flag to the accumulator (A) register
-    pub fn adc_8(&mut self, s: u8) {
-        let carry = match self.is_full_carry() {
-            true => 1,
-            false => 0,
-        };
-
-        self.registers.a = self.add_8(self.registers.a, s + carry);
-    }
-
-    /// SBC - Subtract given value and carry flag from the A register
-    pub fn sbc_8(&mut self, s: u8) {
-        let carry = match self.is_full_carry() {
-            true => 1,
-            false => 0,
-        };
-        self.registers.a = self.sub_8(self.registers.a, s + carry);
-    }
-
-    /*      Subtraction      */
-
-    /// Subtract t (u8) from s (u8), handling underflow and the Z/N/H/C flags of the F register
-    pub fn sub_8(&mut self, s: u8, t: u8) -> u8 {
-        let result = s.wrapping_sub(t);
-
-        match result == 0 {
-            true => self.set_zero(),
-            false => self.unset_zero(),
-        };
-
-        self.set_subtraction();
-        match (s & 0xf).wrapping_sub(t & 0xf) & 0x10 != 0 {
-            true => self.set_half_carry(),
-            false => self.unset_half_carry(),
-        };
-
-        result
-    }
-
-    /*     Incrementation    */
-
-    /// Increment a given u8, handling overflow and the Z/N/H/C flags of the F register
-    pub fn inc_8(&mut self, s: u8) -> u8 {
-        // Save the carry flag as it is changed by sub
-        let carry = self.is_full_carry();
-        let result = self.add_8(s, 1);
-
-        // Restore the carry flag state after sub operation
-        match carry {
-            true => self.set_full_carry(),
-            false => self.unset_full_carry(),
-        };
-
-        result
-    }
-
-    /// Increment a given u16, handling overflow
-    pub fn inc_16(&mut self, s: u16) -> u16 {
-        // Save the carry flag as it is changed by sub
-        let carry = self.is_full_carry();
-        let result = self.add_16(s, 1);
-
-        // Restore the carry flag state after sub operation
-        match carry {
-            true => self.set_full_carry(),
-            false => self.unset_full_carry(),
-        };
-
-        result
-    }
-
-    /*      Decrementing     */
-
-    /// Decrement a given u8, handling overflow and the Z/N/H/C flags of the F register
-    pub fn dec_8(&mut self, s: u8) -> u8 {
-        // Save the carry flag as it is changed by sub
-        let carry = self.is_full_carry();
-        let result = self.sub_8(s, 1);
-
-        // Restore the carry flag state after sub operation
-        match carry {
-            true => self.set_full_carry(),
-            false => self.unset_full_carry(),
-        };
-
-        result
-    }
-
-    /// Decrement a given u16, handling overflow and the Z/N/H/C flags of the F register
-    pub fn dec_16(&mut self, s: u16) -> u16 {
-        // Save the carry flag as it is changed by sub
-        let carry = self.is_full_carry();
-        let result = s.wrapping_sub(1);
-
-        // Restore the carry flag state after sub operation
-        match carry {
-            true => self.set_full_carry(),
-            false => self.unset_full_carry(),
-        };
-
-        result
-    }
-
-    /*   Bitwise Operations  */
-
-    /// AND - AND the given value with the accumulator register (A) and store the result in A
-    pub fn and(&mut self, t: u8) {
-        self.registers.a &= t;
-
-        match self.registers.a == 0 {
-            true => self.set_zero(),
-            false => self.unset_zero(),
-        };
-
-        self.unset_subtraction();
-        self.unset_half_carry();
-        self.set_full_carry();
-    }
-
-    /// OR - OR the given value with register A. Store result in A.
-    pub fn or(&mut self, t: u8) {
-        self.registers.a |= t;
-
-        match self.registers.a == 0 {
-            true => self.set_zero(),
-            false => self.unset_zero(),
-        };
-        self.unset_subtraction();
-        self.unset_half_carry();
-        self.unset_full_carry();
-    }
-
-    /// CP - Compare the given value with register A, setting the zero flag if they're equal
-    pub fn cp(&mut self, t: u8) {
-        if self.sub_8(self.registers.a, t) == 0 {
-            self.set_zero()
+        // Resume execution with one-cycle delay if halted
+        } else if self.status == HALTED {
+            self.status = RUNNING;
+            return self.nop_0x00();
         }
+
+        // println!("program counter: {:#06X}", self.registers.pc);
+
+        let opcode = self.byte();        // Get the opcode number to execute
+
+        // println!("fetched instruction: {:#02X}", opcode);
+
+        // Special 'exit condition' on testing a "mooneye" testing ROM; accessing instruction 0x40
+        //  (which is LD B B) indicates that the test is done. A successful test places the
+        //  Fibonacci sequence (starting at 3) across the B-L registers.
+        if self.mooneye_testing && opcode == 0x40 {
+            self.status = HALTED;
+            return 0;
+        }
+
+        self.call_instruction(opcode)        // Execute from standard table
     }
 
-    /// XOR - XOR the given value with the accumulator register (A) and store the result in A
-    pub fn xor(&mut self, v: u8) {
-        self.registers.a ^= v;
-
-        match self.registers.a == 0 {
-            true => self.set_zero(),
-            false => self.unset_zero(),
-        };
-
-        self.unset_subtraction();
-        self.unset_half_carry();
-        self.unset_full_carry();
-    }
-
-    /// RLC - Rotate a number left, and copy the left-most bit shifted into the C register
-    pub fn rlc(&mut self, v: u8) -> u8 {
-        let result = (v << 1) | (v >> 7);
-
-        match result == 0 {
-            true => self.set_zero(),
-            false => self.unset_zero(),
-        };
-
-        self.unset_subtraction();
-        self.unset_half_carry();
-
-        match result & 0x01 == 0 {
-            true => self.unset_full_carry(),
-            false => self.set_full_carry(),
-        };
-
-        result
-    }
-
-    /// RL - Rotate a number left, copy the contents of carry into the result
-    pub fn rl(&mut self, v: u8) -> u8 {
-        let carry_bit = if self.is_full_carry() { 1 } else { 0 };
-        let mut result = (v << 1) | (v >> 7);
-
-        match result == 0 {
-            true => self.set_zero(),
-            false => self.unset_zero(),
-        };
-        match result & 0x01 == 0 {
-            true => self.unset_full_carry(),
-            false => self.set_full_carry(),
-        };
-        self.unset_subtraction();
-        self.unset_half_carry();
-
-        result = (result & (!(1 << 7))) | carry_bit;
-
-        result
-    }
-
-    /// RRC - Rotate a number right, and copy the right-most bit shifted into the C register
-    pub fn rrc(&mut self, v: u8) -> u8 {
-        let result = (v >> 1) | (v << 7);
-
-        match result == 0 {
-            true => self.set_zero(),
-            false => self.unset_zero(),
-        };
-
-        self.unset_subtraction();
-        self.unset_half_carry();
-
-        match result & 0xF0 == 0 {
-            true => self.unset_full_carry(),
-            false => self.set_full_carry(),
-        };
-
-        result
-    }
-
-    /// RR - Rotate a number right, copy carry flag into right-most bit
-    pub fn rr(&mut self, v: u8) -> u8 {
-        let carry_bit = if self.is_full_carry() { 1 } else { 0 };
-        let mut result = (v << 1) | (v >> 7);
-
-        match result == 0 {
-            true => self.set_zero(),
-            false => self.unset_zero(),
-        };
-        match result & 0x01 == 0 {
-            true => self.unset_full_carry(),
-            false => self.set_full_carry(),
-        };
-        self.unset_subtraction();
-        self.unset_half_carry();
-
-        result = (result & (!(1 << 7))) | carry_bit;
-
-        result
-    }
-
-    /// SLA - Shift a number left, and copy the left-most bit shifted into the C register
-    pub fn sla(&mut self, v: u8) -> u8 {
-        let result = v << 1;
-
-        match result == 0 {
-            true => self.set_zero(),
-            false => self.unset_zero(),
-        };
-
-        self.unset_subtraction();
-        self.unset_half_carry();
-
-        match v & 0xF0 == 0 {
-            true => self.unset_full_carry(),
-            false => self.set_full_carry(),
-        };
-
-        result
-    }
-
-    /// SRA - Shift a number right, and copy the right-most bit shifted into the C register
-    pub fn sra(&mut self, v: u8) -> u8 {
-        let result = v >> 1;
-
-        match result == 0 {
-            true => self.set_zero(),
-            false => self.unset_zero(),
-        };
-
-        self.unset_subtraction();
-        self.unset_half_carry();
-
-        match v & 0x01 == 0 {
-            true => self.unset_full_carry(),
-            false => self.set_full_carry(),
-        };
-
-        result
-    }
-
-    /// SWAP - return the value with
-    /// its 4 higher order bits swapped with the four lower order bits
-    pub fn swap(&mut self, s: u8) -> u8 {
-        let result = (s << 4) | (s >> 4);
-        match result == 0 {
-            true => self.set_zero(),
-            false => self.unset_zero(),
-        };
-
-        self.unset_subtraction();
-        self.unset_half_carry();
-        self.unset_full_carry();
-        result
-    }
-
-    /// SRL - shift number right, copy bit 0 to CY and set bit 7 of number to 0
-    pub fn srl(&mut self, r: u8) -> u8 {
-        let mut result = (r << 1) | (r >> 7);
-
-        match result == 0 {
-            true => self.set_zero(),
-            false => self.unset_zero(),
-        };
-        match result & 0x01 == 0 {
-            true => self.unset_full_carry(),
-            false => self.set_full_carry(),
-        };
-        self.unset_subtraction();
-        self.unset_half_carry();
-
-        result &= !(result << 7);
-
-        result
-    }
-
-    /// BIT - Store the complement of bit b of s in the Zero (Z) flag
-    pub fn bit(&mut self, s: u8, b: u8) {
-        match (s & (1 << b)) == 0 {
-            true => self.set_zero(),
-            false => self.unset_zero(),
-        };
-        self.unset_subtraction();
-        self.set_half_carry();
-    }
-
-    /*  Program Counter (PC) */
+    /*************************/
+    /*        Program        */
+    /*************************/
 
     pub fn byte(&mut self) -> u8 {
         let next_byte = self.mmu.read(self.registers.pc);
-        self.registers.pc += 1;
+        self.registers.pc = self.registers.pc.wrapping_add(1);
         next_byte
     }
 
@@ -469,36 +161,36 @@ impl LR35902 {
         LR35902::u16_from_u8(upper, lower)
     }
 
+    /*************************/
     /*   Stack Pointer (SP)  */
+    /*************************/
 
     /// Push 16 bits to the stack (SP)
-    pub fn push_sp(&mut self, v: u16) {
-        let value = LR35902::u8_pair(v);
-        self.registers.sp -= 2;
-        self.mmu.write(value.1, self.registers.sp);
-        self.mmu.write(value.0, self.registers.sp + 1);
+    pub fn push_sp(&mut self, value: u16) {
+        self.registers.sp = self.registers.sp.wrapping_sub(2);
+        self.mmu.write_word( self.registers.sp, value);
     }
 
     /// Pop and return 16 bits from the stack (SP)
     pub fn pop_sp(&mut self) -> u16 {
-        let lower = self.mmu.read(self.registers.sp);
-        let upper = self.mmu.read(self.registers.sp + 1);
-        self.registers.sp += 2;
-        LR35902::u16_from_u8(upper, lower)
+        let value = self.mmu.read_word(self.registers.sp);
+        self.registers.sp = self.registers.sp.wrapping_add(2);
+        value
     }
 
-    /*        Control       */
+    /*************************/
+    /*        Control        */
+    /*************************/
 
-    // RST - Restore the PC by popping the stack by 16 bits to acquire a previously-pushed location
+    /// RST - Pseudo-instruction to call a specific address depending on opcode
     pub fn rst(&mut self, rst: u16) {
-        self.push_sp(self.registers.pc);
-        self.registers.pc = rst;
+        self.call(rst);
     }
 
     /// CALL - Store the current PC address on the stack and move PC to the given address
-    pub fn call(&mut self, addr: u16) {
+    pub fn call(&mut self, address: u16) {
         self.push_sp(self.registers.pc);
-        self.registers.pc = addr;
+        self.registers.pc = address;
     }
 
     /// RET - Pop the stack by 16 bits and set the PC to the result
@@ -509,6 +201,435 @@ impl LR35902 {
     /// JR - Adjust the PC by the given i8
     pub fn jr(&mut self, s: i8) {
         self.registers.pc = ((self.registers.pc as u32 as i32) + (s as i32)) as u16;
+    }
+
+    /*************************/
+    /*          IME          */
+    /*************************/
+
+    /// Get the Interrupt Master Enable flag
+    pub fn is_ime(&self) -> bool {
+        self.ime == IME::Enabled
+    }
+
+    /// Set the Interrupt Master Enable flag
+    pub fn set_ime(&mut self) {
+        self.ime = IME::OneCycleDelay;
+    }
+
+    /// Unset the IME flag
+    pub fn unset_ime(&mut self) {
+        self.ime = IME::Disabled;
+    }
+
+    /*************************/
+    /*         STATUS        */
+    /*************************/
+
+    pub fn stop(&mut self) {
+        self.mmu.write(0xFF04, 0);  // A STOP clears the timer
+        // TODO - this should actually halt the timer until resumed (maybe?)
+        self.status = STOPPED;
+    }
+
+    pub fn halt(&mut self) {
+        self.status = HALTED;
+    }
+
+    /*************************/
+    /*          ALU          */
+    /*************************/
+
+    /***      Addition     ***/
+
+    /// Add two u8s together, handling overflow and the Z/N/H/C flags of the F register
+    fn alu_add_8(&mut self, s: u8, t: u8) -> u8 {
+
+        let result = s.wrapping_add(t);
+
+        match result == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
+        };
+
+        self.registers.unset_subtraction();
+
+        match (s & 0xF) + (t & 0xF) > 0xF {
+            true  => self.registers.set_half_carry(),
+            false => self.registers.unset_full_carry(),
+        };
+
+        match s < t {
+            true  => self.registers.set_full_carry(),
+            false => self.registers.unset_full_carry(),
+        };
+
+        result
+    }
+
+    /// Add two u16s together, handling overflow and the Z/N/H/C flags of the F register
+    pub fn add_16(&mut self, s: u16, t: u16) -> u16 {
+
+        let result = s.wrapping_add(t);
+
+        match (s & 0x07FF) + (t & 0x07FF) > 0x07FF {
+            true  => self.registers.set_half_carry(),
+            false => self.registers.unset_full_carry(),
+        };
+
+        self.registers.unset_subtraction();
+
+        match s.checked_add(t) {
+            None    => self.registers.set_full_carry(),
+            Some(_) => self.registers.unset_full_carry(),
+        };
+
+        result
+    }
+
+    pub fn add_16_immediate(&mut self, s: u16, t: u8) -> u16 {
+
+        let i = t as i8 as i16 as u16;
+
+        self.registers.unset_subtraction();
+        self.registers.unset_zero();
+
+        match (s & 0x000F) + (i & 0x000F) > 0x000F {
+            true  => self.registers.set_half_carry(),
+            false => self.registers.unset_full_carry()
+        };
+
+        match (s & 0x00FF) + (i & 0x00FF) > 0x00FF {
+            true  => self.registers.set_full_carry(),
+            false => self.registers.unset_full_carry()
+        };
+
+        s.wrapping_add(i)
+    }
+
+    pub fn hl_add_16(&mut self, value: u16) {
+        let result = self.add_16(self.registers.get_hl(), value);
+        self.registers.set_hl(result);
+    }
+
+    pub fn a_add_8(&mut self, value: u8) {
+        self.registers.a = self.alu_add_8(self.registers.a, value);
+    }
+
+    /// ADC - Add the given value and the carry (C) flag to the accumulator (A) register
+    pub fn adc_8(&mut self, s: u8) {
+        self.a_add_8(s + if self.registers.is_full_carry() { 1 } else { 0 });
+    }
+
+    /***    Subtraction    ***/
+
+    /// Subtract t (u8) from s (u8), handling underflow and the Z/N/H/C flags of the F register
+    pub fn a_sub_8(&mut self, value: u8) -> u8 {
+
+        let result = self.registers.a.wrapping_sub(value);
+
+        match result == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
+        };
+
+        self.registers.set_subtraction();
+
+        match (self.registers.a & 0x0F) < (value & 0x0F) {
+            true  => self.registers.set_half_carry(),
+            false => self.registers.unset_full_carry(),
+        };
+
+        match (self.registers.a as u16) < (value as u16) {
+            true  => self.registers.set_full_carry(),
+            false => self.registers.unset_full_carry()
+        } ;
+
+        self.registers.a = result;
+
+        result
+    }
+
+    /// SBC - Subtract given value and carry flag from the A register
+    pub fn sbc_8(&mut self, s: u8) {
+        self.a_sub_8(s + if self.registers.is_full_carry() { 1 } else { 0 });
+    }
+
+    /***   Incrementation  ***/
+
+    /// Increment a given u8, handling overflow and the Z/N/H/C flags of the F register
+    pub fn inc_8(&mut self, s: u8) -> u8 {
+
+        let result = s.wrapping_add(1);
+
+        match result == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero()
+        };
+
+        match (result & 0x0F) + 1 > 0x0F {
+            true  => self.registers.set_half_carry(),
+            false => self.registers.unset_full_carry()
+        };
+
+        self.registers.unset_subtraction();
+
+        result
+    }
+
+    /***    Decrementing   ***/
+
+    /// Decrement a given u8, handling overflow and the Z/N/H/C flags of the F register
+    pub fn dec_8(&mut self, s: u8) -> u8 {
+
+        let result = s.wrapping_sub(1);
+
+        match result == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero()
+        };
+
+        match (s & 0x0F) == 0 {
+            true  => self.registers.set_half_carry(),
+            false => self.registers.unset_full_carry()
+        };
+
+        self.registers.set_subtraction();
+
+        result
+    }
+
+    /*************************/
+    /*   Bitwise Operations  */
+    /*************************/
+
+    /// AND - AND the given value with the accumulator register (A) and store the result in A
+    pub fn and(&mut self, t: u8) {
+        self.registers.a &= t;
+
+        match self.registers.a == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
+        };
+
+        self.registers.set_half_carry();
+        self.registers.unset_full_carry();
+        self.registers.unset_subtraction();
+    }
+
+    /// OR - OR the given value with register A. Store result in A.
+    pub fn or(&mut self, t: u8) {
+        self.registers.a |= t;
+
+        match self.registers.a == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
+        };
+        self.registers.unset_subtraction();
+        self.registers.unset_full_carry();
+        self.registers.unset_full_carry();
+    }
+
+    /// CP - Compare the given value with register A, setting the zero flag if they're equal
+    pub fn cp(&mut self, value: u8) {
+        let restore = self.registers.a;
+        if self.a_sub_8(value) == 0 {
+            self.registers.set_zero()
+        }
+        self.registers.a = restore;
+    }
+
+    /// XOR - XOR the given value with the accumulator register (A) and store the result in A
+    pub fn xor(&mut self, v: u8) {
+        self.registers.a ^= v;
+
+        match self.registers.a == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
+        };
+
+        self.registers.unset_subtraction();
+        self.registers.unset_full_carry();
+        self.registers.unset_full_carry();
+    }
+
+    /// SWAP - return the value with higher order bits swapped with lower order bits
+    pub fn swap(&mut self, s: u8) -> u8 {
+
+        let result = (s << 4) | (s >> 4);
+        match result == 0 {
+            true => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
+        };
+
+        self.registers.unset_subtraction();
+        self.registers.unset_full_carry();
+        self.registers.unset_full_carry();
+        result
+    }
+
+    /// BIT - Store the complement of bit b of s in the Zero (Z) flag
+    pub fn bit(&mut self, s: u8, b: u8) {
+        match (s & (1 << b)) == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
+        };
+
+        self.registers.unset_subtraction();
+        self.registers.set_half_carry();
+    }
+
+    /*************************/
+    /*         ROTATE        */
+    /*************************/
+
+    /// RRC - Rotate a number right, and copy the right-most bit shifted into the C register
+    pub fn rrc(&mut self, v: u8) -> u8 {
+
+        let result = (v >> 1) | (v << 7);
+
+        match result == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
+        };
+
+        self.registers.unset_subtraction();
+        self.registers.unset_full_carry();
+
+        match result & 0x80 != 0 {
+            true  => self.registers.set_full_carry(),
+            false => self.registers.unset_full_carry(),
+        };
+
+        result
+    }
+
+    /// RR - Rotate a number right, copy carry flag into right-most bit
+    pub fn rr(&mut self, v: u8) -> u8 {
+
+        let carry_bit = if self.registers.is_full_carry() { 1 } else { 0 };
+        let result = v >> 7 | carry_bit;
+
+        match result == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
+        };
+
+        match result & 0x80 != 0 {
+            true  => self.registers.set_full_carry(),
+            false => self.registers.unset_full_carry(),
+        };
+
+        self.registers.unset_subtraction();
+        self.registers.unset_full_carry();
+
+        result
+    }
+
+    /// RLC - Rotate a number left, and copy the left-most bit shifted into the C register
+    pub fn rlc(&mut self, v: u8) -> u8 {
+        let result = (v << 1) | (v >> 7);
+
+        match result == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
+        };
+
+        self.registers.unset_subtraction();
+        self.registers.unset_full_carry();
+
+        match result & 0x01 != 0 {
+            true  => self.registers.set_full_carry(),
+            false => self.registers.unset_full_carry(),
+        };
+
+        result
+    }
+
+    /// RL - Rotate a number left, copy the contents of carry into the result
+    pub fn rl(&mut self, v: u8) -> u8 {
+        let carry_bit = if self.registers.is_full_carry() { 1 } else { 0 };
+        let result = v << 1 | carry_bit;
+
+        match result == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
+        };
+
+        match result & 0x01 != 0 {
+            true  => self.registers.set_full_carry(),
+            false => self.registers.unset_full_carry(),
+        };
+
+        self.registers.unset_subtraction();
+        self.registers.unset_full_carry();
+
+        result
+    }
+
+    /*************************/
+    /*         SHIFT         */
+    /*************************/
+
+    /// SLA - Shift a number left, and copy the left-most bit shifted into the C register
+    pub fn sla(&mut self, v: u8) -> u8 {
+        let result = v << 1;
+
+        match result == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
+        };
+
+        self.registers.unset_subtraction();
+        self.registers.unset_full_carry();
+
+        match v & 0x80 != 0 {
+            true  => self.registers.set_full_carry(),
+            false => self.registers.unset_full_carry(),
+        };
+
+        result
+    }
+
+    /// SRA - Shift a number right, and copy the right-most bit shifted into the C register
+    pub fn sra(&mut self, v: u8) -> u8 {
+        let result = v >> 1;
+
+        match result == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
+        };
+
+        self.registers.unset_subtraction();
+        self.registers.unset_full_carry();
+
+        match v & 0x01 != 0 {
+            true  => self.registers.set_full_carry(),
+            false => self.registers.unset_full_carry(),
+        };
+
+        result
+    }
+
+    /// SRL - shift number right, copy bit 0 to CY and set bit 7 of number to 0
+    pub fn srl(&mut self, r: u8) -> u8 {
+
+        let result = r >> 1;
+
+        match result == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero(),
+        };
+
+        match r & 0x01 != 0 {
+            true  => self.registers.set_full_carry(),
+            false => self.registers.unset_full_carry(),
+        };
+
+        self.registers.unset_subtraction();
+        self.registers.unset_full_carry();
+
+        result
     }
 
     /*************************/
@@ -524,146 +645,8 @@ impl LR35902 {
     pub fn u8_pair(x: u16) -> (u8, u8) {
         ((x >> 8) as u8, x as u8)
     }
-
-    /*************************/
-    /*     Register Pairs    */
-    /*************************/
-
-    /// Get the register pair AF as a u16
-    pub fn get_af(&self) -> u16 {
-        LR35902::u16_from_u8(self.registers.a, self.registers.f)
-    }
-
-    /// Set the register pair AF to the given u16
-    pub fn set_af(&mut self, x: u16) {
-        let u8_pair = LR35902::u8_pair(x);
-        self.registers.a = u8_pair.0;
-        self.registers.f = u8_pair.1;
-    }
-
-    /// Get the register pair BC as a u16
-    pub fn get_bc(&self) -> u16 {
-        LR35902::u16_from_u8(self.registers.b, self.registers.c)
-    }
-
-    /// Set the register pair BC to the given u16
-    pub fn set_bc(&mut self, x: u16) {
-        let u8_pair = LR35902::u8_pair(x);
-        self.registers.b = u8_pair.0;
-        self.registers.c = u8_pair.1;
-    }
-
-    /// Get the register pair DE as a u16
-    pub fn get_de(&self) -> u16 {
-        LR35902::u16_from_u8(self.registers.d, self.registers.e)
-    }
-
-    /// Set the register pair DE to the given u16
-    pub fn set_de(&mut self, x: u16) {
-        let u8_pair = LR35902::u8_pair(x);
-        self.registers.d = u8_pair.0;
-        self.registers.e = u8_pair.1;
-    }
-
-    /// Get the register pair HL as a u16
-    pub fn get_hl(&self) -> u16 {
-        LR35902::u16_from_u8(self.registers.h, self.registers.l)
-    }
-
-    /// Set the register pair HL to the given u16
-    pub fn set_hl(&mut self, x: u16) {
-        let u8_pair = LR35902::u8_pair(x);
-        self.registers.h = u8_pair.0;
-        self.registers.l = u8_pair.1;
-    }
-
-    /*************************/
-    /*   Z/N/H/C Flags (F)   */
-    /*************************/
-
-    /*     Zero (Z) Flag     */
-
-    /// Set the Zero (Z) flag of the F register
-    pub fn set_zero(&mut self) {
-        self.registers.f |= 0x80;
-    }
-
-    /// Unset the Zero (Z) flag of the F register
-    pub fn unset_zero(&mut self) {
-        self.registers.f &= !0x80;
-    }
-
-    /// Check the Zero(Z) flag of the F register
-    pub fn is_zero(&self) -> bool {
-        self.registers.f & 0x80 != 0
-    }
-
-    /*   Subtract (N) flag   */
-
-    /// Set the Subtract (N) flag of the F register
-    pub fn set_subtraction(&mut self) {
-        self.registers.f |= 0x40;
-    }
-
-    /// Unset the Subtract (N) flag of the F register
-    pub fn unset_subtraction(&mut self) {
-        self.registers.f &= !0x40;
-    }
-
-    /// Check the Subtract (N) flag of the F register
-    pub fn is_subtraction(&self) -> bool {
-        self.registers.f & 0x40 != 0
-    }
-
-    /*  Half Carry (H)  Flag */
-
-    /// Set the Half Carry (H) flag of the F register
-    pub fn set_half_carry(&mut self) {
-        self.registers.f |= 0x20;
-    }
-
-    /// Unset the Half Carry (H) flag of the F register
-    pub fn unset_half_carry(&mut self) {
-        self.registers.f &= !0x20;
-    }
-
-    /// Check the Half Carry (H) flag of the F register
-    pub fn is_half_carry(&self) -> bool {
-        self.registers.f & 0x20 != 0
-    }
-
-    /*     Carry (C) Flag    */
-
-    /// Set the Carry (C) flag of the F register
-    pub fn set_full_carry(&mut self) {
-        self.registers.f |= 0x10;
-    }
-
-    /// Unset the Carry (C) flag of the F register
-    pub fn unset_full_carry(&mut self) {
-        self.registers.f &= !0x10;
-    }
-
-    /// Check the Carry (C) flag of the F register
-    pub fn is_full_carry(&self) -> bool {
-        self.registers.f & 0x10 != 0
-    }
-
-    /// Get the Interrupt Master Enable flag
-    pub fn is_ime(&self) -> bool {
-        self.registers.ime
-    }
-
-    /// Set the Interrupt Master Enable flag
-    pub fn set_ime(&mut self) {
-        self.registers.ime = true;
-    }
-
-    /// Unset the IME flag
-    pub fn unset_ime(&mut self) {
-        self.registers.ime = false;
-    }
 }
+
 
 impl fmt::Debug for LR35902 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -676,4 +659,46 @@ impl fmt::Debug for LR35902 {
             CB Prefix Set: {:?}", self.registers, self.clock, self.use_cb_table)
 
     }
+}
+
+
+#[cfg(test)]
+mod test {
+
+    use crate::testing::mooneye_all;
+
+    #[test]
+    fn acceptance_root() {
+        mooneye_all("acceptance");
+    }
+
+    #[test]
+    fn acceptance_bits() {
+        mooneye_all("acceptance/bits");
+    }
+
+    #[test]
+    fn acceptance_instr() {
+        mooneye_all("acceptance/instr");
+    }
+
+    #[test]
+    fn acceptance_interrupts() {
+        mooneye_all("acceptance/interrupts");
+    }
+
+
+    /* TODO - Enable when ready
+    #[test]
+    fn acceptance_oam_dma() {
+        mooneye_all(&format!("{}/{}", MOONEYE, "acceptance/oam_dma"));
+    }
+     */
+
+    /* TODO
+    #[test]
+    fn acceptance_serial() {
+        mooneye_all(&format!("{}/{}", MOONEYE, "acceptance/serial"));
+    }
+     */
 }

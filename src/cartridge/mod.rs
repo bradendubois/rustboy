@@ -1,5 +1,6 @@
 use std::fmt;
 
+
 pub struct Cartridge {
 
     pub rom: Vec<u8>,
@@ -12,7 +13,7 @@ pub struct Cartridge {
     cgb_flag: u8,                   // 0x0143
     new_licensee_code: u16,         // 0x0144 - 0x0145
     sgb_flag: u8,                   // 0x0146
-    pub cartridge_type: u8,             // 0x0147
+    cartridge_type: u8,             // 0x0147
     rom_size: u8,                   // 0x0148
     ram_size: u8,                   // 0x0149
     destination_code: u8,           // 0x014A
@@ -21,6 +22,7 @@ pub struct Cartridge {
     header_checksum: u8,            // 0x014D
     global_checksum: u16            // 0x014E - 0x014F
 }
+
 
 impl Cartridge {
     pub fn new(data: Vec<u8>) -> Cartridge {
@@ -43,7 +45,16 @@ impl Cartridge {
             global_checksum: ((data[0x014E] as u16) << 8) | data[0x0150] as u16
         }
     }
+
+    pub fn cartridge_type(&self) -> u8 {
+        self.cartridge_type
+    }
+
+    pub fn rom_size(&self) -> u8 {
+        self.rom_size
+    }
 }
+
 
 impl fmt::Debug for Cartridge {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
