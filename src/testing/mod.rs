@@ -1,5 +1,9 @@
+use nix::unistd::{fork, ForkResult};
+
 use crate::cartridge::Cartridge;
 use crate::lr35902::LR35902;
+use nix::sys::wait::{waitpid, WaitPidFlag, WaitStatus};
+use std::process::exit;
 
 
 /* The [allow(dead_code)] flags are misleading; the code here is used in testing, which can be
@@ -32,7 +36,7 @@ pub fn mooneye(path: &String) -> bool {
         cpu.registers.d ==  8 &&
         cpu.registers.e == 13 &&
         cpu.registers.h == 21 &&
-        cpu.registers.l == 34
+        cpu.registers.l == 34;
 }
 
 
@@ -50,9 +54,26 @@ pub fn mooneye_all(dir: &str) {
         let pathname = path.to_str().unwrap().to_string();
 
         if path.is_file() && pathname.ends_with(".gb") {
-            match mooneye(&pathname) {
-                true  => successful.push(pathname),
-                false => errors.push(pathname)
+
+            match fork() {
+                Ok(ForkResult::Parent { child, .. }) => {
+                    let x = waitpid(child, None).unwrap();
+                    match x {
+                        WaitStatus::Exited(_, exit_code) => {
+                            match exit_code == 0 {
+                                true  => successful.push(pathname),
+                                false => errors.push(pathname)
+                            };
+                        }
+                        _ => panic!("process did not exit")
+                    }
+                },
+
+                Ok(ForkResult::Child) => {
+                    std::process::exit(if mooneye(&pathname) { 0 } else { 1 })
+                }
+
+                Err(_) => panic!("failed fork")
             }
         }
     }
