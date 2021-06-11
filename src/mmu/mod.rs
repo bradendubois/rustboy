@@ -13,11 +13,6 @@ use super::serial::Serial;
 
 extern crate sdl2;
 
-use sdl2::pixels::Color;
-use sdl2::event::Event;
-use sdl2::keyboard::Keycode;
-use std::time::Duration;
-
 const W_RAM_SIZE: usize = 0x2000;
 const H_RAM_SIZE: usize = 0x7F;
 
@@ -70,7 +65,7 @@ impl MMU {
         let sdl_context = sdl2::init().unwrap();
         let video_subsystem = sdl_context.video().unwrap();
 
-        let mut event_pump = sdl_context.event_pump().unwrap();
+        let event_pump = sdl_context.event_pump().unwrap();
 
         let mut mmu = MMU {
             in_bios: false,
@@ -146,6 +141,24 @@ impl MMU {
     }
 
     /*************************/
+    /*      OAM Transfer     */
+    /*************************/
+
+    fn oam_transfer(&mut self, value: u8) {
+
+        let source = (value as u16) << 8;
+
+        println!("DMA TRANSFER from {:#06X} from ({:#06X})", source, value);
+
+        for i in 0x00..=0x9F {
+            let value = self.read(source + i as u16);
+            self.write(0xFE00 + i as u16, value);
+        }
+
+        self.ppu.dma_transfer();
+    }
+
+    /*************************/
     /*       Interrupts      */
     /*************************/
 
@@ -169,14 +182,22 @@ impl MMU {
         self.serial.interrupt     = value & 0x08 != 0;
         self.joypad.interrupt     = value & 0x10 != 0;
     }
+
+    /*************************/
+    /*   Helpers / Testing   */
+    /*************************/
+
+    pub fn retrieve_serial(&mut self) -> String {
+        self.serial.string_history()
+    }
 }
 
 
 impl RunComponent for MMU {
 
     fn run(&mut self, cpu_cycles: u64) {
-        self.ppu.run_for(cpu_cycles);
-        self.timer.run(cpu_cycles / 4);
+        self.ppu.run(cpu_cycles);
+        self.timer.run(cpu_cycles);
         self.joypad.run(cpu_cycles);
     }
 }
@@ -210,7 +231,9 @@ impl MemoryMap for MMU {
                 0xFF20 ..= 0xFF26 => self.apu.read(address),
                 0xFF27 ..= 0xFF2F => 0xFF,                                  // unmapped
                 0xFF30 ..= 0xFF3F => self.apu.read(address),
-                0xFF40 ..= 0xFF4B => self.ppu.read(address),
+                0xFF40 ..= 0xFF45 => self.ppu.read(address),
+                0xFF46 ..= 0xFF46 => 0xFF,
+                0xFF47 ..= 0xFF4B => self.ppu.read(address),
                 0xFF4C ..= 0xFF4C => 0xFF,                                  // unmapped
                 0xFF4D ..= 0xFF4D => self.ppu.read(address),
                 0xFF4E ..= 0xFF4E => 0xFF,                                  // unmapped
@@ -260,7 +283,9 @@ impl MemoryMap for MMU {
                 0xFF20 ..= 0xFF26 => self.apu.write(address, value),
                 0xFF27 ..= 0xFF2F => (),                                            // unmapped
                 0xFF30 ..= 0xFF3F => self.apu.write(address, value),
-                0xFF40 ..= 0xFF4B => self.ppu.write(address, value),
+                0xFF40 ..= 0xFF45 => self.ppu.write(address, value),
+                0xFF46 ..= 0xFF46 => self.oam_transfer(value),
+                0xFF47 ..= 0xFF4B => self.ppu.write(address, value),
                 0xFF4C ..= 0xFF4C => (),                                            // unmapped
                 0xFF4D ..= 0xFF4D => self.ppu.write(address, value),
                 0xFF4E ..= 0xFF4E => (),                                            // unmapped
@@ -284,6 +309,20 @@ impl MemoryMap for MMU {
         };
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+
+    use crate::testing::mooneye_all;
+
+    #[test]
+    fn acceptance_oam() {
+        mooneye_all("acceptance/oam_dma");
+    }
+
+}
+
 
 impl fmt::Debug for MMU {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

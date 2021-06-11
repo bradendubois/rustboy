@@ -2,16 +2,20 @@ extern crate sdl2;
 
 // use self::sdl2::Sdl;
 // use self::sdl2::render::WindowCanvas;
+#[allow(unused_imports)]
 use self::sdl2::rect::{Point};
 use self::sdl2::pixels::Color;
 use self::sdl2::VideoSubsystem;
+
+#[allow(unused_imports)]
 use self::sdl2::render::WindowCanvas;
 
+#[allow(unused_imports)]
 use super::{HEIGHT, WIDTH};
 
 #[allow(unused)]
 pub struct Screen {
-    canvas: WindowCanvas,
+    // canvas: WindowCanvas,
 }
 
 #[allow(unused)]
@@ -19,13 +23,17 @@ impl Screen {
 
     pub fn new(video_context: VideoSubsystem) -> Screen {
 
+        /*
         let canvas = video_context
             .window("Rustboy", WIDTH as u32, HEIGHT as u32)
             .position_centered().opengl().build().unwrap()
             .into_canvas().build().unwrap();
 
+
+         */
+
         Screen {
-            canvas
+            // canvas
         }
     }
 

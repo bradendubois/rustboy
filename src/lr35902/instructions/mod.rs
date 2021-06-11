@@ -407,22 +407,22 @@ impl LR35902 {
                     0x5F => self.bit_3_a_0xcb5f(),
 
                     // 0xCB6X
-                    0x60 => self.bit_2_b_0xcb60(),
-                    0x61 => self.bit_2_c_0xcb61(),
-                    0x62 => self.bit_2_d_0xcb62(),
-                    0x63 => self.bit_2_e_0xcb63(),
-                    0x64 => self.bit_2_h_0xcb64(),
-                    0x65 => self.bit_2_l_0xcb65(),
-                    0x66 => self.bit_2_hl_0xcb66(),
-                    0x67 => self.bit_2_a_0xcb67(),
-                    0x68 => self.bit_3_b_0xcb68(),
-                    0x69 => self.bit_3_c_0xcb69(),
-                    0x6A => self.bit_3_d_0xcb6a(),
-                    0x6B => self.bit_3_e_0xcb6b(),
-                    0x6C => self.bit_3_h_0xcb6c(),
-                    0x6D => self.bit_3_l_0xcb6d(),
-                    0x6E => self.bit_3_hl_0xcb6e(),
-                    0x6F => self.bit_3_a_0xcb6f(),
+                    0x60 => self.bit_4_b_0xcb60(),
+                    0x61 => self.bit_4_c_0xcb61(),
+                    0x62 => self.bit_4_d_0xcb62(),
+                    0x63 => self.bit_4_e_0xcb63(),
+                    0x64 => self.bit_4_h_0xcb64(),
+                    0x65 => self.bit_4_l_0xcb65(),
+                    0x66 => self.bit_4_hl_0xcb66(),
+                    0x67 => self.bit_4_a_0xcb67(),
+                    0x68 => self.bit_5_b_0xcb68(),
+                    0x69 => self.bit_5_c_0xcb69(),
+                    0x6A => self.bit_5_d_0xcb6a(),
+                    0x6B => self.bit_5_e_0xcb6b(),
+                    0x6C => self.bit_5_h_0xcb6c(),
+                    0x6D => self.bit_5_l_0xcb6d(),
+                    0x6E => self.bit_5_hl_0xcb6e(),
+                    0x6F => self.bit_5_a_0xcb6f(),
 
                     // 0xCB7X
                     0x70 => self.bit_6_b_0xcb70(),
@@ -1441,7 +1441,7 @@ impl LR35902 {
         4
     }
 
-    //0x7B - LD A, e
+    //0x7B - LD A, E
     fn ld_a_e_0x7b(&mut self) -> u64 {
         self.registers.a = self.registers.e;
         4
@@ -2077,7 +2077,7 @@ impl LR35902 {
 
     // 0xD9 - RETI
     fn ret_0xd9(&mut self) -> u64 {
-        self.set_ime();
+        self.ime = crate::enums::IME::ReadyToEnable;
         self.ret();
         16
     }
@@ -2598,35 +2598,30 @@ impl LR35902 {
     // 0xCB31 - SWAP C
     fn swap_c_0xcb31(&mut self) -> u64 {
         self.registers.c = self.swap(self.registers.c);
-
         8
     }
 
     // 0xCB32 - SWAP D
     fn swap_d_0xcb32(&mut self) -> u64 {
         self.registers.d = self.swap(self.registers.d);
-
         8
     }
 
     // 0xCB33 - SWAP E
     fn swap_e_0xcb33(&mut self) -> u64 {
         self.registers.e = self.swap(self.registers.e);
-
         8
     }
 
     // 0xCB34 - SWAP H
     fn swap_h_0xcb34(&mut self) -> u64 {
         self.registers.h = self.swap(self.registers.h);
-
         8
     }
 
     // 0xCB35 - SWAP L
     fn swap_l_0xcb35(&mut self) -> u64 {
         self.registers.l = self.swap(self.registers.l);
-
         8
     }
 
@@ -2895,101 +2890,101 @@ impl LR35902 {
 
     /* 0xCB60 - 0xCB6F */
 
-    // 0xCB60 - BIT 2, B
-    fn bit_2_b_0xcb60(&mut self) -> u64 {
-        self.bit(self.registers.b, 2);
+    // 0xCB60 - BIT 4, B
+    fn bit_4_b_0xcb60(&mut self) -> u64 {
+        self.bit(self.registers.b, 4);
         8
     }
 
-    // 0xCB61 - BIT 2, C
-    fn bit_2_c_0xcb61(&mut self) -> u64 {
-        self.bit(self.registers.c, 2);
+    // 0xCB61 - BIT 4, C
+    fn bit_4_c_0xcb61(&mut self) -> u64 {
+        self.bit(self.registers.c, 4);
         8
     }
 
-    // 0xCB62 - BIT 2, D
-    fn bit_2_d_0xcb62(&mut self) -> u64 {
-        self.bit(self.registers.d, 2);
+    // 0xCB62 - BIT 4, D
+    fn bit_4_d_0xcb62(&mut self) -> u64 {
+        self.bit(self.registers.d, 4);
         8
     }
 
-    // 0xCB63 - BIT 2, E
-    fn bit_2_e_0xcb63(&mut self) -> u64 {
-        self.bit(self.registers.e, 2);
+    // 0xCB63 - BIT 4, E
+    fn bit_4_e_0xcb63(&mut self) -> u64 {
+        self.bit(self.registers.e, 4);
         8
     }
 
-    // 0xCB64 - BIT 2, H
-    fn bit_2_h_0xcb64(&mut self) -> u64 {
-        self.bit(self.registers.h, 2);
+    // 0xCB64 - BIT 4, H
+    fn bit_4_h_0xcb64(&mut self) -> u64 {
+        self.bit(self.registers.h, 4);
         8
     }
 
-    // 0xCB65 - BIT 2, L
-    fn bit_2_l_0xcb65(&mut self) -> u64 {
-        self.bit(self.registers.l, 2);
+    // 0xCB65 - BIT 4, L
+    fn bit_4_l_0xcb65(&mut self) -> u64 {
+        self.bit(self.registers.l, 4);
         8
     }
 
-    // 0xCB66 - BIT 2, (HL)
-    fn bit_2_hl_0xcb66(&mut self) -> u64 {
+    // 0xCB66 - BIT 4, (HL)
+    fn bit_4_hl_0xcb66(&mut self) -> u64 {
         let value = self.mmu.read(self.registers.get_hl());
-        self.bit(value, 2);
+        self.bit(value, 4);
         16
     }
 
-    // 0xCB67 - BIT 2, A
-    fn bit_2_a_0xcb67(&mut self) -> u64 {
-        self.bit(self.registers.a, 2);
+    // 0xCB67 - BIT 4, A
+    fn bit_4_a_0xcb67(&mut self) -> u64 {
+        self.bit(self.registers.a, 4);
         8
     }
 
-    // 0xCB68 - BIT 3, B
-    fn bit_3_b_0xcb68(&mut self) -> u64 {
-        self.bit(self.registers.b, 3);
+    // 0xCB68 - BIT 5, B
+    fn bit_5_b_0xcb68(&mut self) -> u64 {
+        self.bit(self.registers.b, 5);
         8
     }
 
-    // 0xCB69 - BIT 3, C
-    fn bit_3_c_0xcb69(&mut self) -> u64 {
-        self.bit(self.registers.c, 3);
+    // 0xCB69 - BIT 5, C
+    fn bit_5_c_0xcb69(&mut self) -> u64 {
+        self.bit(self.registers.c, 5);
         8
     }
 
-    // 0xCB6A - BIT 3, D
-    fn bit_3_d_0xcb6a(&mut self) -> u64 {
-        self.bit(self.registers.d, 3);
+    // 0xCB6A - BIT 5, D
+    fn bit_5_d_0xcb6a(&mut self) -> u64 {
+        self.bit(self.registers.d, 5);
         8
     }
 
-    // 0xCB6B - BIT 3, E
-    fn bit_3_e_0xcb6b(&mut self) -> u64 {
-        self.bit(self.registers.e, 3);
+    // 0xCB6B - BIT 5, E
+    fn bit_5_e_0xcb6b(&mut self) -> u64 {
+        self.bit(self.registers.e, 5);
         8
     }
 
-    // 0xCB6C - BIT 3, H
-    fn bit_3_h_0xcb6c(&mut self) -> u64 {
-        self.bit(self.registers.h, 3);
+    // 0xCB6C - BIT 5, H
+    fn bit_5_h_0xcb6c(&mut self) -> u64 {
+        self.bit(self.registers.h, 5);
         8
     }
 
-    // 0xCB6D - BIT 3, L
-    fn bit_3_l_0xcb6d(&mut self) -> u64 {
-        self.bit(self.registers.l, 3);
+    // 0xCB6D - BIT 5, L
+    fn bit_5_l_0xcb6d(&mut self) -> u64 {
+        self.bit(self.registers.l, 5);
         8
     }
 
-    // 0xCB6E - BIT 3, (HL)
-    fn bit_3_hl_0xcb6e(&mut self) -> u64 {
+    // 0xCB6E - BIT 5, (HL)
+    fn bit_5_hl_0xcb6e(&mut self) -> u64 {
         let value = self.mmu.read(self.registers.get_hl());
-        self.bit(value, 3);
+        self.bit(value, 5);
         16
     }
 
-    // 0xCB6F - BIT 3, A
-    fn bit_3_a_0xcb6f(&mut self) -> u64 {
-        self.bit(self.registers.a, 3);
+    // 0xCB6F - BIT 5, A
+    fn bit_5_a_0xcb6f(&mut self) -> u64 {
+        self.bit(self.registers.a, 5);
         8
     }
 
@@ -3030,7 +3025,7 @@ impl LR35902 {
         self.bit(self.registers.l, 6);
         8
     }
-    // 0xCB76 - BIT 2, (HL)
+    // 0xCB76 - BIT 6, (HL)
     fn bit_6_hl_0xcb76(&mut self) -> u64 {
         let value = self.mmu.read(self.registers.get_hl());
         self.bit(value, 6);
@@ -3245,50 +3240,50 @@ impl LR35902 {
 
     // 0xCB98 - RES 3, B
     fn res_3_b_0xcb98(&mut self) -> u64 {
-        self.registers.b &= !4;
+        self.registers.b &= !8;
         8
     }
 
     // 0xCB99 - RES 3, C
     fn res_3_c_0xcb99(&mut self) -> u64 {
-        self.registers.c &= !4;
+        self.registers.c &= !8;
         8
     }
 
     // 0xCB9A - RES 3, D
     fn res_3_d_0xcb9a(&mut self) -> u64 {
-        self.registers.d &= !4;
+        self.registers.d &= !8;
         8
     }
 
     // 0xCB9B - RES 3, E
     fn res_3_e_0xcb9b(&mut self) -> u64 {
-        self.registers.e &= !4;
+        self.registers.e &= !8;
         8
     }
 
     // 0xCB9C - RES 3, H
     fn res_3_h_0xcb9c(&mut self) -> u64 {
-        self.registers.h &= !4;
+        self.registers.h &= !8;
         8
     }
 
     // 0xCB9D - RES 3, L
     fn res_3_l_0xcb9d(&mut self) -> u64 {
-        self.registers.l &= !4;
+        self.registers.l &= !8;
         8
     }
 
     // 0xCB9E - RES 3, (HL)
     fn res_3_hl_0xcb9e(&mut self) -> u64 {
-        let value = self.mmu.read(self.registers.get_hl()) & !4;
+        let value = self.mmu.read(self.registers.get_hl()) & !8;
         self.mmu.write(self.registers.get_hl(), value);
         16
     }
 
     // 0xCB9F - RES 3, A
     fn res_3_a_0xcb9f(&mut self) -> u64 {
-        self.registers.a &= !4;
+        self.registers.a &= !8;
         8
     }
 
@@ -3296,99 +3291,99 @@ impl LR35902 {
 
     // 0xCBA0 - RES 4, B
     fn res_4_b_0xcba0(&mut self) -> u64 {
-        self.registers.b &= !8;
+        self.registers.b &= !16;
         8
     }
 
     // 0xCBA1 - RES 4, C
     fn res_4_c_0xcba1(&mut self) -> u64 {
-        self.registers.c &= !8;
+        self.registers.c &= !16;
         8
     }
 
     // 0xCBA2 - RES 4, D
     fn res_4_d_0xcba2(&mut self) -> u64 {
-        self.registers.d &= !8;
+        self.registers.d &= !16;
         8
     }
 
     // 0xCBA3 - RES 4, E
     fn res_4_e_0xcba3(&mut self) -> u64 {
-        self.registers.e &= !8;
+        self.registers.e &= !16;
         8
     }
 
     // 0xCBA4 - RES 4, H
     fn res_4_h_0xcba4(&mut self) -> u64 {
-        self.registers.h &= !8;
+        self.registers.h &= !16;
         8
     }
 
     // 0xCBA5 - RES 4, L
     fn res_4_l_0xcba5(&mut self) -> u64 {
-        self.registers.l &= !8;
+        self.registers.l &= !16;
         8
     }
 
     // 0xCBA6 - RES 4, (HL)
     fn res_4_hl_0xcba6(&mut self) -> u64 {
-        let value = self.mmu.read(self.registers.get_hl()) & !8;
+        let value = self.mmu.read(self.registers.get_hl()) & !16;
         self.mmu.write(self.registers.get_hl(), value);
         16
     }
 
     // 0xCBA7 - RES 4, A
     fn res_4_a_0xcba7(&mut self) -> u64 {
-        self.registers.a &= !8;
+        self.registers.a &= !16;
         8
     }
 
     // 0xCBA8 - RES 5, B
     fn res_5_b_0xcba8(&mut self) -> u64 {
-        self.registers.b &= !16;
+        self.registers.b &= !32;
         8
     }
 
     // 0xCBA9 - RES 5, C
     fn res_5_c_0xcba9(&mut self) -> u64 {
-        self.registers.c &= !16;
+        self.registers.c &= !32;
         8
     }
 
     // 0xCBAA - RES 5, D
     fn res_5_d_0xcbaa(&mut self) -> u64 {
-        self.registers.d &= !16;
+        self.registers.d &= !32;
         8
     }
 
     // 0xCBAB - RES 5, E
     fn res_5_e_0xcbab(&mut self) -> u64 {
-        self.registers.e &= !16;
+        self.registers.e &= !32;
         8
     }
 
     // 0xCBAC - RES 5, H
     fn res_5_h_0xcbac(&mut self) -> u64 {
-        self.registers.h &= !16;
+        self.registers.h &= !32;
         8
     }
 
     // 0xCBAD - RES 5, L
     fn res_5_l_0xcbad(&mut self) -> u64 {
-        self.registers.l &= !16;
+        self.registers.l &= !32;
         8
     }
 
     // 0xCBAE - RES 5, (HL)
     fn res_5_hl_0xcbae(&mut self) -> u64 {
-        let value = self.mmu.read(self.registers.get_hl()) & !16;
+        let value = self.mmu.read(self.registers.get_hl()) & !32;
         self.mmu.write(self.registers.get_hl(), value);
         16
     }
 
     // 0xCBAF - RES 5, A
     fn res_5_a_0xcbaf(&mut self) -> u64 {
-        self.registers.a &= !16;
+        self.registers.a &= !32;
         8
     }
 
@@ -3396,98 +3391,98 @@ impl LR35902 {
 
     // 0xCBB0 - RES 6, B
     fn res_6_b_0xcbb0(&mut self) -> u64 {
-        self.registers.b &= !32;
+        self.registers.b &= !64;
         8
     }
 
     // 0xCBB1 - RES 6, C
     fn res_6_c_0xcbb1(&mut self) -> u64 {
-        self.registers.c &= !32;
+        self.registers.c &= !64;
         8
     }
 
     // 0xCBB2 - RES 6, D
     fn res_6_d_0xcbb2(&mut self) -> u64 {
-        self.registers.d &= !32;
+        self.registers.d &= !64;
         8
     }
 
     // 0xCBB3 - RES 6, E
     fn res_6_e_0xcbb3(&mut self) -> u64 {
-        self.registers.e &= !32;
+        self.registers.e &= !64;
         8
     }
 
     // 0xCBB4 - RES 6, H
     fn res_6_h_0xcbb4(&mut self) -> u64 {
-        self.registers.h &= !32;
+        self.registers.h &= !64;
         8
     }
 
     // 0xCBB5 - RES 6, L
     fn res_6_l_0xcbb5(&mut self) -> u64 {
-        self.registers.l &= !32;
+        self.registers.l &= !64;
         8
     }
     // 0xCBB6 - RES 6, (HL)
     fn res_6_hl_0xcbb6(&mut self) -> u64 {
-        let value = self.mmu.read(self.registers.get_hl()) & !32;
+        let value = self.mmu.read(self.registers.get_hl()) & !64;
         self.mmu.write(self.registers.get_hl(), value);
         16
     }
 
     // 0xCBB7 - RES 6, A
     fn res_6_a_0xcbb7(&mut self) -> u64 {
-        self.registers.a &= !32;
+        self.registers.a &= !64;
         8
     }
 
     // 0xCBB8 - RES 7, B
     fn res_7_b_0xcbb8(&mut self) -> u64 {
-        self.registers.b &= !32;
+        self.registers.b &= !128;
         8
     }
 
     // 0xCBB9 - RES 7, C
     fn res_7_c_0xcbb9(&mut self) -> u64 {
-        self.registers.c &= !32;
+        self.registers.c &= !128;
         8
     }
 
     // 0xCBBA - RES 7, D
     fn res_7_d_0xcbba(&mut self) -> u64 {
-        self.registers.d &= !32;
+        self.registers.d &= !128;
         8
     }
 
     // 0xCBBB - RES 7, E
     fn res_7_e_0xcbbb(&mut self) -> u64 {
-        self.registers.e &= !32;
+        self.registers.e &= !128;
         8
     }
 
     // 0xCBBC - RES 7, H
     fn res_7_h_0xcbbc(&mut self) -> u64 {
-        self.registers.h &= !32;
+        self.registers.h &= !128;
         8
     }
 
     // 0xCBBD - RES 7, L
     fn res_7_l_0xcbbd(&mut self) -> u64 {
-        self.registers.l &= !32;
+        self.registers.l &= !128;
         8
     }
 
     // 0xCBBE - RES 7, (HL)
     fn res_71_hl_0xcbbe(&mut self) -> u64 {
-        let value = self.mmu.read(self.registers.get_hl()) & !32;
+        let value = self.mmu.read(self.registers.get_hl()) & !128;
         self.mmu.write(self.registers.get_hl(), value);
         16
     }
 
     // 0xCBBF - RES 7, A
     fn res_7_a_0xcbbf(&mut self) -> u64 {
-        self.registers.a &= !32;
+        self.registers.a &= !128;
         8
     }
 
@@ -3638,7 +3633,7 @@ impl LR35902 {
 
     // 0xCBD7 - SET 2, A
     fn set_2_a_0xcbd7(&mut self) -> u64 {
-        self.registers.a |= 8;
+        self.registers.a |= 4;
         8
     }
 

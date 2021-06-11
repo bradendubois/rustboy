@@ -1,6 +1,9 @@
 use crate::cartridge::Cartridge;
 use crate::lr35902::LR35902;
 
+use nix::unistd::{ForkResult, fork};
+use nix::sys::wait::{waitpid, WaitStatus};
+
 
 /* The [allow(dead_code)] flags are misleading; the code here is used in testing, which can be
  *  done with either `cargo test` or `cargo test -- --nocapture`, but a basic `cargo check` would
@@ -10,7 +13,6 @@ use crate::lr35902::LR35902;
 
 #[allow(dead_code)]
 const MOONEYE: &str = "./roms/testing/mooneye";
-
 
 /// Helper method to test with a Mooneye ROM
 #[allow(dead_code)]
@@ -37,6 +39,29 @@ pub fn mooneye(path: &String) -> bool {
 
 
 #[allow(dead_code)]
+const BLARGG: &str = "./roms/testing/blargg";
+
+#[allow(dead_code)]
+pub fn blargg(path: &String) -> bool {
+
+    println!("testing path: {}", path);
+
+    let data = std::fs::read(path).unwrap();
+    let cartridge = Cartridge::new(data);
+
+    let mut cpu = LR35902::testing(cartridge);
+
+    cpu.run();
+
+    let serial_data = cpu.retrieve_serial();
+
+    println!("GOT :{}", serial_data);
+
+    return false;
+}
+
+
+#[allow(dead_code)]
 pub fn mooneye_all(dir: &str) {
 
     let mut successful: Vec<String> = Vec::new();
@@ -53,6 +78,63 @@ pub fn mooneye_all(dir: &str) {
             match mooneye(&pathname) {
                 true  => successful.push(pathname),
                 false => errors.push(pathname)
+            }
+        }
+    }
+
+    if errors.len() == 0 {
+        println!("{} : {} tests : all successful", dir, successful.len());
+    } else {
+        println!("{} - successful", dir);
+        for success in successful.iter() {
+            println!("  {}", success);
+        }
+
+        println!("{} - errors", dir);
+        for error in errors.iter() {
+            println!("  {}", error);
+        }
+
+        panic!("errors in {}", dir)
+    }
+}
+
+
+
+#[allow(dead_code)]
+pub fn blargg_all(dir: &str) {
+
+    let mut successful: Vec<String> = Vec::new();
+    let mut errors: Vec<String> = Vec::new();
+
+    let full_dir = &format!("{}/{}", BLARGG, dir);
+
+    for entry in std::fs::read_dir(full_dir).unwrap() {
+
+        let path = entry.unwrap().path();
+        let pathname = path.to_str().unwrap().to_string();
+
+        if path.is_file() && pathname.ends_with(".gb") {
+
+            match fork() {
+                Ok(ForkResult::Parent { child, .. }) => {
+                    let x = waitpid(child, None).unwrap();
+                    match x {
+                        WaitStatus::Exited(_, exit_code) => {
+                            match exit_code == 0 {
+                                true  => successful.push(pathname),
+                                false => errors.push(pathname)
+                            };
+                        }
+                        _ => panic!("process did not exit")
+                    }
+                },
+
+                Ok(ForkResult::Child) => {
+                    std::process::exit(if blargg(&pathname) { 0 } else { 1 })
+                }
+
+                Err(_) => panic!("failed fork")
             }
         }
     }
