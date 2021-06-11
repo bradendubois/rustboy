@@ -1441,7 +1441,7 @@ impl LR35902 {
         4
     }
 
-    //0x7B - LD A, e
+    //0x7B - LD A, E
     fn ld_a_e_0x7b(&mut self) -> u64 {
         self.registers.a = self.registers.e;
         4
@@ -2077,7 +2077,7 @@ impl LR35902 {
 
     // 0xD9 - RETI
     fn ret_0xd9(&mut self) -> u64 {
-        self.set_ime();
+        self.ime = crate::enums::IME::ReadyToEnable;
         self.ret();
         16
     }

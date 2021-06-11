@@ -2,11 +2,15 @@ extern crate sdl2;
 
 // use self::sdl2::Sdl;
 // use self::sdl2::render::WindowCanvas;
+#[allow(unused_imports)]
 use self::sdl2::rect::{Point};
 use self::sdl2::pixels::Color;
 use self::sdl2::VideoSubsystem;
+
+#[allow(unused_imports)]
 use self::sdl2::render::WindowCanvas;
 
+#[allow(unused_imports)]
 use super::{HEIGHT, WIDTH};
 
 #[allow(unused)]

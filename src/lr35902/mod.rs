@@ -35,7 +35,7 @@ pub struct LR35902 {
 
     mooneye_testing: bool,
 
-    runInstr: HashSet<u16>,
+    instr_used: HashSet<u16>,
 }
 
 #[allow(dead_code)]
@@ -51,7 +51,7 @@ impl LR35902 {
             clock: 0,
             use_cb_table: false,
             mooneye_testing: false,
-            runInstr: HashSet::new(),
+            instr_used: HashSet::new(),
         }
     }
 
@@ -64,7 +64,7 @@ impl LR35902 {
             clock: 0,
             use_cb_table: false,
             mooneye_testing: true,
-            runInstr: HashSet::new(),
+            instr_used: HashSet::new(),
         }
     }
 
@@ -134,15 +134,17 @@ impl LR35902 {
             return self.nop_0x00();
         }
 
+        // if self.clock > 100 { std::process::exit(0) }
+
         let cb = self.use_cb_table;
 
-        // println!("program counter: {:#06X}", self.registers.pc);
+        println!("program counter: {:#06X}", self.registers.pc);
 
         let opcode = self.byte();        // Get the opcode number to execute
 
-        // println!("fetched instruction: {:#02X}", opcode);
+        println!("fetched instruction: {:#02X}", opcode);
 
-        self.runInstr.insert(if cb { 0xFF00 | (opcode as u16) } else { opcode as u16 });
+        self.instr_used.insert(if cb { 0xFF00 | (opcode as u16) } else { opcode as u16 });
 
         // Special 'exit condition' on testing a "mooneye" testing ROM; accessing instruction 0x40
         //  (which is LD B B) indicates that the test is done. A successful test places the
@@ -272,7 +274,7 @@ impl LR35902 {
 
         match (s & 0xF) + (t & 0xF) > 0xF {
             true  => self.registers.set_half_carry(),
-            false => self.registers.unset_full_carry(),
+            false => self.registers.unset_half_carry(),
         };
 
         match result < t {
@@ -290,14 +292,14 @@ impl LR35902 {
 
         match (s & 0x07FF) + (t & 0x07FF) > 0x07FF {
             true  => self.registers.set_half_carry(),
-            false => self.registers.unset_full_carry(),
+            false => self.registers.unset_half_carry(),
         };
 
         self.registers.unset_subtraction();
 
-        match s.checked_add(t) {
-            None    => self.registers.set_full_carry(),
-            Some(_) => self.registers.unset_full_carry(),
+        match result > 0xFFFF - t {
+            true  => self.registers.set_full_carry(),
+            false => self.registers.unset_full_carry(),
         };
 
         result
@@ -307,12 +309,14 @@ impl LR35902 {
 
         let i = t as i8 as i16 as u16;
 
+        let result = s.wrapping_add(i);
+
         self.registers.unset_subtraction();
         self.registers.unset_zero();
 
         match (s & 0x000F) + (i & 0x000F) > 0x000F {
             true  => self.registers.set_half_carry(),
-            false => self.registers.unset_full_carry()
+            false => self.registers.unset_half_carry()
         };
 
         match (s & 0x00FF) + (i & 0x00FF) > 0x00FF {
@@ -320,7 +324,7 @@ impl LR35902 {
             false => self.registers.unset_full_carry()
         };
 
-        s.wrapping_add(i)
+        result
     }
 
     pub fn hl_add_16(&mut self, value: u16) {
@@ -353,7 +357,7 @@ impl LR35902 {
 
         match (self.registers.a & 0x0F) < (value & 0x0F) {
             true  => self.registers.set_half_carry(),
-            false => self.registers.unset_full_carry(),
+            false => self.registers.unset_half_carry(),
         };
 
         match (self.registers.a as u16) < (value as u16) {
@@ -383,12 +387,12 @@ impl LR35902 {
             false => self.registers.unset_zero()
         };
 
+        self.registers.unset_subtraction();
+
         match (result & 0x0F) + 1 > 0x0F {
             true  => self.registers.set_half_carry(),
-            false => self.registers.unset_full_carry()
+            false => self.registers.unset_half_carry()
         };
-
-        self.registers.unset_subtraction();
 
         result
     }
@@ -407,7 +411,7 @@ impl LR35902 {
 
         match (s & 0x0F) == 0 {
             true  => self.registers.set_half_carry(),
-            false => self.registers.unset_full_carry()
+            false => self.registers.unset_half_carry()
         };
 
         self.registers.set_subtraction();
@@ -443,15 +447,13 @@ impl LR35902 {
         };
         self.registers.unset_subtraction();
         self.registers.unset_full_carry();
-        self.registers.unset_full_carry();
+        self.registers.unset_half_carry();
     }
 
     /// CP - Compare the given value with register A, setting the zero flag if they're equal
     pub fn cp(&mut self, value: u8) {
         let restore = self.registers.a;
-        if self.a_sub_8(value) == 0 {
-            self.registers.set_zero()
-        }
+        self.a_sub_8(value);
         self.registers.a = restore;
     }
 
@@ -466,7 +468,7 @@ impl LR35902 {
 
         self.registers.unset_subtraction();
         self.registers.unset_full_carry();
-        self.registers.unset_full_carry();
+        self.registers.unset_half_carry();
     }
 
     /// SWAP - return the value with higher order bits swapped with lower order bits
@@ -480,13 +482,14 @@ impl LR35902 {
 
         self.registers.unset_subtraction();
         self.registers.unset_full_carry();
-        self.registers.unset_full_carry();
+        self.registers.unset_half_carry();
         result
     }
 
     /// BIT - Store the complement of bit b of s in the Zero (Z) flag
     pub fn bit(&mut self, s: u8, b: u8) {
-        match (s & (1 << b)) == 0 {
+
+        match (s & (1 << (b as u32))) == 0 {
             true  => self.registers.set_zero(),
             false => self.registers.unset_zero(),
         };
@@ -510,7 +513,7 @@ impl LR35902 {
         };
 
         self.registers.unset_subtraction();
-        self.registers.unset_full_carry();
+        self.registers.unset_half_carry();
 
         match result & 0x80 != 0 {
             true  => self.registers.set_full_carry(),
@@ -523,7 +526,7 @@ impl LR35902 {
     /// RR - Rotate a number right, copy carry flag into right-most bit
     pub fn rr(&mut self, v: u8) -> u8 {
 
-        let carry_bit = if self.registers.is_full_carry() { 1 } else { 0 };
+        let carry_bit = if self.registers.is_full_carry() { 0x80 } else { 0 };
         let result = v >> 7 | carry_bit;
 
         match result == 0 {
@@ -531,13 +534,13 @@ impl LR35902 {
             false => self.registers.unset_zero(),
         };
 
-        match result & 0x80 != 0 {
+        match v & 0x01 != 0 {
             true  => self.registers.set_full_carry(),
             false => self.registers.unset_full_carry(),
         };
 
         self.registers.unset_subtraction();
-        self.registers.unset_full_carry();
+        self.registers.unset_half_carry();
 
         result
     }
@@ -552,7 +555,7 @@ impl LR35902 {
         };
 
         self.registers.unset_subtraction();
-        self.registers.unset_full_carry();
+        self.registers.unset_half_carry();
 
         match result & 0x01 != 0 {
             true  => self.registers.set_full_carry(),
@@ -572,13 +575,13 @@ impl LR35902 {
             false => self.registers.unset_zero(),
         };
 
-        match result & 0x01 != 0 {
+        self.registers.unset_subtraction();
+        self.registers.unset_half_carry();
+
+        match v & 0x80 != 0 {
             true  => self.registers.set_full_carry(),
             false => self.registers.unset_full_carry(),
         };
-
-        self.registers.unset_subtraction();
-        self.registers.unset_full_carry();
 
         result
     }
@@ -597,7 +600,7 @@ impl LR35902 {
         };
 
         self.registers.unset_subtraction();
-        self.registers.unset_full_carry();
+        self.registers.unset_half_carry();
 
         match v & 0x80 != 0 {
             true  => self.registers.set_full_carry(),
@@ -617,7 +620,7 @@ impl LR35902 {
         };
 
         self.registers.unset_subtraction();
-        self.registers.unset_full_carry();
+        self.registers.unset_half_carry();
 
         match v & 0x01 != 0 {
             true  => self.registers.set_full_carry(),
@@ -637,13 +640,13 @@ impl LR35902 {
             false => self.registers.unset_zero(),
         };
 
+        self.registers.unset_subtraction();
+        self.registers.unset_half_carry();
+
         match r & 0x01 != 0 {
             true  => self.registers.set_full_carry(),
             false => self.registers.unset_full_carry(),
         };
-
-        self.registers.unset_subtraction();
-        self.registers.unset_full_carry();
 
         result
     }

@@ -1,6 +1,9 @@
 use crate::cartridge::Cartridge;
 use crate::lr35902::LR35902;
 
+use nix::unistd::{ForkResult, fork};
+use nix::sys::wait::{waitpid, WaitStatus};
+
 
 /* The [allow(dead_code)] flags are misleading; the code here is used in testing, which can be
  *  done with either `cargo test` or `cargo test -- --nocapture`, but a basic `cargo check` would

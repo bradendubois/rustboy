@@ -30,7 +30,7 @@ impl Joypad {
 
 
 impl RunComponent for Joypad {
-    fn run(&mut self, cpu_clock_cycles: u64) {
+    fn run(&mut self, _cpu_clock_cycles: u64) {
 
         for event in self.event_pump.poll_iter() {
             match event {
