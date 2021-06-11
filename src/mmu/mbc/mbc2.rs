@@ -1,7 +1,5 @@
-use std::cmp::max;
 use crate::cartridge::Cartridge;
 use super::{MBC, create_ram, ROM_BANK_SIZE, RAM_BANK_SIZE};
-use sdl2::gfx::imagefilter::add;
 
 const RAM_SIZE: usize = 0x200;
 pub struct MBC2 {
@@ -54,37 +52,50 @@ impl MBC for MBC2 {
         match address {
             0x0000..=0x3FFF => self.cartridge.rom[address as usize],
             0x4000..=0x7FFF => {
-                self.cartridge.rom[(address & (ROM_BANK_SIZE - 1)) as usize]
+                self.cartridge.rom[(address & (ROM_BANK_SIZE as u16 - 1)) as usize]
             },
-            0xA000..=0xBFFF => self.ram[(address & ((1<<9) - 1) & (RAM_SIZE-1))],
+            0xA000..=0xBFFF => self.ram[(address & ((1<<9) - 1) & (RAM_SIZE as u16 -1))as usize],
 
             _ => panic!("unmapped mbc2 address {:#06X}", address)
         }
     }
 
     fn write(&mut self, address: u16, value: u8) {
+        let upper_byte: u8 = (address >> 8) as u8;
+        let lower_byte: u8 = address as u8;
+        // If the address's third least significant bit is even it controls the ram
+        // otherwise it controls the rom
+        if address & 0x100 % 0x200 == 0{
+
+        }
+
         match address {
-
+            //Addresses that can write to rom are
+            // address & 0x100 mod 200 != 0
+            // Addresses that can write to ram are mod 200 == 0
             // RAM Enable
-            0x0000..=0x3FFF => if self.ram_size != 0 { self.ram_enabled = value & 0x0F == 0x0A; },
-
-            // ROM Bank Number
-            0xA000..=0xA1FF => if self.ram_enabled{
-                self.ram[(address & (RAM_BANK_SIZE -1)) as usize]
-            },
-
-            // RAM Bank Number / Upper Bits of ROM Bank Number
-            0x4000..=0x5FFF => self.bank2 = value & 0x03,
-
-            // Banking Mode Select
-            0x6000..=0x7FFF => self.mode = value & 0x01,
-
-            // RAM Bank 00-03
-            0xA000..=0xBFFF => if self.ram_enabled {
-                self.ram[(address & ((1<<9) - 1) & (RAM_SIZE-1))] = value;
+            0x0000..=0x3FFF => {
+                if upper_byte & 0x01 == 1 {
+                    self.rom_bank = value &0x0f;
+                    self.ram[(lower_byte & 0x0f) as usize] = value
+                }
+            else {
+                if value == 0x0A{self.ram_enabled = true;}else{self.ram_enabled=false;}
             }
+            },
+            0xA000 ..=0xBFFF => {
+                self.ram[(address & ((1<<9)-1)& (RAM_SIZE as u16 -1)) as usize] = value;
+            },
 
             _ => panic!("unmapped mbc2 address {:#06X}", address)
         }
     }
+}
+
+#[cfg(test)]
+mod test{
+    use crate::testing::mooneye_all;
+
+    #[test]
+    fn acceptance_mbc2() {mooneye_all("emulator-only/mbc2");}
 }
