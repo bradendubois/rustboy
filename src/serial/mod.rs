@@ -9,8 +9,10 @@ pub struct Serial {
     serial_transfer_control: u8,    // 0xFF02
 
     pub interrupt: bool,            // This corresponds to bit 3 of the IF register at 0xFF0F
-    tick_tank: u64                  // A "tank" of cycles run to synchronize and run the Serial
+    tick_tank: u64,                 // A "tank" of cycles run to synchronize and run the Serial
                                     // transfer at an appropriate rate
+
+    history: String
 }
 
 
@@ -21,8 +23,13 @@ impl Serial {
             serial_transfer_data: 0,
             serial_transfer_control: 0,
             interrupt: false,
-            tick_tank: 0
+            tick_tank: 0,
+            history: String::new()
         }
+    }
+
+    pub fn string_history(&mut self) -> String {
+        self.history.clone()
     }
 
     // TODO - Actual transfer method rotates bits along 0xFF01
@@ -56,7 +63,10 @@ impl MemoryMap for Serial {
 
     fn write(&mut self, address: u16, value: u8) {
         match address {
-            0xFF01 => self.serial_transfer_data = value,
+            0xFF01 => {
+                self.history.push(value as char);
+                self.serial_transfer_data = value;
+            },
             0xFF02 => self.serial_transfer_control = value,
             _ => panic!("serial link cable is not mapped to by address: {:#010X}", address)
         }

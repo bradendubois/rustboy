@@ -10,6 +10,8 @@ use super::cartridge::Cartridge;
 use super::mmu::MMU;
 use registers::Registers;
 
+use std::collections::HashSet;
+
 // Struct representing the LR35902 CPU
 pub struct LR35902 {
 
@@ -31,7 +33,9 @@ pub struct LR35902 {
     // CB Flag : Will set whether to use the default table or the CB Prefix table
     use_cb_table: bool,
 
-    mooneye_testing: bool
+    mooneye_testing: bool,
+
+    runInstr: HashSet<u16>,
 }
 
 #[allow(dead_code)]
@@ -46,7 +50,8 @@ impl LR35902 {
             ime: IME::Disabled,
             clock: 0,
             use_cb_table: false,
-            mooneye_testing: false
+            mooneye_testing: false,
+            runInstr: HashSet::new(),
         }
     }
 
@@ -58,7 +63,8 @@ impl LR35902 {
             ime: IME::Disabled,
             clock: 0,
             use_cb_table: false,
-            mooneye_testing: true
+            mooneye_testing: true,
+            runInstr: HashSet::new(),
         }
     }
 
@@ -128,11 +134,15 @@ impl LR35902 {
             return self.nop_0x00();
         }
 
+        let cb = self.use_cb_table;
+
         // println!("program counter: {:#06X}", self.registers.pc);
 
         let opcode = self.byte();        // Get the opcode number to execute
 
         // println!("fetched instruction: {:#02X}", opcode);
+
+        self.runInstr.insert(if cb { 0xFF00 | (opcode as u16) } else { opcode as u16 });
 
         // Special 'exit condition' on testing a "mooneye" testing ROM; accessing instruction 0x40
         //  (which is LD B B) indicates that the test is done. A successful test places the
@@ -140,6 +150,12 @@ impl LR35902 {
         if self.mooneye_testing && opcode == 0x40 {
             self.status = HALTED;
             return 0;
+        }
+
+        if self.mooneye_testing && opcode == 0x18 && self.registers.pc == 0x0286 {
+            //for k in self.runInstr.iter() {
+              //  println!("{:#06X}", k);
+            //}
         }
 
         self.call_instruction(opcode)        // Execute from standard table
@@ -259,7 +275,7 @@ impl LR35902 {
             false => self.registers.unset_full_carry(),
         };
 
-        match s < t {
+        match result < t {
             true  => self.registers.set_full_carry(),
             false => self.registers.unset_full_carry(),
         };
@@ -645,6 +661,14 @@ impl LR35902 {
     pub fn u8_pair(x: u16) -> (u8, u8) {
         ((x >> 8) as u8, x as u8)
     }
+
+    /*************************/
+    /*    Helper / Testing   */
+    /*************************/
+
+    pub fn retrieve_serial(&mut self) -> String {
+        self.mmu.retrieve_serial()
+    }
 }
 
 
@@ -665,7 +689,26 @@ impl fmt::Debug for LR35902 {
 #[cfg(test)]
 mod test {
 
-    use crate::testing::mooneye_all;
+    use crate::testing::{mooneye_all, blargg_all};
+
+    /* Blargg */
+
+    #[test]
+    fn blargg_cpu_instrs_root() {
+        blargg_all("cpu_instrs")
+    }
+
+    #[test]
+    fn blargg_cpu_instrs_individual() {
+        blargg_all("cpu_instrs/individual")
+    }
+
+    #[test]
+    fn blargg_instr_timing() {
+        blargg_all("instr_timing")
+    }
+
+    /* Mooneye */
 
     #[test]
     fn acceptance_root() {
@@ -687,13 +730,10 @@ mod test {
         mooneye_all("acceptance/interrupts");
     }
 
-
-    /* TODO - Enable when ready
     #[test]
     fn acceptance_oam_dma() {
-        mooneye_all(&format!("{}/{}", MOONEYE, "acceptance/oam_dma"));
+        mooneye_all("acceptance/oam_dma");
     }
-     */
 
     /* TODO
     #[test]

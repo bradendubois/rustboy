@@ -1,20 +1,20 @@
 use crate::traits::Byte;
 
 // Ranges for the window tile map
-const WINDOW_TILE_MAP_DISPLAY_SELECT_0: (u16, u16) = (0x9800, 0x9BFF);
-const WINDOW_TILE_MAP_DISPLAY_SELECT_1: (u16, u16) = (0x9C00, 0x9FFF);
+pub const WINDOW_TILE_MAP_DISPLAY_SELECT_0: (u16, u16) = (0x9800, 0x9BFF);
+pub const WINDOW_TILE_MAP_DISPLAY_SELECT_1: (u16, u16) = (0x9C00, 0x9FFF);
 
 // Ranges for the background and window tile data
-const BG_WINDOW_TILE_DATA_SELECT_0: (u16, u16) = (0x8800, 0x97FF);
-const BG_WINDOW_TILE_DATA_SELECT_1: (u16, u16) = (0x8000, 0x8FFF);
+pub const BG_WINDOW_TILE_DATA_SELECT_0: (u16, u16) = (0x8800, 0x97FF);
+pub const BG_WINDOW_TILE_DATA_SELECT_1: (u16, u16) = (0x8000, 0x8FFF);
 
 // Ranges for the background tile map
-const BG_TILE_MAP_DISPLAY_SELECT_0: (u16, u16) = (0x9800, 0x9BFF);
-const BG_TILE_MAP_DISPLAY_SELECT_1: (u16, u16) = (0x9C00, 0x9FFF);
+pub const BG_TILE_MAP_DISPLAY_SELECT_0: (u16, u16) = (0x9800, 0x9BFF);
+pub const BG_TILE_MAP_DISPLAY_SELECT_1: (u16, u16) = (0x9C00, 0x9FFF);
 
 // Valid Object (Sprite) dimensions
-const OBJ_8_8: (u8, u8) = (8, 8);
-const OBJ_8_16: (u8, u8) = (8, 16);
+pub const OBJ_8_8: (u8, u8) = (8, 8);
+pub const OBJ_8_16: (u8, u8) = (8, 16);
 
 
 // Fields taken from: http://bgb.bircd.org/pandocs.htm#lcdcontrolregister

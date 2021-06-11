@@ -11,7 +11,7 @@ use super::{HEIGHT, WIDTH};
 
 #[allow(unused)]
 pub struct Screen {
-    canvas: WindowCanvas,
+    // canvas: WindowCanvas,
 }
 
 #[allow(unused)]
@@ -19,13 +19,17 @@ impl Screen {
 
     pub fn new(video_context: VideoSubsystem) -> Screen {
 
+        /*
         let canvas = video_context
             .window("Rustboy", WIDTH as u32, HEIGHT as u32)
             .position_centered().opengl().build().unwrap()
             .into_canvas().build().unwrap();
 
+
+         */
+
         Screen {
-            canvas
+            // canvas
         }
     }
 
