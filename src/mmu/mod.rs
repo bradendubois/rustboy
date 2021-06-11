@@ -11,13 +11,6 @@ use super::timer::Timer;
 use super::joypad::Joypad;
 use super::serial::Serial;
 
-extern crate sdl2;
-
-use sdl2::pixels::Color;
-use sdl2::event::Event;
-use sdl2::keyboard::Keycode;
-use std::time::Duration;
-
 const W_RAM_SIZE: usize = 0x2000;
 const H_RAM_SIZE: usize = 0x7F;
 
@@ -70,7 +63,7 @@ impl MMU {
         let sdl_context = sdl2::init().unwrap();
         let video_subsystem = sdl_context.video().unwrap();
 
-        let mut event_pump = sdl_context.event_pump().unwrap();
+        let event_pump = sdl_context.event_pump().unwrap();
 
         let mut mmu = MMU {
             in_bios: false,

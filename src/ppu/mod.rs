@@ -12,6 +12,7 @@ use oam::{OAMEntry, OAMFlags};
 use registers::lcdc::LCDC;
 use registers::lcds::LCDS;
 use sdl2::VideoSubsystem;
+use std::cmp::max;
 
 
 const V_RAM_SIZE: usize = 0x2000;
@@ -263,8 +264,8 @@ impl PPU {
         //self.display.draw(clear_bg);
 
         // 2.b - Background
-        // let background_pixels = self.background_pixels();
-        // self.display.draw(background_pixels);
+        let background_pixels = self.background_pixels();
+        self.display.draw(background_pixels);
 
         // 2.c - Objects
         // let object_pixels = self.object_pixels(visible);
@@ -318,7 +319,7 @@ impl PPU {
         //    println!("{:?}", dump);
         //}
 
-        self.display.draw(dump);
+        //self.display.draw(dump);
 
         // 3 - H-Blank
     }
@@ -391,41 +392,44 @@ impl PPU {
             return pixels
         }
 
-        let y = self.ly as i32 - self.wy as i32;
+        let base_address = self.lcdc.bg_tile_map_display_select().0;
+        let y_adjustment = ((self.scy / 8) * 32) as u16;
 
-        if y < 0 {
-            return pixels
+        for i in 0..WIDTH {
+
+            let x = (((self.scx as usize) + i) % WIDTH) as u16;
+            let tile_base = base_address + y_adjustment + (x / 8);
+
+            let address = tile_base + (self.scy % 8) as u16;
+
+            println!("{:#06X}", self.lcdc.bg_tile_map_display_select().0);
+
+            let lo_byte = self.read(address);
+            let hi_byte = self.read(address + 1);
+
+            println!("{:#10b}, {:#10b}", hi_byte, lo_byte);
+
+            for j in (x % 8)..8 {
+
+                let b1 = if hi_byte & (1 << (7 - j)) != 0 { 1 } else { 0 };
+                let b0 = if lo_byte & (1 << (7 - j)) != 0 { 1 } else { 0 };
+
+                let col = (b1 << 1) | b0;
+
+                let color = match col {
+                    0b00 => Color::RGB(0, 0, 0),
+                    0b00 => Color::RGB(64, 64, 64),
+                    0b00 => Color::RGB(128, 128, 128),
+                    0b00 => Color::RGB(255, 255, 255),
+
+                    _ => panic!("impossible color: {:#06b}", col)
+                };
+
+                pixels.push((Point::new(x as u32 as i32, self.ly as u32 as i32), color));
+            }
         }
 
-        /*
-        let sprite_bytes = match self.lcdc.bg_window_tile_data_select().0 {
-
-            // "8000" method
-            0x8000 => {
-
-                let base_tile_address = object.tile_number as u16;
-                let address = base_tile_address * 16 + (object_data_y * 2) as u16;
-                let address = 0x8000 + address as u16;
-
-                (self.read(address),  self.read(address + 1))
-            },
-
-            // "8800" method
-            0x8800 => {
-
-                let base_tile_address = (object.tile_number * 16) as i16;
-                let address = (0x9000 as i32 + base_tile_address as i32) as u16 + (object_data_y * 2) as u16;
-
-                (self.read(address), self.read(address + 1))
-            },
-
-            _ => panic!("impossible addressing method: {:?}", self.lcdc.bg_window_tile_data_select())
-        };
-
-         */
-
         pixels
-
     }
 
 
