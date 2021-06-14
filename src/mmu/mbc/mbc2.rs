@@ -1,7 +1,9 @@
 use crate::cartridge::Cartridge;
-use super::{MBC, create_ram, ROM_BANK_SIZE, RAM_BANK_SIZE};
+use super::{MBC, ROM_BANK_SIZE};
 
 const RAM_SIZE: usize = 0x200;
+
+#[allow(dead_code)]
 pub struct MBC2 {
     mode: u8,
 
@@ -19,6 +21,7 @@ pub struct MBC2 {
 
 }
 
+#[allow(dead_code)]
 impl MBC2 {
     pub fn new(cartridge: Cartridge) -> MBC2 {
 

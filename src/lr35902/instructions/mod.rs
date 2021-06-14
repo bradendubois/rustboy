@@ -774,7 +774,6 @@ impl LR35902 {
     }
 
     /// 0x1B - DEC DE : decrement contents of de by 1!
-    ///
     fn dec_de_0x1b(&mut self) -> u64 {
         self.registers.set_de(self.registers.get_de().wrapping_sub(1));
         8
@@ -813,11 +812,11 @@ impl LR35902 {
         let next = self.byte() as i8;
 
         match self.registers.is_zero() {
-            true => {
+            true => 8,
+            false => {
                 self.jr(next);
                 12
             }
-            false => 8,
         }
     }
 
@@ -862,37 +861,38 @@ impl LR35902 {
     // 0x27 - DAA
     fn daa_0x27(&mut self) -> u64 {
 
-        let mut adj = 0x00;
-
-        if self.registers.is_full_carry() {
-            adj |= 0x60;
-        }
-        if self.registers.is_half_carry() {
-            adj |= 0x06;
-        }
+        let mut a = self.registers.a;
 
         if !self.registers.is_subtraction() {
-            if self.registers.a & 0x0F > 0x09 {
-                adj |= 0x06;
-            };
-            if self.registers.a > 0x99 {
-                adj |= 0x60;
-            };
+
+            if self.registers.is_full_carry() || (a > 0x99) {
+                a = a.wrapping_add(0x60);
+                self.registers.set_full_carry();
+            }
+
+            if self.registers.is_half_carry() || ((a & 0x0f) > 0x09) {
+                a = a.wrapping_add(0x6);
+            }
+
+        } else {
+
+            if self.registers.is_full_carry() {
+                a = a.wrapping_sub(0x60);
+            }
+
+            if self.registers.is_half_carry() {
+                a = a.wrapping_sub(0x6);
+            }
         }
 
-        self.registers.a = self.registers.a.wrapping_add(adj);
-
-        match adj >= 0x60 {
-            true  => self.registers.set_full_carry(),
-            false => self.registers.unset_full_carry(),
+        match a == 0 {
+            true  => self.registers.set_zero(),
+            false => self.registers.unset_zero()
         };
 
         self.registers.unset_half_carry();
 
-        match self.registers.a == 0 {
-            true  => self.registers.set_zero(),
-            false => self.registers.unset_zero(),
-        };
+        self.registers.a = a;
 
         4
     }
@@ -902,8 +902,8 @@ impl LR35902 {
         let next = self.byte() as i8;
 
         match self.registers.is_zero() {
-            true => 8,
-            false => {
+            false => 8,
+            true  => {
                 self.jr(next);
                 12
             }
@@ -1080,6 +1080,7 @@ impl LR35902 {
     }
 
     /*   0x40 - 0x4F   */
+
     // 0x40 - LD B B
     fn ld_b_b_0x40(&mut self) -> u64 {
         self.registers.b = self.registers.b; // ah, yes
@@ -1196,18 +1197,18 @@ impl LR35902 {
         4
     }
 
-    // 0x53 - LD, D, E
+    // 0x53 - LD D, E
     fn ld_d_e_0x53(&mut self) -> u64 {
         self.registers.d = self.registers.e;
         4
     }
-    // 0x54 - LD, D, H
+    // 0x54 - LD D, H
     fn ld_d_h_0x54(&mut self) -> u64 {
         self.registers.d = self.registers.h;
         4
     }
 
-    // 0x55 - LD, D, L
+    // 0x55 - LD D, L
     fn ld_d_l_0x55(&mut self) -> u64 {
         self.registers.d = self.registers.l;
         4
@@ -1219,49 +1220,49 @@ impl LR35902 {
         8
     }
 
-    // 0x57 - LD, D, A
+    // 0x57 - LD D, A
     fn ld_d_a_0x57(&mut self) -> u64 {
         self.registers.d = self.registers.a;
         4
     }
 
-    // 0x58 - LD, E, B
+    // 0x58 - LD E, B
     fn ld_e_b_0x58(&mut self) -> u64 {
         self.registers.e = self.registers.b;
         4
     }
 
-    // 0x59 - LD, E, C
+    // 0x59 - LD E, C
     fn ld_e_c_0x59(&mut self) -> u64 {
         self.registers.e = self.registers.c;
         4
     }
 
-    // 0x5A - LD, E, D
+    // 0x5A - LD E, D
     fn ld_e_d_0x5a(&mut self) -> u64 {
         self.registers.e = self.registers.d;
         4
     }
 
-    // 0x5B - LD, E, E
+    // 0x5B - LD E, E
     fn ld_e_e_0x5b(&mut self) -> u64 {
         self.registers.e = self.registers.e; //literally nop
         4
     }
 
-    // 0x5C - LD, E, H
+    // 0x5C - LD E, H
     fn ld_e_h_0x5c(&mut self) -> u64 {
         self.registers.e = self.registers.h;
         4
     }
 
-    // 0x5D - LD, E, L
+    // 0x5D - LD E, L
     fn ld_e_l_0x5d(&mut self) -> u64 {
         self.registers.e = self.registers.l;
         4
     }
 
-    // 0x5E - LD, E, HL
+    // 0x5E - LD E, HL
     fn ld_e_hl_0x5e(&mut self) -> u64 {
         self.registers.e = self.mmu.read(self.registers.get_hl());
         8
@@ -1424,7 +1425,7 @@ impl LR35902 {
         self.mmu.write(self.registers.get_hl(), self.registers.a);
         8
     }
-    // 0x78 - LD, A, B
+    // 0x78 - LD A, B
     fn ld_a_b_0x78(&mut self) -> u64 {
         self.registers.a = self.registers.b;
         4
@@ -2167,7 +2168,7 @@ impl LR35902 {
         16
     }
 
-    // 0xE9 - JP (HL)
+    // 0xE9 - JP HL
     fn jp_hl_0xe9(&mut self) -> u64 {
         self.registers.pc = self.registers.get_hl();
         4
@@ -2279,6 +2280,7 @@ impl LR35902 {
         self.rst(0x38);
         16
     }
+
     /*****************************************/
     /*         16-bit CB Prefix Table        */
     /*****************************************/
@@ -2828,12 +2830,11 @@ impl LR35902 {
     // 0xCB56 - BIT 2, hl
     fn bit_2_hl_0xcb56(&mut self) -> u64 {
         let value = self.mmu.read(self.registers.get_hl());
-
         self.bit(value, 2);
         16
     }
 
-    // 0xCB57 - BIT 0, A
+    // 0xCB57 - BIT 2, A
     fn bit_2_a_0xcb57(&mut self) -> u64 {
         self.bit(self.registers.a, 2);
         8

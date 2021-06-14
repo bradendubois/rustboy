@@ -148,7 +148,7 @@ impl MMU {
 
         let source = (value as u16) << 8;
 
-        println!("DMA TRANSFER from {:#06X} from ({:#06X})", source, value);
+        // println!("DMA TRANSFER from {:#06X} from ({:#06X})", source, value);
 
         for i in 0x00..=0x9F {
             let value = self.read(source + i as u16);

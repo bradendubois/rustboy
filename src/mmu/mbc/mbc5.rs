@@ -46,7 +46,7 @@ impl MBC for MBC5 {
             // ROM Read - Banked
             0x4000..=0x7FFF => {
                 let bank_number = (((self.bank2 as u16) << 8) | self.bank1 as u16) as usize;
-                self.cartridge.rom[ROM_BANK_SIZE * bank_number | (address as usize & (ROM_BANK_SIZE - 1))]
+                self.cartridge.rom[((ROM_BANK_SIZE * bank_number) | (address as usize & (ROM_BANK_SIZE - 1))) % self.cartridge.rom.len()]
             },
 
             // RAM Read

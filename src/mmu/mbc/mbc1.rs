@@ -48,7 +48,7 @@ impl MBC for MBC1 {
             0x0000..=0x3FFF => match self.mode {
                 0 => self.cartridge.rom[address as usize],
                 1 => {
-                    let address = (ROM_BANK_SIZE * ((self.bank2 << 5) as usize)) | ((address as usize) & ROM_BANK_SIZE - 1);
+                    let address = (ROM_BANK_SIZE * ((self.bank2 << 5) as usize)) | (address as usize);
                     self.cartridge.rom[address % self.cartridge.rom.len()]
                 },
                 _ => panic!("impossible mode: {}", self.mode)
@@ -57,7 +57,8 @@ impl MBC for MBC1 {
             // ROM Read - Banked
             0x4000..=0x7FFF => {
                 let address = (ROM_BANK_SIZE * (((self.bank2 << 5) | self.bank1) as usize)) | ((address as usize) & ROM_BANK_SIZE - 1);
-                self.cartridge.rom[address % self.cartridge.rom.len()]
+                println!("{} {} {} {:#06X} {:#06X}", self.bank2, self.bank1, (self.bank2 << 5) | self.bank1, address, self.cartridge.rom.len());
+                self.cartridge.rom[address]
             },
 
             // RAM Read
@@ -85,6 +86,7 @@ impl MBC for MBC1 {
 
             // ROM Bank Number / Lower bits
             0x2000..=0x3FFF => self.bank1 = {
+
                 let mut masked = (value & 0x1F) as u16;
                 if masked >= (1 << (self.rom_size + 1)) {
                     masked &= (1 << (self.rom_size + 1)) - 1;
@@ -101,10 +103,15 @@ impl MBC for MBC1 {
 
             // RAM Bank 00-03
             0xA000..=0xBFFF => if self.ram_enabled {
-                match self.mode {
-                    0 => self.ram[(address as usize) & (RAM_BANK_SIZE - 1)] = value,
-                    1 => self.ram[((self.bank2 as usize) * RAM_BANK_SIZE) | (address as usize & (RAM_BANK_SIZE - 1))] = value,
-                    _ => panic!("impossible mode value: {}", self.mode)
+
+                if self.ram_size > 0x02 {
+                    match self.mode {
+                        0 => self.ram[(address as usize) & (RAM_BANK_SIZE - 1)] = value,
+                        1 => self.ram[((self.bank2 as usize) * RAM_BANK_SIZE) | (address as usize & (RAM_BANK_SIZE - 1))] = value,
+                        _ => panic!("impossible mode value: {}", self.mode)
+                    }
+                } else {
+                    self.ram[(address as usize) & (RAM_BANK_SIZE - 1)] = value;
                 }
             }
 

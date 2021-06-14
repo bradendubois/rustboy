@@ -71,7 +71,6 @@ impl LR35902 {
     /// Run the cycle until otherwise halted / interrupted by an interrupt / exception
     pub fn run(&mut self) {
         loop {
-            self.step();
 
             let cycles = self.step();
             if cycles == 0 {   // 0 is returned from Mooneye tests when complete
@@ -85,7 +84,7 @@ impl LR35902 {
 
             // The PPU runs at a clock rate of 4.2 MHz, while the LR35902 runs at 1.05 MHz
             //  Each cycle run by the CPU corresponds to 4 PPU cycles
-            self.mmu.run(cycles * 4);
+            self.mmu.run(cycles);
         }
     }
 
@@ -138,11 +137,24 @@ impl LR35902 {
 
         let cb = self.use_cb_table;
 
-        println!("program counter: {:#06X}", self.registers.pc);
+        if self.registers.pc == 0xC7D2 {
+            println!("{}", self.retrieve_serial());
+            std::process::exit(0);
+        }
+
+        /*
+        println!("{} {} {} {} {} {} {} {}",
+                 self.registers.a, self.registers.f, self.registers.b, self.registers.c,
+                 self.registers.d, self.registers.e, self.registers.h, self.registers.l
+        );
+
+         */
+
+        // println!("program counter: {:#06X}", self.registers.pc);
 
         let opcode = self.byte();        // Get the opcode number to execute
 
-        println!("fetched instruction: {:#02X}", opcode);
+        // println!("opcode: {:#06X}", opcode);
 
         self.instr_used.insert(if cb { 0xFF00 | (opcode as u16) } else { opcode as u16 });
 
@@ -338,7 +350,7 @@ impl LR35902 {
 
     /// ADC - Add the given value and the carry (C) flag to the accumulator (A) register
     pub fn adc_8(&mut self, s: u8) {
-        self.a_add_8(s + if self.registers.is_full_carry() { 1 } else { 0 });
+        self.a_add_8(s.wrapping_add(if self.registers.is_full_carry() { 1 } else { 0 }));
     }
 
     /***    Subtraction    ***/
@@ -372,7 +384,7 @@ impl LR35902 {
 
     /// SBC - Subtract given value and carry flag from the A register
     pub fn sbc_8(&mut self, s: u8) {
-        self.a_sub_8(s + if self.registers.is_full_carry() { 1 } else { 0 });
+        self.a_sub_8(s.wrapping_add(if self.registers.is_full_carry() { 1 } else { 0 }));
     }
 
     /***   Incrementation  ***/
@@ -389,7 +401,7 @@ impl LR35902 {
 
         self.registers.unset_subtraction();
 
-        match (result & 0x0F) + 1 > 0x0F {
+        match (s & 0x0F) + 1 > 0x0F {
             true  => self.registers.set_half_carry(),
             false => self.registers.unset_half_carry()
         };

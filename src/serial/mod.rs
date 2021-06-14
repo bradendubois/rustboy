@@ -65,7 +65,7 @@ impl MemoryMap for Serial {
         match address {
             0xFF01 => {
                 self.history.push(value as char);
-                println!("{}", self.history); std::process::exit(0);
+                println!("{}", self.history); // std::process::exit(0);
                 self.serial_transfer_data = value;
             },
             0xFF02 => self.serial_transfer_control = value,

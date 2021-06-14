@@ -29,8 +29,8 @@ impl Timer {
             timer_counter: 0,
             timer_modulo: 0,
             timer_control: 0,
-            timer_enabled: true,
-            timer_clock_select: 0,
+            timer_enabled: false,
+            timer_clock_select: 256,
             divi_tank: 0,
             tima_tank: 0,
             interrupt: false,
@@ -79,6 +79,7 @@ impl RunComponent for Timer {
 
     fn run(&mut self, cpu_clock_cycles: u64) {
 
+        // println!("{} {} {}", cpu_clock_cycles, self.divi_tank, self.tima_tank);
         let cycles = cpu_clock_cycles as usize;
 
         // Divider timer always runs
@@ -99,7 +100,10 @@ impl RunComponent for Timer {
 
                 // Interrupt and reset on overflow
                 self.timer_counter = match overflow {
-                    true  => { self.interrupt = true; self.timer_modulo }
+                    true  => {
+                        self.interrupt = true;
+                        self.timer_modulo
+                    }
                     false => result
                 };
 

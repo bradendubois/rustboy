@@ -75,9 +75,26 @@ pub fn mooneye_all(dir: &str) {
         let pathname = path.to_str().unwrap().to_string();
 
         if path.is_file() && pathname.ends_with(".gb") {
-            match mooneye(&pathname) {
-                true  => successful.push(pathname),
-                false => errors.push(pathname)
+
+            match fork() {
+                Ok(ForkResult::Parent { child, .. }) => {
+                    let x = waitpid(child, None).unwrap();
+                    match x {
+                        WaitStatus::Exited(_, exit_code) => {
+                            match exit_code == 0 {
+                                true  => successful.push(pathname),
+                                false => errors.push(pathname)
+                            };
+                        }
+                        _ => panic!("process did not exit")
+                    }
+                },
+
+                Ok(ForkResult::Child) => {
+                    std::process::exit(if mooneye(&pathname) { 0 } else { 1 })
+                }
+
+                Err(_) => panic!("failed fork")
             }
         }
     }

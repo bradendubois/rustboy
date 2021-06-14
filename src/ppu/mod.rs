@@ -451,7 +451,7 @@ impl RunComponent for PPU {
 
             // Advance to next line (wrapping "around" back to top if necessary)
             self.ly += 1;
-            self.ly %= HEIGHT + V_BLANK_LINES;
+            self.ly %= (HEIGHT + V_BLANK_LINES);
 
             // If toggled, check for lyc interrupt
             if self.lcds.lyc_interrupt() && self.ly == self.lyc {
